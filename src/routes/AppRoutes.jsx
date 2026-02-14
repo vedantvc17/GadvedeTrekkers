@@ -9,6 +9,24 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
+
+      {/* Main Pages */}
+      <Route
+        path="/treks"
+        element={<h1 className="text-center mt-5">All Treks</h1>}
+      />
+      <Route
+        path="/tours"
+        element={<h1 className="text-center mt-5">All Tours</h1>}
+      />
+      <Route
+        path="/rentals"
+        element={<h1 className="text-center mt-5">Adventure Rentals</h1>}
+      />
+      <Route
+        path="/corporate"
+        element={<h1 className="text-center mt-5">School & Corporate Tours</h1>}
+      />
     </Routes>
   );
 }
