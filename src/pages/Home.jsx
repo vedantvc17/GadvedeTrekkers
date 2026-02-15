@@ -96,7 +96,6 @@ function Home() {
             ];
 
             const visibleCount = 3;
-
             const extended = [
               ...treks.slice(-visibleCount),
               ...treks,
@@ -106,12 +105,10 @@ function Home() {
             const [index, setIndex] = useState(visibleCount);
             const [transition, setTransition] = useState(true);
 
-            // 🔥 Auto slide every 2 seconds
             useEffect(() => {
               const interval = setInterval(() => {
                 setIndex((prev) => prev + 1);
               }, 4000);
-
               return () => clearInterval(interval);
             }, []);
 
@@ -131,15 +128,15 @@ function Home() {
             };
 
             return (
-              <div className="slider-container">
+              <div className="trek-slider-container">
 
-                <button className="slider-btn left" onClick={prev}>
+                <button className="trek-slider-btn left" onClick={prev}>
                   ❮
                 </button>
 
-                <div className="slider-wrapper">
+                <div className="trek-slider-wrapper">
                   <div
-                    className="slider-track"
+                    className="trek-slider-track"
                     style={{
                       transform: `translateX(-${index * (100 / visibleCount)}%)`,
                       transition: transition ? "transform 0.6s ease-in-out" : "none",
@@ -150,7 +147,7 @@ function Home() {
                     }}
                   >
                     {extended.map((trek, i) => (
-                      <div className="slide" key={i}>
+                      <div className="trek-slide" key={i}>
                         <div className="card border-0 shadow-sm h-100 text-center">
                           <img
                             src={trek.img}
@@ -176,7 +173,7 @@ function Home() {
                   </div>
                 </div>
 
-                <button className="slider-btn right" onClick={next}>
+                <button className="trek-slider-btn right" onClick={next}>
                   ❯
                 </button>
 
@@ -192,72 +189,148 @@ function Home() {
         </div>
       </section>
 
-      {/* ================= BACKPACKING TOURS ================= */}
+      {/* ================= POPULAR TOURS ================= */}
       <section className="py-5 bg-light">
-        <div className="container text-center">
-          <h2 className="fw-bold">
-            Backpacking Trips & Group Tours
+        <div className="container">
+          <h2 className="text-center fw-bold">
+            Explore Tours by Region
           </h2>
 
-          <div className="row g-4 mt-4">
+          <p className="text-center text-muted mb-5">
+            Discover backpacking & group tours across India.
+          </p>
 
-            <div className="col-md-4">
-              <div className="card border-0 shadow-sm">
-                <img
-                  src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429"
-                  className="card-img-top"
-                  style={{ height: "220px", objectFit: "cover" }}
-                />
-                <div className="card-body">
-                  <h5>Himachal Backpacking</h5>
-                  <button className="btn btn-success mt-3">
-                    Explore Tours →
-                  </button>
+          {(() => {
+            const tours = [
+              {
+                name: "Himachal Tours",
+                price: "Starting ₹6,999",
+                img: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429",
+                link: "/tours/himachal",
+              },
+              {
+                name: "Uttarakhand Tours",
+                price: "Starting ₹7,499",
+                img: "https://images.unsplash.com/photo-1587474260584-136574528ed5",
+                link: "/tours/uttarakhand",
+              },
+              {
+                name: "Rajasthan Tours",
+                price: "Starting ₹5,999",
+                img: "https://images.unsplash.com/photo-1548013146-72479768bada",
+                link: "/tours/rajasthan",
+              },
+              {
+                name: "NorthEast Tours",
+                price: "Starting ₹8,999",
+                img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+                link: "/tours/northeast",
+              },
+              {
+                name: "Kashmir & Leh Tours",
+                price: "Starting ₹9,999",
+                img: "https://images.unsplash.com/photo-1593693411515-c20261bcad6e",
+                link: "/tours/kashmir",
+              },
+              {
+                name: "South India Tours",
+                price: "Starting ₹4,999",
+                img: "https://images.unsplash.com/photo-1599661046827-dacff0c0f09e",
+                link: "/tours/southindia",
+              },
+            ];
+
+            const visibleCount = 3;
+            const extended = [
+              ...tours.slice(-visibleCount),
+              ...tours,
+              ...tours.slice(0, visibleCount),
+            ];
+
+            const [index, setIndex] = useState(visibleCount);
+            const [transition, setTransition] = useState(true);
+
+            useEffect(() => {
+              const interval = setInterval(() => {
+                setIndex((prev) => prev + 1);
+              }, 4000);
+              return () => clearInterval(interval);
+            }, []);
+
+            const next = () => setIndex((prev) => prev + 1);
+            const prev = () => setIndex((prev) => prev - 1);
+
+            const handleTransitionEnd = () => {
+              if (index >= tours.length + visibleCount) {
+                setTransition(false);
+                setIndex(visibleCount);
+              }
+
+              if (index < visibleCount) {
+                setTransition(false);
+                setIndex(tours.length + visibleCount - 1);
+              }
+            };
+
+            return (
+              <div className="tour-slider-container">
+
+                <button className="tour-slider-btn left" onClick={prev}>
+                  ❮
+                </button>
+
+                <div className="tour-slider-wrapper">
+                  <div
+                    className="tour-slider-track"
+                    style={{
+                      transform: `translateX(-${index * (100 / visibleCount)}%)`,
+                      transition: transition ? "transform 0.6s ease-in-out" : "none",
+                    }}
+                    onTransitionEnd={() => {
+                      handleTransitionEnd();
+                      setTimeout(() => setTransition(true), 20);
+                    }}
+                  >
+                    {extended.map((tour, i) => (
+                      <div className="tour-slide" key={i}>
+                        <div className="card border-0 shadow-sm h-100 text-center">
+                          <img
+                            src={tour.img}
+                            className="card-img-top"
+                            style={{ height: "260px", objectFit: "cover" }}
+                            alt={tour.name}
+                          />
+                          <div className="card-body">
+                            <h5>{tour.name}</h5>
+                            <h6 className="fw-bold text-success">
+                              {tour.price}
+                            </h6>
+                            <Link
+                              to={tour.link}
+                              className="btn btn-success mt-3"
+                            >
+                              Explore →
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+
+                <button className="tour-slider-btn right" onClick={next}>
+                  ❯
+                </button>
+
               </div>
-            </div>
+            );
+          })()}
 
-            <div className="col-md-4">
-              <div className="card border-0 shadow-sm">
-                <img
-                  src="https://images.unsplash.com/photo-1587474260584-136574528ed5"
-                  className="card-img-top"
-                  style={{ height: "220px", objectFit: "cover" }}
-                />
-                <div className="card-body">
-                  <h5>Rajasthan Tours</h5>
-                  <button className="btn btn-success mt-3">
-                    Explore Tours →
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-4">
-              <div className="card border-0 shadow-sm">
-                <img
-                  src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
-                  className="card-img-top"
-                  style={{ height: "220px", objectFit: "cover" }}
-                />
-                <div className="card-body">
-                  <h5>South India Trips</h5>
-                  <button className="btn btn-success mt-3">
-                    Explore Tours →
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* ✅ Explore All Tours Route */}
-          <div className="mt-4">
+          <div className="text-center mt-4">
             <Link to="/tours" className="btn btn-outline-success px-4">
-              Explore All Tours →
+              View All Tours →
             </Link>
           </div>
-
         </div>
       </section>
 
