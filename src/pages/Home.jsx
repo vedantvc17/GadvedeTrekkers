@@ -1,5 +1,6 @@
 import HeroCarousel from "../components/HeroCarousel";
 import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 
 function Home() {
   return (
@@ -53,71 +54,141 @@ function Home() {
       <section className="py-5">
         <div className="container">
           <h2 className="text-center fw-bold">
-            Popular Treks Near Pune & Mumbai
+            Explore Treks by Region
           </h2>
 
           <p className="text-center text-muted mb-5">
-            Beginner-friendly and challenging Sahyadri treks every weekend.
+            Discover adventures across India.
           </p>
 
-          <div className="row g-4">
-
-            {[
+          {(() => {
+            const treks = [
               {
-                name: "Rajgad Fort Trek",
-                price: "₹999",
-                img: "https://images.unsplash.com/photo-1526772662000-3f88f10405ff",
-              },
-              {
-                name: "Torna Fort Trek",
-                price: "₹1099",
+                name: "Mumbai Treks",
+                price: "Starting ₹799",
                 img: "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+                link: "/treks/mumbai",
               },
               {
-                name: "Visapur Fort Trek",
-                price: "₹799",
-                img: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+                name: "Pune Treks",
+                price: "Starting ₹699",
+                img: "https://images.unsplash.com/photo-1526772662000-3f88f10405ff",
+                link: "/treks/pune",
               },
               {
-                name: "Lohagad Fort Trek",
-                price: "₹699",
-                img: "https://images.unsplash.com/photo-1473625247510-8ceb1760943f",
+                name: "Himachal Treks",
+                price: "Starting ₹6,999",
+                img: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429",
+                link: "/treks/himachal",
               },
-            ].map((trek, index) => (
-              <div className="col-md-3" key={index}>
-                <div className="card border-0 shadow-sm h-100">
-                  <img
-                    src={trek.img}
-                    className="card-img-top"
-                    style={{ height: "200px", objectFit: "cover" }}
-                  />
+              {
+                name: "Uttarakhand Treks",
+                price: "Starting ₹7,499",
+                img: "https://images.unsplash.com/photo-1587474260584-136574528ed5",
+                link: "/treks/uttarakhand",
+              },
+              {
+                name: "Kashmir Treks",
+                price: "Starting ₹9,999",
+                img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+                link: "/treks/kashmir",
+              },
+            ];
 
-                  <div className="card-body">
-                    <h6>{trek.name}</h6>
-                    <h5 className="fw-bold text-success">{trek.price}</h5>
+            const visibleCount = 3;
 
-                    <div className="d-flex gap-2 mt-3">
-                      <button className="btn btn-success w-50">
-                        Book Now
-                      </button>
-                      <button className="btn btn-outline-success w-50">
-                        Details
-                      </button>
-                    </div>
+            const extended = [
+              ...treks.slice(-visibleCount),
+              ...treks,
+              ...treks.slice(0, visibleCount),
+            ];
+
+            const [index, setIndex] = useState(visibleCount);
+            const [transition, setTransition] = useState(true);
+
+            // 🔥 Auto slide every 2 seconds
+            useEffect(() => {
+              const interval = setInterval(() => {
+                setIndex((prev) => prev + 1);
+              }, 4000);
+
+              return () => clearInterval(interval);
+            }, []);
+
+            const next = () => setIndex((prev) => prev + 1);
+            const prev = () => setIndex((prev) => prev - 1);
+
+            const handleTransitionEnd = () => {
+              if (index >= treks.length + visibleCount) {
+                setTransition(false);
+                setIndex(visibleCount);
+              }
+
+              if (index < visibleCount) {
+                setTransition(false);
+                setIndex(treks.length + visibleCount - 1);
+              }
+            };
+
+            return (
+              <div className="slider-container">
+
+                <button className="slider-btn left" onClick={prev}>
+                  ❮
+                </button>
+
+                <div className="slider-wrapper">
+                  <div
+                    className="slider-track"
+                    style={{
+                      transform: `translateX(-${index * (100 / visibleCount)}%)`,
+                      transition: transition ? "transform 0.6s ease-in-out" : "none",
+                    }}
+                    onTransitionEnd={() => {
+                      handleTransitionEnd();
+                      setTimeout(() => setTransition(true), 20);
+                    }}
+                  >
+                    {extended.map((trek, i) => (
+                      <div className="slide" key={i}>
+                        <div className="card border-0 shadow-sm h-100 text-center">
+                          <img
+                            src={trek.img}
+                            className="card-img-top"
+                            style={{ height: "260px", objectFit: "cover" }}
+                            alt={trek.name}
+                          />
+                          <div className="card-body">
+                            <h5>{trek.name}</h5>
+                            <h6 className="fw-bold text-success">
+                              {trek.price}
+                            </h6>
+                            <Link
+                              to={trek.link}
+                              className="btn btn-success mt-3"
+                            >
+                              Explore →
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+
+                <button className="slider-btn right" onClick={next}>
+                  ❯
+                </button>
+
               </div>
-            ))}
+            );
+          })()}
 
-          </div>
-
-          {/* ✅ View All Treks Route */}
           <div className="text-center mt-4">
             <Link to="/treks" className="btn btn-outline-success px-4">
               View All Treks →
             </Link>
           </div>
-
         </div>
       </section>
 
