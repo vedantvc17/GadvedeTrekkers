@@ -3,9 +3,12 @@ import { useParams } from "react-router-dom";
 function TrekDetails() {
   const { id } = useParams();
 
+  // Prevent crash if id is undefined
   const formattedName = id
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+    ? id
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+    : "Trek Details";
 
   return (
     <div className="container py-5">
