@@ -1,3 +1,6 @@
+import app from "../../backend/src/app";
+import supabase from "../../backend/src/config/supabaseClient";
+
 app.get("/api/products", async (req, res) => {
   const { type } = req.query;
 
