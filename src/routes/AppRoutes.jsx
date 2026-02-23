@@ -4,12 +4,7 @@ import About from "../pages/About";
 import Contact from "../pages/Contact";
 
 /* ================= TREK PAGES ================= */
-import Treks from "../pages/Treks/Treks";
-import MumbaiTreks from "../pages/Treks/MumbaiTreks";
-import PuneTreks from "../pages/Treks/PuneTreks";
-import HimachalTreks from "../pages/Treks/HimachalTreks";
-import UttarakhandTreks from "../pages/Treks/UttarakhandTreks";
-import KashmirTreks from "../pages/Treks/KashmirTreks";
+import Trek from "../pages/Treks/Trek";
 import TrekDetails from "../pages/Treks/TrekDetails";
 
 /* ================= TOUR PAGES ================= */
@@ -31,15 +26,8 @@ function AppRoutes() {
       <Route path="/contact" element={<Contact />} />
 
       {/* ================= TREKS ================= */}
-      <Route path="/treks" element={<Treks />} />
-      <Route path="/treks/mumbai" element={<MumbaiTreks />} />
-      <Route path="/treks/pune" element={<PuneTreks />} />
-      <Route path="/treks/himachal" element={<HimachalTreks />} />
-      <Route path="/treks/uttarakhand" element={<UttarakhandTreks />} />
-      <Route path="/treks/kashmir" element={<KashmirTreks />} />
-
-      {/* Dynamic Trek Details */}
-      <Route path="/treks/:trekName" element={<TrekDetails />} />
+      <Route path="/treks" element={<Trek />} />
+      <Route path="/treks/:id" element={<TrekDetails />} />
 
       {/* ================= TOURS ================= */}
       <Route path="/tours" element={<Tours />} />
@@ -60,9 +48,11 @@ function AppRoutes() {
       />
       <Route
         path="/corporate"
-        element={<h1 className="text-center mt-5">
-          School & Corporate Tours
-        </h1>}
+        element={
+          <h1 className="text-center mt-5">
+            School & Corporate Tours
+          </h1>
+        }
       />
     </Routes>
   );

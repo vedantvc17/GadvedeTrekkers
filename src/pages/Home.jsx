@@ -67,31 +67,31 @@ function Home() {
                 name: "Mumbai Treks",
                 price: "Starting ₹799",
                 img: "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
-                link: "/treks/mumbai",
+                state: { region: "mumbai" },
               },
               {
                 name: "Pune Treks",
                 price: "Starting ₹699",
                 img: "https://images.unsplash.com/photo-1526772662000-3f88f10405ff",
-                link: "/treks/pune",
+                state: { region: "pune" },
               },
               {
                 name: "Himachal Treks",
                 price: "Starting ₹6,999",
                 img: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429",
-                link: "/treks/himachal",
+                state: { region: "himachal" },
               },
               {
                 name: "Uttarakhand Treks",
                 price: "Starting ₹7,499",
                 img: "https://images.unsplash.com/photo-1587474260584-136574528ed5",
-                link: "/treks/uttarakhand",
+                state: { region: "uttarakhand" },
               },
               {
                 name: "Kashmir Treks",
                 price: "Starting ₹9,999",
                 img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-                link: "/treks/kashmir",
+                state: { region: "kashmir" },
               },
             ];
 
@@ -160,12 +160,16 @@ function Home() {
                             <h6 className="fw-bold text-success">
                               {trek.price}
                             </h6>
+
+                            {/* ✅ Correct Navigation */}
                             <Link
-                              to={trek.link}
+                              to="/treks"
+                              state={trek.state}
                               className="btn btn-success mt-3"
                             >
                               Explore →
                             </Link>
+
                           </div>
                         </div>
                       </div>
