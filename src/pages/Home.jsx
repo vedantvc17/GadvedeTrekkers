@@ -20,8 +20,7 @@ function Home() {
               <div className="position-relative overflow-hidden rounded">
                 <img
                   src="https://images.unsplash.com/photo-1501785888041-af3ef285b470"
-                  className="img-fluid w-100"
-                  style={{ height: "300px", objectFit: "cover" }}
+                  className="img-fluid w-100 standard-img-lg"
                 />
                 <div className="position-absolute bottom-0 start-0 text-white p-4">
                   <h4>Upcoming Treks in Mumbai</h4>
@@ -66,31 +65,31 @@ function Home() {
               {
                 name: "Mumbai Treks",
                 price: "Starting ₹799",
-                img: "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+                img: "/TrekImages/mumbaitrek.png",
                 state: { region: "mumbai" },
               },
               {
                 name: "Pune Treks",
                 price: "Starting ₹699",
-                img: "https://images.unsplash.com/photo-1526772662000-3f88f10405ff",
+                img: "/TrekImages/PuneTrek.png",
                 state: { region: "pune" },
               },
               {
                 name: "Himachal Treks",
                 price: "Starting ₹6,999",
-                img: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429",
+                img: "/TrekImages/himachal.png",
                 state: { region: "himachal" },
               },
               {
                 name: "Uttarakhand Treks",
                 price: "Starting ₹7,499",
-                img: "https://images.unsplash.com/photo-1587474260584-136574528ed5",
+                img: "/TrekImages/Uttarakhand.png",
                 state: { region: "uttarakhand" },
               },
               {
                 name: "Kashmir Treks",
                 price: "Starting ₹9,999",
-                img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+                img: "/TrekImages/kashmir.png",
                 state: { region: "kashmir" },
               },
             ];
@@ -151,8 +150,7 @@ function Home() {
                         <div className="card border-0 shadow-sm h-100 text-center">
                           <img
                             src={trek.img}
-                            className="card-img-top"
-                            style={{ height: "260px", objectFit: "cover" }}
+                            className="card-img-top standard-img"
                             alt={trek.name}
                           />
                           <div className="card-body">
@@ -161,7 +159,7 @@ function Home() {
                               {trek.price}
                             </h6>
 
-                            {/* ✅ Correct Navigation */}
+                            {/* Correct Trek Navigation */}
                             <Link
                               to="/treks"
                               state={trek.state}
@@ -209,38 +207,38 @@ function Home() {
               {
                 name: "Himachal Tours",
                 price: "Starting ₹6,999",
-                img: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429",
-                link: "/tours/himachal",
+                img: "/TourImages/himachaltours.png",
+                state: { region: "himachal" },
               },
               {
                 name: "Uttarakhand Tours",
                 price: "Starting ₹7,499",
-                img: "https://images.unsplash.com/photo-1587474260584-136574528ed5",
-                link: "/tours/uttarakhand",
+                img: "/TourImages/uttarakhandtours.png",
+                state: { region: "uttarakhand" },
               },
               {
                 name: "Rajasthan Tours",
                 price: "Starting ₹5,999",
-                img: "https://images.unsplash.com/photo-1548013146-72479768bada",
-                link: "/tours/rajasthan",
+                img: "/TourImages/Rajasthan.png",
+                state: { region: "rajasthan" },
               },
               {
                 name: "NorthEast Tours",
                 price: "Starting ₹8,999",
-                img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-                link: "/tours/northeast",
+                img: "/TourImages/northeast.png",
+                state: { region: "northeast" },
               },
               {
                 name: "Kashmir & Leh Tours",
                 price: "Starting ₹9,999",
-                img: "https://images.unsplash.com/photo-1593693411515-c20261bcad6e",
-                link: "/tours/kashmir",
+                img: "/TourImages/leh.png",
+                state: { region: "kashmir" },
               },
               {
                 name: "South India Tours",
                 price: "Starting ₹4,999",
-                img: "https://images.unsplash.com/photo-1599661046827-dacff0c0f09e",
-                link: "/tours/southindia",
+                img: "/TourImages/south.png",
+                state: { region: "southindia" },
               },
             ];
 
@@ -300,8 +298,7 @@ function Home() {
                         <div className="card border-0 shadow-sm h-100 text-center">
                           <img
                             src={tour.img}
-                            className="card-img-top"
-                            style={{ height: "260px", objectFit: "cover" }}
+                            className="card-img-top standard-img"
                             alt={tour.name}
                           />
                           <div className="card-body">
@@ -309,8 +306,10 @@ function Home() {
                             <h6 className="fw-bold text-success">
                               {tour.price}
                             </h6>
+                            {/* Correct Tour Navigation */}
                             <Link
-                              to={tour.link}
+                              to="/tours"
+                              state={tour.state}
                               className="btn btn-success mt-3"
                             >
                               Explore →
@@ -338,38 +337,147 @@ function Home() {
         </div>
       </section>
 
+      {/* ================= HERITAGE WALKS ================= */}
+      <section className="py-5">
+        <div className="container">
+          <h2 className="text-center fw-bold">
+            Explore Pune Heritage Walks
+          </h2>
+
+          <p className="text-center text-muted mb-5">
+            Discover history, culture, and hidden gems of Pune.
+          </p>
+
+          {(() => {
+            const heritage = [
+              {
+                name: "Old Pune City Walk",
+                price: "Starting ₹399",
+                img: "/HeritageImages/pune.png",
+                state: { category: "city" },
+              },
+              {
+                name: "Forts & Landmarks Walk",
+                price: "Starting ₹699",
+                img: "/HeritageImages/shanivaarwada.png",
+                state: { category: "forts" },
+              },
+              {
+                name: "Temple & Cultural Walk",
+                price: "Starting ₹299",
+                img: "/HeritageImages/cultural.png",
+                state: { category: "temples" },
+              },
+            ];
+
+            return (
+              <div className="row g-4">
+                {heritage.map((item, i) => (
+                  <div className="col-md-4" key={i}>
+                    <div className="card border-0 shadow-sm h-100 text-center">
+                      <img
+                        src={item.img}
+                        className="card-img-top standard-img"
+                        alt={item.name}
+                      />
+                      <div className="card-body">
+                        <h5>{item.name}</h5>
+                        <h6 className="fw-bold text-success">
+                          {item.price}
+                        </h6>
+
+                        <Link
+                          to="/heritage"
+                          state={item.state}
+                          className="btn btn-success mt-3"
+                        >
+                          Explore →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          <div className="text-center mt-4">
+            <Link to="/heritage" className="btn btn-outline-success px-4">
+              View All Heritage Walks →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ================= RENTALS ================= */}
       <section className="py-5">
-        <div className="container text-center">
-          <h2 className="fw-bold">Adventure Rentals & Essentials</h2>
+        <div className="container">
+          <h2 className="text-center fw-bold">
+            Adventure Rentals & Essentials
+          </h2>
 
-          <div className="row g-4 mt-4">
+          <p className="text-center text-muted mb-5">
+            Rent high-quality gear & stays for your next adventure.
+          </p>
 
-            {["Tents on Rent", "Trekking Gear", "Villas on Rent"].map(
-              (item, index) => (
-                <div className="col-md-4" key={index}>
-                  <div className="card shadow-sm border-0 p-4 h-100">
-                    <h5>{item}</h5>
-                    <p className="text-muted">
-                      Quality gear for your adventures.
-                    </p>
-                    <button className="btn btn-success mt-auto">
-                      Explore
-                    </button>
+          <div className="row g-4">
+
+            {[
+              {
+                name: "Tents on Rent",
+                price: "Starting ₹299/day",
+                img: "/images/rentals/tent.jpg",
+                state: { category: "Tents" },
+              },
+              {
+                name: "Trekking Gear",
+                price: "Starting ₹149/day",
+                img: "/images/rentals/gear.jpg",
+                state: { category: "Gear" },
+              },
+              {
+                name: "Villas on Rent",
+                price: "Starting ₹5999/night",
+                img: "/images/rentals/villa.jpg",
+                state: { category: "Villas" },
+              },
+            ].map((item, index) => (
+              <div className="col-md-4" key={index}>
+                <div className="card border-0 shadow-sm h-100 text-center">
+
+                  <img
+                    src={item.img}
+                    className="card-img-top standard-img"
+                    alt={item.name}
+                  />
+
+                  <div className="card-body d-flex flex-column">
+                    <h5>{item.name}</h5>
+
+                    <h6 className="fw-bold text-success">
+                      {item.price}
+                    </h6>
+
+                    <Link
+                      to="/rentals"
+                      state={item.state}
+                      className="btn btn-success mt-auto"
+                    >
+                      Explore →
+                    </Link>
                   </div>
+
                 </div>
-              )
-            )}
+              </div>
+            ))}
 
           </div>
 
-          {/* ✅ Rentals Route */}
-          <div className="mt-4">
+          <div className="text-center mt-4">
             <Link to="/rentals" className="btn btn-outline-success px-4">
               View All Rentals →
             </Link>
           </div>
-
         </div>
       </section>
 

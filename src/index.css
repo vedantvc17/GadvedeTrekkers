@@ -14,6 +14,7 @@ body {
 }
 
 #root {
+  width: 100%;
   min-height: 100vh;
 }
 
@@ -41,6 +42,45 @@ body {
 
 .carousel {
   margin-bottom: 0;
+}
+
+/* ================= STANDARD IMAGE SYSTEM ================= */
+
+/* All card images (Treks, Tours, Rentals, Heritage) */
+.standard-img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Bigger banner images (Weekend section) */
+.standard-img-lg {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* Image hover zoom */
+.card img {
+  transition: transform 0.4s ease;
+}
+
+.card:hover img {
+  transform: scale(1.05);
+}
+
+/* ================= CARD FIX ================= */
+
+.card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-body {
+  flex-grow: 1;
 }
 
 /* ================= TREK SLIDER =================== */
@@ -79,7 +119,7 @@ body {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: #198754; /* Green */
+  background: #198754;
   color: white;
   border: none;
   font-size: 20px;
@@ -191,4 +231,66 @@ body {
   .tour-slider-btn.right {
     right: 5px;
   }
+}
+/* ================= HEADER ================= */
+
+.navbar {
+  background-color: #198754 !important;
+}
+
+.navbar .nav-link,
+.navbar .navbar-brand {
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+}
+
+.navbar .nav-link:hover {
+  color: #d4edda !important;
+}
+
+/* Dropdown fix */
+.navbar .dropdown-menu {
+  border-radius: 8px;
+  border: none;
+}
+
+.navbar .dropdown-item:hover {
+  background-color: #e9f7ef;
+}
+
+/* ================= FOOTER ================= */
+
+footer {
+  background-color: #198754;
+  color: #ffffff;
+}
+
+.footer-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+  display: inline-block;
+  margin-bottom: 6px;
+  transition: all 0.3s ease;
+}
+
+.footer-link:hover {
+  color: #d4edda;
+  transform: translateX(3px);
+}
+
+/* Footer spacing fix */
+footer .row > div {
+  margin-bottom: 15px;
+}
+
+/* ================= GLOBAL BUTTON IMPROVEMENT ================= */
+
+.btn-success {
+  background-color: #198754;
+  border: none;
+}
+
+.btn-success:hover {
+  background-color: #145c32;
 }

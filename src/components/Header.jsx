@@ -1,16 +1,27 @@
 import { Link } from "react-router-dom";
+import logo from "../assets/gadvedelogo.png";
 
 function Header() {
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm py-3">
+    <nav className="navbar navbar-expand-lg navbar-dark shadow-sm py-3"
+         style={{ backgroundColor: "#198754" }}>
       <div className="container">
 
-        <Link className="navbar-brand fw-semibold fs-5" to="/">
-          🏔 Gadvede Trekkers
+        {/* 🔥 LOGO + NAME */}
+        <Link
+          className="navbar-brand d-flex align-items-center fw-semibold fs-5 text-white"
+          to="/"
+        >
+          <img
+            src={logo}
+            alt="Gadvede Trekkers Logo"
+            style={{ height: "80px", marginRight: "12px", objectFit: "contain" }}
+          />
+          Gadvede Trekkers
         </Link>
 
         <button
-          className="navbar-toggler"
+          className="navbar-toggler border-0"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarContent"
@@ -24,7 +35,7 @@ function Header() {
             {/* Treks Dropdown */}
             <li className="nav-item dropdown mx-3">
               <span
-                className="nav-link dropdown-toggle"
+                className="nav-link dropdown-toggle text-white"
                 role="button"
                 data-bs-toggle="dropdown"
               >
@@ -47,7 +58,7 @@ function Header() {
             {/* Tours Dropdown */}
             <li className="nav-item dropdown mx-3">
               <span
-                className="nav-link dropdown-toggle"
+                className="nav-link dropdown-toggle text-white"
                 role="button"
                 data-bs-toggle="dropdown"
               >
@@ -68,19 +79,19 @@ function Header() {
             </li>
 
             <li className="nav-item mx-3">
-              <Link className="nav-link" to="/rentals">Rentals</Link>
+              <Link className="nav-link text-white" to="/rentals">Rentals</Link>
             </li>
 
             <li className="nav-item mx-3">
-              <Link className="nav-link" to="/faq">FAQ</Link>
+              <Link className="nav-link text-white" to="/faq">FAQ</Link>
             </li>
 
             {/* Book Now */}
             <li className="nav-item ms-3">
               <Link
                 to="/book"
-                className="btn text-white px-4 rounded-pill"
-                style={{ backgroundColor: "#2f5d3a" }}
+                className="btn px-4 rounded-pill"
+                style={{ backgroundColor: "#145c32", color: "#fff" }}
               >
                 Book Now
               </Link>

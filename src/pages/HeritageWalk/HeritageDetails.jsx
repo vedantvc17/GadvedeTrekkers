@@ -1,9 +1,8 @@
 import { useParams } from "react-router-dom";
 
-function TourDetails() {
+function HeritageDetails() {
   const { id } = useParams();
 
-  // Convert URL slug → Proper Title
   const formattedName = id
     .replace(/-/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
@@ -15,10 +14,10 @@ function TourDetails() {
       </h2>
 
       <p className="text-center">
-        Detailed information about this tour will be added soon.
+        Detailed information about this heritage walk will be added soon.
       </p>
     </div>
   );
 }
 
-export default TourDetails;
+export default HeritageDetails; 
