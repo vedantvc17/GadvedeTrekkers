@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
+import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 
 function Tours() {
   const location = useLocation();
@@ -150,6 +151,13 @@ function Tours() {
       },
     ],
   };
+
+  /* Merge admin-created tours into tourData */
+  getAdminItems("gt_tours").filter((t) => t.active !== false).forEach((t) => {
+    const item = normaliseItem(t);
+    if (!tourData[item.region]) tourData[item.region] = [];
+    tourData[item.region].push(item);
+  });
 
   const regions = Object.keys(tourData);
 

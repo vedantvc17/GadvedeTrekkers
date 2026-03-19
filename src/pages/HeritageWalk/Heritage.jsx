@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
+import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 
 function Heritage() {
   const location = useLocation();
@@ -123,6 +124,14 @@ function Heritage() {
       },
     ],
   };
+
+  /* Merge admin-created heritage walks */
+  getAdminItems("gt_heritage").filter((w) => w.active !== false).forEach((w) => {
+    const item = normaliseItem(w);
+    const cat = item.type || "city";
+    if (!heritageData[cat]) heritageData[cat] = [];
+    heritageData[cat].push(item);
+  });
 
   const categories = Object.keys(heritageData);
 

@@ -142,25 +142,16 @@ function HeroCarousel() {
         {`
           .overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0,0,0,0.55);
           }
 
-          .hero-content {
-            position: relative;
-            z-index: 2;
-          }
+          .hero-content { position: relative; z-index: 2; }
 
-          .animate-content {
-            animation: fadeUp 1.2s ease forwards;
-          }
+          .animate-content { animation: fadeUp 1.2s ease forwards; }
 
-          .fade-in {
-            animation: fadeIn 2s ease;
-          }
+          .fade-in { animation: fadeIn 2s ease; }
 
           .highlight-text {
             color: #28a745;
@@ -170,26 +161,16 @@ function HeroCarousel() {
           .highlight-text::after {
             content: '';
             position: absolute;
-            left: 0;
-            bottom: -5px;
-            width: 100%;
-            height: 4px;
+            left: 0; bottom: -5px;
+            width: 100%; height: 4px;
             background: #28a745;
             animation: pulseLine 2s infinite;
           }
 
-          .hero-btn {
-            transition: all 0.3s ease;
-          }
+          .hero-btn { transition: all 0.3s ease; }
+          .hero-btn:hover { transform: translateY(-3px) scale(1.05); }
 
-          .hero-btn:hover {
-            transform: translateY(-3px) scale(1.05);
-          }
-
-          .hero-btn-outline {
-            transition: all 0.3s ease;
-          }
-
+          .hero-btn-outline { transition: all 0.3s ease; }
           .hero-btn-outline:hover {
             background-color: #fff;
             color: #000;
@@ -197,30 +178,21 @@ function HeroCarousel() {
           }
 
           @keyframes fadeUp {
-            from {
-              opacity: 0;
-              transform: translateY(30px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
           }
-
           @keyframes fadeIn {
             from { opacity: 0; }
-            to { opacity: 1; }
+            to   { opacity: 1; }
           }
-
           @keyframes zoomEffect {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.05); }
             100% { transform: scale(1); }
           }
-
           @keyframes pulseLine {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
+            0%   { opacity: 0.6; }
+            50%  { opacity: 1; }
             100% { opacity: 0.6; }
           }
         `}
@@ -231,4 +203,3 @@ function HeroCarousel() {
 }
 
 export default HeroCarousel;
- 

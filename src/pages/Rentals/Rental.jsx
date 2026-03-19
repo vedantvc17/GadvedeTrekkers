@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
+import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 
 function Rental() {
   const location = useLocation();
@@ -78,6 +79,14 @@ function Rental() {
       },
     ],
   };
+
+  /* Merge admin-created rentals */
+  getAdminItems("gt_rentals").filter((r) => r.active !== false).forEach((r) => {
+    const item = normaliseItem(r);
+    const cat = item.category || "Tents";
+    if (!rentalData[cat]) rentalData[cat] = [];
+    rentalData[cat].push(item);
+  });
 
   const categories = Object.keys(rentalData);
 

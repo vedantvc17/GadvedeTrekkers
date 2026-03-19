@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import logo from "../assets/gadvedelogo.png";
+// Footer updated: FAQ moved here from Header nav
 
 function Footer() {
   return (
@@ -8,7 +9,7 @@ function Footer() {
       style={{ backgroundColor: "#198754" }}
     >
       <div className="container">
-        <div className="row text-start">
+        <div className="row text-start g-4">
 
           {/* LEFT SECTION */}
           <div className="col-md-3 mb-4">
@@ -24,38 +25,78 @@ function Footer() {
             </p>
           </div>
 
-          {/* COMPANY */}
-          <div className="col-md-3 mb-4">
-            <h5 className="fw-bold mb-3">Company</h5>
+          {/* EXPLORE */}
+          <div className="col-md-2 mb-4">
+            <h5 className="fw-bold mb-3">Explore</h5>
             <ul className="list-unstyled">
-              <li><Link className="footer-link" to="/tours">Tours</Link></li>
               <li><Link className="footer-link" to="/treks">Treks</Link></li>
-              <li><Link className="footer-link" to="/about">About Us</Link></li>
-              <li><Link className="footer-link" to="/contact">Contact</Link></li>
-              <li><Link className="footer-link" to="/blogs">Blogs</Link></li>
+              <li><Link className="footer-link" to="/tours">Tours</Link></li>
+              <li><Link className="footer-link" to="/camping">Camping</Link></li>
+              <li><Link className="footer-link" to="/rentals">Rentals</Link></li>
+              <li><Link className="footer-link" to="/heritage">Heritage Walks</Link></li>
             </ul>
           </div>
 
-          {/* QUICK LINKS */}
-          <div className="col-md-3 mb-4">
-            <h5 className="fw-bold mb-3">Quick Links</h5>
+          {/* CORPORATE */}
+          <div className="col-md-2 mb-4">
+            <h5 className="fw-bold mb-3">Corporate</h5>
             <ul className="list-unstyled">
-              <li><span className="footer-link">Privacy Policy</span></li>
-              <li><span className="footer-link">Cancellation Policy</span></li>
-              <li><span className="footer-link">Terms & Conditions</span></li>
-              <li><span className="footer-link">Disclaimer</span></li>
-              <li><span className="footer-link">Support</span></li>
+              <li><Link className="footer-link" to="/corporate/trek">Corporate Trek</Link></li>
+              <li><Link className="footer-link" to="/corporate/camping">Corporate Camping</Link></li>
+              <li><Link className="footer-link" to="/corporate/team-building">Team Building</Link></li>
+              <li><Link className="footer-link" to="/corporate">College Industrial Visits</Link></li>
+            </ul>
+          </div>
+
+          {/* OPPORTUNITIES */}
+          <div className="col-md-2 mb-4">
+            <h5 className="fw-bold mb-3">Opportunities</h5>
+            <ul className="list-unstyled">
+              <li><Link className="footer-link" to="/careers">Careers</Link></li>
+              <li><Link className="footer-link" to="/list-property">List Your Property</Link></li>
+              <li><Link className="footer-link" to="/list-campsite">List Your Campsite</Link></li>
+              <li><Link className="footer-link" to="/list-event">List Your Event</Link></li>
+            </ul>
+          </div>
+
+          {/* COMPANY & SUPPORT */}
+          <div className="col-md-2 mb-4">
+            <h5 className="fw-bold mb-3">Company</h5>
+            <ul className="list-unstyled">
+              <li><Link className="footer-link" to="/about">About Us</Link></li>
+              <li><Link className="footer-link" to="/contact">Contact</Link></li>
+              <li><Link className="footer-link" to="/faq">FAQ</Link></li>
+              <li><span className="footer-link" style={{ cursor: "default" }}>Privacy Policy</span></li>
+              <li><span className="footer-link" style={{ cursor: "default" }}>Cancellation Policy</span></li>
+              <li><span className="footer-link" style={{ cursor: "default" }}>Terms & Conditions</span></li>
             </ul>
           </div>
 
           {/* OFFICE */}
-          <div className="col-md-3 mb-4">
+          <div className="col-md-2 mb-4">
             <h5 className="fw-bold mb-3">Our Office</h5>
             <p style={{ fontSize: "14px", lineHeight: "1.6" }}>
               Gadvede Trekkers <br />
               Pune, Maharashtra <br />
               India
             </p>
+            <h5 className="fw-bold mb-2 mt-3">Follow Us</h5>
+            <div className="d-flex gap-2 flex-wrap">
+              {[
+                { label: "Instagram", href: "#" },
+                { label: "YouTube", href: "#" },
+                { label: "WhatsApp", href: "#" },
+              ].map((s) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  className="footer-link"
+                  style={{ fontSize: 13, border: "1px solid rgba(255,255,255,0.3)", padding: "3px 10px", borderRadius: 999 }}
+                >
+                  {s.label}
+                </a>
+              ))}
+            </div>
           </div>
 
         </div>

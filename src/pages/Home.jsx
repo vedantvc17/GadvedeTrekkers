@@ -1,50 +1,278 @@
 import HeroCarousel from "../components/HeroCarousel";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 
+function TourTile({ title, images, region, path = "/tours", btnLabel = "VIEW TOURS" }) {
+  const [current, setCurrent] = useState(0);
+  const [prevIdx, setPrevIdx] = useState(null);
+  const [animating, setAnimating] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      advanceTo((c) => (c + 1) % images.length);
+    }, 3800);
+    return () => clearInterval(timer);
+  }, [images.length]);
+
+  function advanceTo(nextFn) {
+    const next = nextFn(current);
+    if (animating || next === current) return;
+    setPrevIdx(current);
+    setCurrent(next);
+    setAnimating(true);
+    setTimeout(() => { setPrevIdx(null); setAnimating(false); }, 900);
+  }
+
+  const go = () => navigate(path, region ? { state: { region } } : undefined);
+
+  return (
+    <div className="col-6 col-md-3">
+      <div className="weekend-tile" onClick={go}>
+        {images.map((img, i) => (
+          <img
+            key={i}
+            src={img}
+            alt={title}
+            className={`weekend-tile-img ${i === current ? "wt-active" : ""} ${i === prevIdx ? "wt-prev" : ""}`}
+          />
+        ))}
+        <div className="weekend-tile-overlay" />
+        <div className="weekend-tile-content">
+          <h4 className="weekend-tile-title">{title}</h4>
+          <div className="weekend-tile-dots">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={`weekend-dot ${i === current ? "active" : ""}`}
+                onClick={(e) => { e.stopPropagation(); advanceTo(() => i); }}
+              />
+            ))}
+          </div>
+          <button
+            className="weekend-tile-btn"
+            onClick={(e) => { e.stopPropagation(); go(); }}
+          >
+            {btnLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Home() {
+  const tourTiles = [
+    {
+      title: "Manali",
+      region: "himachal",
+      images: [
+        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
+        "https://images.unsplash.com/photo-1526772662000-3f88f10405ff?w=800&q=80",
+        "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&q=80",
+      ],
+    },
+    {
+      title: "Rajasthan",
+      region: "rajasthan",
+      images: [
+        "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&q=80",
+        "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=800&q=80",
+        "https://images.unsplash.com/photo-1599030399935-8e03c7b6dccc?w=800&q=80",
+        "https://images.unsplash.com/photo-1566228015668-4c45dbc4e2f5?w=800&q=80",
+      ],
+    },
+    {
+      title: "Kerala",
+      region: "southindia",
+      images: [
+        "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80",
+        "https://images.unsplash.com/photo-1593693411515-c20261bcad6e?w=800&q=80",
+        "https://images.unsplash.com/photo-1545109808-7c2b27ad7869?w=800&q=80",
+        "https://images.unsplash.com/photo-1509365465985-25d11c17e812?w=800&q=80",
+      ],
+    },
+    {
+      title: "Hampi",
+      region: null,
+      images: [
+        "https://images.unsplash.com/photo-1600100399425-c7f41f02d5c8?w=800&q=80",
+        "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?w=800&q=80",
+        "https://images.unsplash.com/photo-1614082242765-7c98ca0f3df3?w=800&q=80",
+        "https://images.unsplash.com/photo-1584825975702-a7c5e1fb8ff8?w=800&q=80",
+      ],
+    },
+    {
+      title: "Hampi — Gokarna",
+      region: null,
+      images: [
+        "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?w=800&q=80",
+        "https://images.unsplash.com/photo-1600100399425-c7f41f02d5c8?w=800&q=80",
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
+        "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?w=800&q=80",
+      ],
+    },
+    {
+      title: "Gokarna — Murdeshwar",
+      region: null,
+      images: [
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
+        "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?w=800&q=80",
+        "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80",
+        "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&q=80",
+      ],
+    },
+    {
+      title: "Malvan — Tarkarli",
+      region: null,
+      images: [
+        "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80",
+        "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&q=80",
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
+        "https://images.unsplash.com/photo-1471922694854-ff1b63b20054?w=800&q=80",
+      ],
+    },
+    {
+      title: "Goa",
+      region: "southindia",
+      images: [
+        "https://images.unsplash.com/photo-1614082242765-7c98ca0f3df3?w=800&q=80",
+        "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&q=80",
+        "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&q=80",
+        "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&q=80",
+      ],
+    },
+  ];
+
   return (
     <>
       <HeroCarousel />
 
-      {/* ================= WEEKEND TRIPS ================= */}
+      {/* ================= TREKS & CAMPING ================= */}
+      <section className="py-5">
+        <div className="container">
+          <h2 className="text-center fw-bold mb-5">— TREKS &amp; CAMPING —</h2>
+
+          {/* Trek tiles */}
+          <h5 className="fw-bold text-success mb-3">Weekend Treks</h5>
+          <div className="row g-4 mb-5">
+            {[
+              {
+                title: "Mumbai Treks",
+                region: "mumbai",
+                path: "/treks",
+                images: [
+                  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80",
+                  "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
+                  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
+                  "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=80",
+                ],
+              },
+              {
+                title: "Pune Treks",
+                region: "pune",
+                path: "/treks",
+                images: [
+                  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&q=80",
+                  "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=800&q=80",
+                  "https://images.unsplash.com/photo-1454942901704-3c44c11b2ad1?w=800&q=80",
+                  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80",
+                ],
+              },
+              {
+                title: "Nashik Treks",
+                region: null,
+                path: "/treks",
+                images: [
+                  "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
+                  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
+                  "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=80",
+                  "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=800&q=80",
+                ],
+              },
+              {
+                title: "Bhandardara Treks",
+                region: null,
+                path: "/treks",
+                images: [
+                  "https://images.unsplash.com/photo-1504851149312-7a075b496cc7?w=800&q=80",
+                  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
+                  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
+                  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80",
+                ],
+              },
+            ].map((tile) => (
+              <TourTile key={tile.title} {...tile} btnLabel="VIEW TREKS" />
+            ))}
+          </div>
+
+          {/* Camping tiles */}
+          <h5 className="fw-bold text-success mb-3">Camping &amp; Stays</h5>
+          <div className="row g-4">
+            {[
+              {
+                title: "Alibaug Camping",
+                region: null,
+                path: "/camping",
+                images: [
+                  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
+                  "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80",
+                  "https://images.unsplash.com/photo-1471922694854-ff1b63b20054?w=800&q=80",
+                  "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&q=80",
+                ],
+              },
+              {
+                title: "Pawna Lake Camping",
+                region: null,
+                path: "/camping",
+                images: [
+                  "https://images.unsplash.com/photo-1504851149312-7a075b496cc7?w=800&q=80",
+                  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
+                  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&q=80",
+                  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80",
+                ],
+              },
+              {
+                title: "Bhandardara Camping",
+                region: null,
+                path: "/camping",
+                images: [
+                  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
+                  "https://images.unsplash.com/photo-1504851149312-7a075b496cc7?w=800&q=80",
+                  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
+                  "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=80",
+                ],
+              },
+              {
+                title: "Igatpuri Forest Camping",
+                region: null,
+                path: "/camping",
+                images: [
+                  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&q=80",
+                  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
+                  "https://images.unsplash.com/photo-1504851149312-7a075b496cc7?w=800&q=80",
+                  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
+                ],
+              },
+            ].map((tile) => (
+              <TourTile key={tile.title} {...tile} btnLabel="VIEW CAMPING" />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= POPULAR TOURS ================= */}
       <section className="py-5 bg-light">
         <div className="container">
           <h2 className="text-center fw-bold mb-5">
-            — WEEKEND TRIPS —
+            — POPULAR TOURS —
           </h2>
 
           <div className="row g-4">
-
-            <div className="col-md-8">
-              <div className="position-relative overflow-hidden rounded">
-                <img
-                  src="https://images.unsplash.com/photo-1501785888041-af3ef285b470"
-                  className="img-fluid w-100 standard-img-lg"
-                />
-                <div className="position-absolute bottom-0 start-0 text-white p-4">
-                  <h4>Upcoming Treks in Mumbai</h4>
-                  {/* No Route Here */}
-                  <button className="btn btn-outline-light btn-sm">
-                    View Tours
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-4">
-              <div className="position-relative overflow-hidden rounded">
-                <img
-                  src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee"
-                  className="img-fluid w-100"
-                  style={{ height: "300px", objectFit: "cover" }}
-                />
-                <div className="position-absolute bottom-0 start-0 text-white p-3">
-                  <h5>Upcoming Treks in Pune</h5>
-                </div>
-              </div>
-            </div>
-
+            {tourTiles.map((tile) => (
+              <TourTile key={tile.title} {...tile} />
+            ))}
           </div>
         </div>
       </section>
@@ -73,24 +301,6 @@ function Home() {
                 price: "Starting ₹699",
                 img: "/TrekImages/PuneTrek.png",
                 state: { region: "pune" },
-              },
-              {
-                name: "Himachal Treks",
-                price: "Starting ₹6,999",
-                img: "/TrekImages/himachal.png",
-                state: { region: "himachal" },
-              },
-              {
-                name: "Uttarakhand Treks",
-                price: "Starting ₹7,499",
-                img: "/TrekImages/Uttarakhand.png",
-                state: { region: "uttarakhand" },
-              },
-              {
-                name: "Kashmir Treks",
-                price: "Starting ₹9,999",
-                img: "/TrekImages/kashmir.png",
-                state: { region: "kashmir" },
               },
             ];
 
