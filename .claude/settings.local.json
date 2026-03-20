@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(\"C:/nvm4w/nodejs/node.exe\" \"C:/nvm4w/nodejs/node_modules/npm/bin/npm-cli.js\" run build)"
+    ]
+  }
+}

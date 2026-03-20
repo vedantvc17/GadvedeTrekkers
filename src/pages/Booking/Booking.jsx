@@ -273,12 +273,13 @@ function Booking() {
     const _enhancedId = generateBookingId();
     saveBookingRecord({ ...bookingRecord, enhancedBookingId: _enhancedId, customerId: _customer.id });
     createTransaction({
-      bookingId:    bookingId,
-      customerName: _customer.name,
-      paymentMode:  _paymentModeMap[formData.paymentOption] || "UPI",
-      grossAmount:  payableNow,
-      tax:          taxAmount,
-      netAmount:    baseAmount,
+      bookingId:         bookingId,
+      customerId:        _customer.id,
+      customerName:      _customer.name,
+      paymentMode:       _paymentModeMap[formData.paymentOption] || "UPI",
+      grossAmount:       payableNow,
+      tax:               taxAmount,
+      netAmount:         baseAmount,
       transactionStatus: "SUCCESS",
     });
     /* ── end additive block ── */

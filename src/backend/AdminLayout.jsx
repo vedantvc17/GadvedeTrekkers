@@ -8,9 +8,15 @@ const NAV = [
   { path: "/admin/heritage",     icon: "🏛",  label: "Heritage Walks" },
   { path: "/admin/camping",      icon: "⛺",  label: "Camping" },
   { path: "/admin/rentals",      icon: "🏠",  label: "Rentals" },
+  { path: "/admin/vendors",      icon: "🏪",  label: "Vendors" },
   { path: "/admin/bookings",     icon: "📋",  label: "Bookings" },
   { path: "/admin/transactions", icon: "💳",  label: "Transactions" },
   { path: "/admin/customers",    icon: "👤",  label: "Customers" },
+  { path: "/admin/reports",      icon: "📈",  label: "Reports" },
+  { path: "/admin/marketing",    icon: "📢",  label: "Marketing" },
+  { path: "/admin/feedback",     icon: "⭐",  label: "Feedback" },
+  { path: "/admin/earnings",     icon: "💰",  label: "Earnings"   },
+  { path: "/admin/employees",    icon: "👨‍💼", label: "Employees"  },
 ];
 
 function AdminLayout() {
@@ -54,12 +60,7 @@ function AdminLayout() {
         </nav>
 
         <div className="adm-sidebar-footer">
-          <a
-            href="/"
-            className="adm-view-site"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href="/" className="adm-view-site" target="_blank" rel="noopener noreferrer">
             🌐 View Website
           </a>
           <button className="adm-logout" onClick={logout}>
