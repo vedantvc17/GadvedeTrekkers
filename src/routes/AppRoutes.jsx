@@ -21,32 +21,53 @@ import ManageMarketing   from "../backend/ManageMarketing";
 import ManageFeedback    from "../backend/ManageFeedback";
 import ManageEarnings   from "../backend/ManageEarnings";
 import ManageEmployees  from "../backend/ManageEmployees";
+import EmployeeOnboarding from "../backend/EmployeeOnboarding";
+import EmployeeLogin  from "../pages/Employee/EmployeeLogin";
+import EmployeePortal from "../pages/Employee/EmployeePortal";
+import AddNew           from "../backend/AddNew";
+import ManageBlogs      from "../backend/ManageBlogs";
+import ActivityLogs     from "../backend/ActivityLogs";
+import ManageDocs       from "../backend/ManageDocs";
 
 /* ================= TREK PAGES ================= */
-import Trek          from "../pages/Treks/Trek";
-import TrekDetails   from "../pages/Treks/TrekDetails";
+import Trek           from "../pages/Treks/Trek";
+import TrekDetails    from "../pages/Treks/TrekDetails";
+import AndharbanTrek  from "../pages/Treks/AndharbanTrek";
+import RajmachiTrek   from "../pages/Treks/RajmachiTrek";
+import SandhanValley  from "../pages/Treks/SandhanValley";
+import DevkundTrek    from "../pages/Treks/DevkundTrek";
+import HariharFortTrek from "../pages/Treks/HariharFortTrek";
 import Booking       from "../pages/Booking/Booking";
 import BookingSuccess from "../pages/Booking/BookingSuccess";
 
 /* ================= TOUR PAGES ================= */
-import Tours      from "../pages/Tours/Tours";
-import TourDetails from "../pages/Tours/TourDetails";
+import Tours               from "../pages/Tours/Tours";
+import TourDetails         from "../pages/Tours/TourDetails";
+import VelasTurtleFestival from "../pages/Tours/VelasTurtleFestival";
 
 /* ================= HERITAGE PAGES ================= */
 import Heritage        from "../pages/HeritageWalk/Heritage";
 import HeritageDetails from "../pages/HeritageWalk/HeritageDetails";
 
 /* ================= CAMPING PAGES ================= */
-import Camping from "../pages/Camping/Camping";
+import Camping        from "../pages/Camping/Camping";
+import CampingDetails from "../pages/Camping/CampingDetails";
 
 /* ================= RENTAL PAGES ================= */
 import Rental        from "../pages/Rentals/Rental";
 import RentalDetails from "../pages/Rentals/RentalDetails";
 
+/* ================= CORPORATE ================= */
+import Corporate from "../pages/Corporate/Corporate";
+
+/* ================= VILLAS ================= */
+import Villas from "../pages/Villas/Villas";
+
 /* ================= OPPORTUNITIES / FEEDBACK / TICKET ================= */
 import VendorRegister from "../pages/Opportunities/VendorRegister";
 import FeedbackForm   from "../pages/Feedback/FeedbackForm";
 import TicketPage     from "../pages/Ticket/TicketPage";
+import WeekendTrips from "../components/WeekendTrips";
 
 function AppRoutes() {
   return (
@@ -57,25 +78,36 @@ function AppRoutes() {
       <Route path="/contact" element={<Contact />} />
 
       {/* ================= TREKS ================= */}
-      <Route path="/treks"            element={<Trek />} />
-      <Route path="/treks/:id"        element={<TrekDetails />} />
+      <Route path="/treks"                    element={<Trek />} />
+      <Route path="/treks/andharban-trek-2025"        element={<AndharbanTrek />} />
+      <Route path="/treks/rajmachi-fort-trek"         element={<RajmachiTrek />} />
+      <Route path="/treks/sandhan-valley-trek"        element={<SandhanValley />} />
+      <Route path="/treks/devkund-waterfall-trek"     element={<DevkundTrek />} />
+      <Route path="/treks/harihar-fort-trek"          element={<HariharFortTrek />} />
+      <Route path="/treks/:id"                   element={<TrekDetails />} />
       <Route path="/book"             element={<Booking />} />
       <Route path="/booking/success"  element={<BookingSuccess />} />
 
       {/* ================= TOURS ================= */}
-      <Route path="/tours"     element={<Tours />} />
-      <Route path="/tours/:id" element={<TourDetails />} />
+      <Route path="/tours"                              element={<Tours />} />
+      <Route path="/tours/velas-turtle-festival-2026"  element={<VelasTurtleFestival />} />
+      <Route path="/tours/:id"                         element={<TourDetails />} />
 
       {/* ================= HERITAGE ================= */}
       <Route path="/heritage"     element={<Heritage />} />
       <Route path="/heritage/:id" element={<HeritageDetails />} />
 
       {/* ================= CAMPING ================= */}
-      <Route path="/camping" element={<Camping />} />
+      <Route path="/camping"     element={<Camping />} />
+      <Route path="/camping/:id" element={<CampingDetails />} />
 
       {/* ================= RENTALS ================= */}
       <Route path="/rentals"     element={<Rental />} />
       <Route path="/rentals/:id" element={<RentalDetails />} />
+
+      {/* ================= EMPLOYEE PORTAL ================= */}
+      <Route path="/employee-login"  element={<EmployeeLogin />} />
+      <Route path="/employee/*"      element={<EmployeePortal />} />
 
       {/* ================= OPPORTUNITIES ================= */}
       <Route path="/vendor-register" element={<VendorRegister />} />
@@ -86,16 +118,24 @@ function AppRoutes() {
       {/* ================= TICKET (public) ================= */}
       <Route path="/ticket" element={<TicketPage />} />
 
-      {/* ================= OTHER SERVICES ================= */}
-      <Route
-        path="/corporate"
-        element={<h1 className="text-center mt-5">College Industrial Visits Opportunities</h1>}
-      />
+      {/* ================= QA / TEST ROUTES ================= */}
+      <Route path="/qa/weekend-trips" element={<WeekendTrips />} />
+
+      {/* ================= VILLAS ================= */}
+      <Route path="/villas" element={<Villas />} />
+
+      {/* ================= CORPORATE ================= */}
+      <Route path="/corporate"            element={<Corporate />} />
+      <Route path="/corporate/trek"       element={<Corporate />} />
+      <Route path="/corporate/camping"    element={<Corporate />} />
+      <Route path="/corporate/team-building" element={<Corporate />} />
 
       {/* ================= ADMIN / BACKEND ================= */}
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/*" element={<AdminLayout />}>
         <Route path="dashboard"    element={<Dashboard />} />
+        <Route path="add-new"      element={<AddNew />} />
+        <Route path="blogs"        element={<ManageBlogs />} />
         <Route path="treks"        element={<ManageTreks />} />
         <Route path="tours"        element={<ManageTours />} />
         <Route path="heritage"     element={<ManageHeritage />} />
@@ -110,6 +150,9 @@ function AppRoutes() {
         <Route path="feedback"     element={<ManageFeedback />} />
         <Route path="earnings"     element={<ManageEarnings />} />
         <Route path="employees"    element={<ManageEmployees />} />
+        <Route path="onboarding"   element={<EmployeeOnboarding />} />
+        <Route path="logs"         element={<ActivityLogs />} />
+        <Route path="docs"         element={<ManageDocs />} />
       </Route>
     </Routes>
   );
