@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { findTrekBySlug, slugifyTrekName } from "../../data/treks";
+import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 import {
   kalsubaiOverview,
   kalsubaiHistory,
@@ -26,30 +27,102 @@ import {
   harishchandragadThingsToCarry,
   harishchandragadDiscountCodes,
 } from "../../data/harishchandragadDetails";
-import KalsubaiRouteMap from "../../components/KalsubaiRouteMap";
-import HarishchandragadRouteMap from "../../components/HarishchandragadRouteMap";
 
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "gallery", label: "Photo Gallery" },
-  { id: "route", label: "Trek Route" },
   { id: "itinerary", label: "Itinerary" },
   { id: "details", label: "Details & Cost" },
 ];
 
 const KALSUBAI_ITINERARY_KEYS = ["kasara", "mumbai", "pune"];
-const HC_ITINERARY_KEYS = ["pune"];
+const HC_ITINERARY_KEYS = ["kasara", "pune"];
+
+const parseJsonValue = (value, fallback) => {
+  try {
+    return JSON.parse(value || JSON.stringify(fallback));
+  } catch {
+    return fallback;
+  }
+};
+
+const parseLineItems = (value = "") =>
+  String(value)
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const parseDiscountItems = (value = "") =>
+  parseLineItems(value).map((line) => {
+    const [code, desc] = line.split("|");
+    return { code: code || line, desc: desc || "" };
+  });
+
+const normaliseRouteKey = (city) =>
+  String(city || "")
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[^a-z]/g, "");
+
+const parseDeparturePlanItineraries = (departurePlans) =>
+  Object.fromEntries(
+    Object.entries(parseJsonValue(departurePlans, {})).map(([city, plan]) => {
+      const key = normaliseRouteKey(city);
+      const lines = parseLineItems(plan?.itinerary || "");
+      const events = lines.map((line) => {
+        const [, time = "", desc = line] = line.split("|");
+        return { time, desc };
+      });
+      return [
+        key,
+        {
+          label: `From ${city}`,
+          sublabel: `${city} Route`,
+          icon: city === "Mumbai" ? "🚂" : "🚌",
+          note: `${city} departure itinerary`,
+          days: [{ title: `${city} Departure`, events }],
+        },
+      ];
+    })
+  );
 
 function TrekDetails() {
   const { id } = useParams();
-  const trek = id ? findTrekBySlug(id) : null;
+  const previewDraft = typeof window !== "undefined" ? sessionStorage.getItem("gt_trek_preview") : null;
+  const previewItem = parseJsonValue(previewDraft, null);
+  const previewSlug = previewItem?.name ? slugifyTrekName(previewItem.name) : "";
+  const adminMatch = getAdminItems("gt_treks").find((item) => slugifyTrekName(item.name || "") === id);
+  const adminTrek = adminMatch
+    ? (() => {
+        const fallbackGallery = [adminMatch.image, adminMatch.image, adminMatch.image].filter(Boolean);
+        const gallery = parseJsonValue(adminMatch.imageGallery, fallbackGallery);
+        return {
+          ...normaliseItem(adminMatch),
+          image: gallery[0] || adminMatch.image,
+          gallery,
+        };
+      })()
+    : null;
+  const previewTrek = previewItem && previewSlug === id
+    ? (() => {
+        const fallbackGallery = [previewItem.image, previewItem.image, previewItem.image].filter(Boolean);
+        const gallery = parseJsonValue(previewItem.imageGallery, fallbackGallery);
+        return {
+          ...normaliseItem(previewItem),
+          image: gallery[0] || previewItem.image,
+          gallery,
+        };
+      })()
+    : null;
+  const trek = previewTrek || adminTrek || (id ? findTrekBySlug(id) : null);
   const isKalsubai = trek?.name === "Kalsubai Trek";
   const isHarishchandragad = trek?.name === "Harishchandragad Trek";
   const isRich = isKalsubai || isHarishchandragad;
 
   const [activeTab, setActiveTab] = useState("overview");
-  const [activeItinerary, setActiveItinerary] = useState(isHarishchandragad ? "pune" : "kasara");
+  const [activeItinerary, setActiveItinerary] = useState("kasara");
   const [lightboxImg, setLightboxImg] = useState(null);
+  const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -77,49 +150,207 @@ function TrekDetails() {
     }
   }, [isKalsubai, isHarishchandragad]);
 
+  useEffect(() => {
+    setCurrentHeroSlide(0);
+  }, [trek?.name]);
+
+  useEffect(() => {
+    if (!trek?.gallery?.length || trek.gallery.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setCurrentHeroSlide((prev) => (prev + 1) % trek.gallery.length);
+    }, 3200);
+    return () => window.clearInterval(timer);
+  }, [trek?.gallery]);
+
   const formattedName = trek?.name
     ?? (id ? id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Trek Details");
+  const heroImages = trek?.gallery?.length ? trek.gallery.slice(0, 3) : [];
 
   /* ── Basic layout for non-rich treks ── */
   if (!isRich) {
     return (
-      <div className="trek-details-basic container py-5">
-        <h1 className="fw-bold text-center mb-2 text-success">{formattedName}</h1>
+      <div className="td-page">
         {trek ? (
           <>
-            <p className="text-center text-muted mb-4">
-              {trek.location} &nbsp;|&nbsp; {trek.duration} &nbsp;|&nbsp; {trek.altitude}
-            </p>
-            <div className="text-center mb-4">
-              {trek.gallery?.map((img, i) => (
-                <img key={i} src={img} alt={`${trek.name} ${i + 1}`}
-                  style={{ width: "30%", margin: "6px", borderRadius: 16, objectFit: "cover", aspectRatio: "4/3" }} />
-              ))}
+            <div className="td-hero">
+              <div className="td-hero-slides">
+                {heroImages.map((image, index) => (
+                  <div
+                    key={`${trek.name}-basic-hero-${index}`}
+                    className={`td-hero-slide${index === currentHeroSlide ? " is-active" : ""}`}
+                    style={{ backgroundImage: `url(${image})` }}
+                  />
+                ))}
+              </div>
+              <div className="td-hero-overlay" />
+              <div className="td-hero-content container-fluid td-shell">
+                <span className="td-kicker">🥾 Maharashtra Trek Experience</span>
+                <h1 className="td-heading">{formattedName}</h1>
+                <p className="td-subheading">{trek.location} · {trek.duration} · {trek.altitude}</p>
+
+                <div className="td-stats-bar">
+                  {[
+                    { icon: "📍", label: trek.location },
+                    { icon: "⏱", label: trek.duration },
+                    { icon: "🏔", label: trek.altitude },
+                    { icon: "⚡", label: trek.difficulty },
+                    { icon: "⭐", label: `${trek.rating} (${trek.reviews} reviews)` },
+                    { icon: "💰", label: `From ₹${trek.price}` },
+                  ].map((s) => (
+                    <div className="td-stat" key={s.label}>
+                      <span className="td-stat-icon">{s.icon}</span>
+                      <span>{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="td-hero-actions">
+                  <Link to="/book" state={{ trek }} className="btn td-book-btn">
+                    Book Now — ₹{trek.price}
+                  </Link>
+                  <button className="btn td-itinerary-btn" onClick={() => setActiveTab("gallery")}>
+                    View Photos
+                  </button>
+                </div>
+
+                {heroImages.length > 1 && (
+                  <div className="td-hero-dots" aria-label="Trek hero image slides">
+                    {heroImages.map((_, index) => (
+                      <button
+                        key={`${trek.name}-basic-dot-${index}`}
+                        type="button"
+                        className={`td-hero-dot${index === currentHeroSlide ? " is-active" : ""}`}
+                        onClick={() => setCurrentHeroSlide(index)}
+                        aria-label={`Show image ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="text-center">
-              <Link to="/book" state={{ selectedTrek: trek }} className="btn btn-success px-5 py-3 fw-bold rounded-4">
-                Book {trek.name} — ₹{trek.price}
-              </Link>
+
+            <div className="container-fluid td-shell py-4">
+              <div className="td-card">
+                <h2 className="td-section-title">Photo Gallery</h2>
+                <div className="td-gallery-grid">
+                  {trek.gallery?.map((img, i) => (
+                    <div
+                      className="td-gallery-item"
+                      key={i}
+                      onClick={() => setLightboxImg(img)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && setLightboxImg(img)}
+                    >
+                      <img src={img} alt={`${trek.name} ${i + 1}`} className="td-gallery-img" />
+                      <div className="td-gallery-zoom">🔍 View</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
+            {lightboxImg && (
+              <div className="td-lightbox" onClick={() => setLightboxImg(null)}>
+                <div className="td-lightbox-inner" onClick={(e) => e.stopPropagation()}>
+                  <img src={lightboxImg} alt="Full view" />
+                  <button className="td-lightbox-close" onClick={() => setLightboxImg(null)}>✕</button>
+                </div>
+              </div>
+            )}
           </>
         ) : (
-          <p className="text-center text-muted">Detailed itinerary coming soon for this trek.</p>
+          <div className="trek-details-basic container py-5">
+            <p className="text-center text-muted">Detailed itinerary coming soon for this trek.</p>
+          </div>
         )}
       </div>
     );
   }
 
   /* ── Resolve active data set ── */
-  const overview = isKalsubai ? kalsubaiOverview : harishchandragadOverview;
-  const history = isKalsubai ? kalsubaiHistory : harishchandragadHistory;
-  const highlights = isKalsubai ? kalsubaiHighlights : harishchandragadHighlights;
-  const eventDetails = isKalsubai ? kalsubaiEventDetails : harishchandragadEventDetails;
-  const pricing = isKalsubai ? kalsubaiPricing : harishchandragadPricing;
+  const adminDiscountCodes = trek?.discountEnabled === false ? [] : parseDiscountItems(trek?.discountCodes);
+  const adminItineraries = (adminTrek || previewTrek) ? parseDeparturePlanItineraries(trek?.departurePlans) : {};
+  const overview = isKalsubai
+    ? (adminTrek || previewTrek)
+      ? {
+          ...kalsubaiOverview,
+          subtitle: trek?.subtitle || kalsubaiOverview.subtitle,
+          intro: trek?.about || kalsubaiOverview.intro,
+        }
+      : kalsubaiOverview
+    : (adminTrek || previewTrek)
+      ? {
+          ...harishchandragadOverview,
+          subtitle: trek?.subtitle || harishchandragadOverview.subtitle,
+          intro: trek?.about || harishchandragadOverview.intro,
+          history: trek?.history || harishchandragadOverview.history,
+          mainAttractions: trek?.mainAttractions || harishchandragadOverview.mainAttractions,
+        }
+      : harishchandragadOverview;
+  const history = (adminTrek || previewTrek) && trek?.detailedHistory
+    ? trek.detailedHistory
+    : isKalsubai ? kalsubaiHistory : harishchandragadHistory;
+  const highlights = (adminTrek || previewTrek) && trek?.highlights
+    ? parseLineItems(trek.highlights).map((text) => ({ icon: "✨", text }))
+    : isKalsubai ? kalsubaiHighlights : harishchandragadHighlights;
+  const eventDetails = (adminTrek || previewTrek)
+    ? {
+        difficulty: trek?.difficulty || "",
+        endurance: trek?.enduranceLevel || trek?.difficulty || "",
+        baseVillage: trek?.baseVillage || "",
+        region: trek?.regionArea || trek?.location || "",
+        duration: trek?.duration || "",
+        climbTime: trek?.climbTime || "",
+        distance: trek?.distance || "",
+        altitude: trek?.altitude || "",
+        driveFromPune: trek?.drivePune || "",
+        sanctuary: trek?.wildlifeSanctuary || "",
+        minGroup: "",
+      }
+    : isKalsubai ? kalsubaiEventDetails : harishchandragadEventDetails;
+  const pricing = (adminTrek || previewTrek)
+    ? Object.fromEntries(
+        Object.entries(parseJsonValue(trek?.departurePlans, {})).map(([city, plan]) => [
+          city,
+          { label: `${city} Departure`, price: Number(plan?.price) || trek?.price || 0 },
+        ])
+      )
+    : isKalsubai ? kalsubaiPricing : harishchandragadPricing;
   const whyJoin = isKalsubai ? kalsubaiWhyJoin : harishchandragadWhyJoin;
-  const itineraries = isKalsubai ? kalsubaiItineraries : harishchandragadItineraries;
+  const itineraries = (adminTrek || previewTrek)
+    ? adminItineraries
+    : isKalsubai ? kalsubaiItineraries : harishchandragadItineraries;
   const bookingSteps = isKalsubai ? kalsubaiBookingSteps : harishchandragadBookingSteps;
-  const itineraryKeys = isKalsubai ? KALSUBAI_ITINERARY_KEYS : HC_ITINERARY_KEYS;
-  const itinerary = itineraries[activeItinerary] ?? itineraries[itineraryKeys[0]];
+  const itineraryKeys = (adminTrek || previewTrek)
+    ? Object.keys(adminItineraries)
+    : isKalsubai ? KALSUBAI_ITINERARY_KEYS : HC_ITINERARY_KEYS;
+  const itinerary = itineraryKeys.length
+    ? itineraries[activeItinerary] ?? itineraries[itineraryKeys[0]]
+    : { note: "Itinerary will appear once route details are added.", days: [] };
+  const includedItems = (adminTrek || previewTrek)
+    ? parseLineItems(trek?.included).map((item) => `✅ ${item}`)
+    : isKalsubai
+      ? [
+          "✅ Expert certified trek leader",
+          "✅ Breakfast at summit",
+          "✅ Veg lunch at base village",
+          "✅ Local jeep from Kasara (train batch)",
+          "✅ First aid kit",
+          "✅ E-certificate on completion",
+          "✅ WhatsApp group coordination",
+        ]
+      : harishchandragadInclusions;
+  const excludedItems = (adminTrek || previewTrek)
+    ? parseLineItems(trek?.notIncluded).map((item) => `❌ ${item}`)
+    : isKalsubai
+      ? [
+          "❌ Train ticket (self-arranged)",
+          "❌ Personal expenses",
+        ]
+      : harishchandragadExclusions;
+  const carryItems = (adminTrek || previewTrek)
+    ? parseLineItems(trek?.thingsToCarry)
+    : harishchandragadThingsToCarry;
 
   const heroKicker = isKalsubai ? "🏔 Maharashtra's Highest Peak" : "🏔 Ancient Hill Fort — Konkan Kada";
   const heroTagline = overview.tagline;
@@ -129,7 +360,16 @@ function TrekDetails() {
     <div className="td-page">
 
       {/* ── HERO ── */}
-      <div className="td-hero" style={{ backgroundImage: `url(${trek.gallery[0]})` }}>
+      <div className="td-hero">
+        <div className="td-hero-slides">
+          {heroImages.map((image, index) => (
+            <div
+              key={`${trek.name}-hero-${index}`}
+              className={`td-hero-slide${index === currentHeroSlide ? " is-active" : ""}`}
+              style={{ backgroundImage: `url(${image})` }}
+            />
+          ))}
+        </div>
         <div className="td-hero-overlay" />
         <div className="td-hero-content container-fluid td-shell">
           <span className="td-kicker">{heroKicker}</span>
@@ -153,13 +393,27 @@ function TrekDetails() {
           </div>
 
           <div className="td-hero-actions">
-            <Link to="/book" state={{ selectedTrek: trek }} className="btn td-book-btn">
+            <Link to="/book" state={{ trek }} className="btn td-book-btn">
               Book Now — ₹{trek.price}
             </Link>
             <button className="btn td-itinerary-btn" onClick={() => setActiveTab("itinerary")}>
               View Itinerary
             </button>
           </div>
+
+          {heroImages.length > 1 && (
+            <div className="td-hero-dots" aria-label="Trek hero image slides">
+              {heroImages.map((_, index) => (
+                <button
+                  key={`${trek.name}-dot-${index}`}
+                  type="button"
+                  className={`td-hero-dot${index === currentHeroSlide ? " is-active" : ""}`}
+                  onClick={() => setCurrentHeroSlide(index)}
+                  aria-label={`Show image ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -250,11 +504,11 @@ function TrekDetails() {
                 </div>
 
                 {/* Discount Codes (Harishchandragad only) */}
-                {isHarishchandragad && (
+                {(trek?.discountEnabled !== false) && isHarishchandragad && (
                   <div className="td-card" style={{ marginTop: 16 }}>
                     <h3 className="td-section-title">Discount Offers</h3>
                     <div className="td-discount-codes">
-                      {harishchandragadDiscountCodes.map((d) => (
+                      {(adminDiscountCodes.length ? adminDiscountCodes : harishchandragadDiscountCodes).map((d) => (
                         <div className="td-discount-item" key={d.code}>
                           <span className="td-discount-code">{d.code}</span>
                           <span className="td-discount-desc">{d.desc}</span>
@@ -314,48 +568,6 @@ function TrekDetails() {
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {/* ── ROUTE MAP TAB ── */}
-        {activeTab === "route" && (
-          <div className="td-section">
-            <h2 className="td-section-title">Trek Route Map</h2>
-            <p className="td-muted">
-              {isKalsubai
-                ? "AI-generated visual route from Bari Village to Kalsubai Summit"
-                : "AI-generated visual route from Pachnai Village to Harishchandragad Summit & Konkan Kada"}
-            </p>
-            {isKalsubai ? <KalsubaiRouteMap /> : <HarishchandragadRouteMap />}
-            <div className="td-route-info-grid">
-              {isKalsubai
-                ? [
-                    { label: "Start Point", value: "Bari Village (680m)", icon: "🏘" },
-                    { label: "Summit", value: "Kalsubai Peak (1646m)", icon: "🏔" },
-                    { label: "Distance (one way)", value: "5.5 km", icon: "📏" },
-                    { label: "Climb Time", value: "3.5 – 4 hours", icon: "⏱" },
-                    { label: "Trail Type", value: "Rocky + Ladders", icon: "🪜" },
-                    { label: "Difficulty", value: "Medium", icon: "⚡" },
-                  ]
-                : [
-                    { label: "Start Point", value: "Pachnai Village (2592 ft)", icon: "🏘" },
-                    { label: "Summit", value: "Taramati Peak (4650 ft)", icon: "🏔" },
-                    { label: "Distance (one way)", value: "5 km", icon: "📏" },
-                    { label: "Climb Time", value: "3 hours", icon: "⏱" },
-                    { label: "Side Trip", value: "Konkan Kada Cliff", icon: "🪨" },
-                    { label: "Difficulty", value: "Medium", icon: "⚡" },
-                  ]
-              }
-              .map((r) => (
-                <div className="td-route-info-item" key={r.label}>
-                  <span className="td-route-icon">{r.icon}</span>
-                  <div>
-                    <div className="td-route-label">{r.label}</div>
-                    <div className="td-route-value">{r.value}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         )}
 
@@ -431,7 +643,7 @@ function TrekDetails() {
                   </li>
                 ))}
               </ol>
-              <Link to="/book" state={{ selectedTrek: trek }} className="btn td-book-btn" style={{ marginTop: 20 }}>
+              <Link to="/book" state={{ trek }} className="btn td-book-btn" style={{ marginTop: 20 }}>
                 Book Now
               </Link>
             </div>
@@ -450,30 +662,30 @@ function TrekDetails() {
                     {Object.entries(
                       isKalsubai
                         ? {
-                            "Difficulty Level": kalsubaiEventDetails.difficulty,
-                            "Endurance Level": kalsubaiEventDetails.endurance,
-                            "Base Village": kalsubaiEventDetails.baseVillage,
-                            "Region": kalsubaiEventDetails.region,
-                            "Duration": kalsubaiEventDetails.duration,
-                            "Climb Time (one way)": kalsubaiEventDetails.climbTime,
-                            "Distance (one way)": kalsubaiEventDetails.distance,
-                            "Altitude": kalsubaiEventDetails.altitude,
-                            "Minimum Group": kalsubaiEventDetails.minGroup,
-                            "Wildlife Sanctuary": kalsubaiEventDetails.sanctuary,
+                            "Difficulty Level": eventDetails.difficulty,
+                            "Endurance Level": eventDetails.endurance,
+                            "Base Village": eventDetails.baseVillage,
+                            "Region": eventDetails.region,
+                            "Duration": eventDetails.duration,
+                            "Climb Time (one way)": eventDetails.climbTime,
+                            "Distance (one way)": eventDetails.distance,
+                            "Altitude": eventDetails.altitude,
+                            "Minimum Group": eventDetails.minGroup,
+                            "Wildlife Sanctuary": eventDetails.sanctuary,
                           }
                         : {
-                            "Difficulty Level": harishchandragadEventDetails.difficulty,
-                            "Endurance Level": harishchandragadEventDetails.endurance,
-                            "Base Village": harishchandragadEventDetails.baseVillage,
-                            "Region": harishchandragadEventDetails.region,
-                            "Duration": harishchandragadEventDetails.duration,
-                            "Climb Time (one way)": harishchandragadEventDetails.climbTime,
-                            "Distance (one way)": harishchandragadEventDetails.distance,
-                            "Altitude": harishchandragadEventDetails.altitude,
-                            "Drive from Pune": harishchandragadEventDetails.driveFromPune,
-                            "Wildlife Sanctuary": harishchandragadEventDetails.sanctuary,
+                            "Difficulty Level": eventDetails.difficulty,
+                            "Endurance Level": eventDetails.endurance,
+                            "Base Village": eventDetails.baseVillage,
+                            "Region": eventDetails.region,
+                            "Duration": eventDetails.duration,
+                            "Climb Time (one way)": eventDetails.climbTime,
+                            "Distance (one way)": eventDetails.distance,
+                            "Altitude": eventDetails.altitude,
+                            "Drive from Pune": eventDetails.driveFromPune,
+                            "Wildlife Sanctuary": eventDetails.sanctuary,
                           }
-                    ).map(([key, val]) => (
+                    ).filter(([, val]) => val).map(([key, val]) => (
                       <tr key={key}>
                         <td className="td-table-key">{key}</td>
                         <td className="td-table-val">{val}</td>
@@ -492,7 +704,7 @@ function TrekDetails() {
                       <div className="td-pricing-card" key={p.label}>
                         <div className="td-pricing-label">{p.label}</div>
                         <div className="td-pricing-price">₹{p.price}<span>/person</span></div>
-                        <Link to="/book" state={{ selectedTrek: trek }} className="btn td-pricing-book-btn">
+                        <Link to="/book" state={{ trek }} className="btn td-pricing-book-btn">
                           Book This
                         </Link>
                       </div>
@@ -504,31 +716,18 @@ function TrekDetails() {
                 <div className="td-card" style={{ marginTop: 18 }}>
                   <h3 className="td-section-title">What's Included / Not Included</h3>
                   <ul className="td-inclusions">
-                    {(isKalsubai
-                      ? [
-                          "✅ Expert certified trek leader",
-                          "✅ Breakfast at summit",
-                          "✅ Veg lunch at base village",
-                          "✅ Local jeep from Kasara (train batch)",
-                          "✅ First aid kit",
-                          "✅ E-certificate on completion",
-                          "✅ WhatsApp group coordination",
-                          "❌ Train ticket (self-arranged)",
-                          "❌ Personal expenses",
-                        ]
-                      : [...harishchandragadInclusions, ...harishchandragadExclusions]
-                    ).map((item) => (
+                    {[...includedItems, ...excludedItems].map((item) => (
                       <li key={item} className="td-inclusion-item">{item}</li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Things to Carry (Harishchandragad only) */}
-                {isHarishchandragad && (
+                {(isHarishchandragad || (adminTrek || previewTrek)) && carryItems.length > 0 && (
                   <div className="td-card" style={{ marginTop: 18 }}>
                     <h3 className="td-section-title">Things to Carry</h3>
                     <ul className="td-inclusions">
-                      {harishchandragadThingsToCarry.map((item) => (
+                      {carryItems.map((item) => (
                         <li key={item} className="td-inclusion-item">🎒 {item}</li>
                       ))}
                     </ul>
@@ -551,7 +750,7 @@ function TrekDetails() {
           <span className="td-cta-amount">₹{trek.price}</span>
           <span className="td-cta-orig">₹{trek.originalPrice}</span>
         </div>
-        <Link to="/book" state={{ selectedTrek: trek }} className="btn td-cta-book-btn">
+        <Link to="/book" state={{ trek }} className="btn td-cta-book-btn">
           Book Now
         </Link>
       </div>

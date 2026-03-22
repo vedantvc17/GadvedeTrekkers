@@ -4340,3 +4340,64 @@ footer .row > div {
   .ht-outer.ht-printing { position:fixed; inset:0; width:210mm; margin:0 auto; box-shadow:none !important; }
   .no-print { display: none !important; }
 }
+
+/* Trek Details Hero Slider */
+.td-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.td-hero-slides {
+  position: absolute;
+  inset: 0;
+}
+
+.td-hero-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transform: scale(1.08);
+  transition: opacity 1.2s ease, transform 6s ease;
+}
+
+.td-hero-slide.is-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.td-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(10, 18, 15, 0.82) 0%, rgba(10, 18, 15, 0.56) 42%, rgba(10, 18, 15, 0.34) 100%),
+    linear-gradient(180deg, rgba(3, 10, 8, 0.18) 0%, rgba(3, 10, 8, 0.72) 100%);
+  z-index: 1;
+}
+
+.td-hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.td-hero-dots {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.td-hero-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.28);
+  transition: transform 0.25s ease, background 0.25s ease, width 0.25s ease;
+}
+
+.td-hero-dot.is-active {
+  width: 28px;
+  background: #fff;
+  transform: translateY(-1px);
+}

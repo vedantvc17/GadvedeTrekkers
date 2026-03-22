@@ -3,14 +3,30 @@ import { useEffect, useState, useMemo } from "react";
 import { uniqueTreks, slugifyTrekName } from "../../data/treks";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 
+const parseGallery = (value, fallback) => {
+  try {
+    const parsed = JSON.parse(value || "[]").filter(Boolean);
+    return parsed.length ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 /* Merge hardcoded treks with admin-created treks from localStorage */
 const adminTreks = getAdminItems("gt_treks")
   .filter((t) => t.active !== false)
-  .map((t) => ({
-    ...normaliseItem(t),
-    gallery: [t.image, t.image, t.image],
-    seasonalTag: "New Listing",
-  }));
+  .sort((a, b) => Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999))
+  .map((t) => {
+    const fallbackGallery = [t.image, t.image, t.image].filter(Boolean);
+    const gallery = parseGallery(t.imageGallery, fallbackGallery);
+    return {
+      ...normaliseItem(t),
+      image: gallery[0] || t.image,
+      gallery,
+      seasonalTag: "New Listing",
+      _sortOrder: Number(t.sortOrder ?? 999),
+    };
+  });
 const allTreks = [...uniqueTreks, ...adminTreks];
 
 const DIFFICULTY_FILTERS = ["All", "Easy", "Medium", "Hard"];
@@ -144,6 +160,7 @@ function Trek() {
     if (activeSort === "price-asc") result.sort((a, b) => a.price - b.price);
     else if (activeSort === "price-desc") result.sort((a, b) => b.price - a.price);
     else if (activeSort === "rating") result.sort((a, b) => b.rating - a.rating);
+    else result.sort((a, b) => Number(a._sortOrder ?? 999) - Number(b._sortOrder ?? 999));
     return result;
   }, [activeFilter, activeSort]);
 

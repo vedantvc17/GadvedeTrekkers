@@ -19,6 +19,29 @@ export function useAdminData(key, seedData = []) {
       saveAdminItems(key, seeded);
       return seeded;
     }
+    if (stored.length > 0 && seedData.length > 0) {
+      const seedByName = new Map(
+        seedData.map((item) => [String(item.name || item.title || "").toLowerCase(), item])
+      );
+      let changed = false;
+      const hydrated = stored.map((item) => {
+        const match = seedByName.get(String(item.name || item.title || "").toLowerCase());
+        if (!match) return item;
+        const next = { ...item };
+        Object.entries(match).forEach(([field, value]) => {
+          if (field === "id") return;
+          if ((next[field] === "" || next[field] == null) && value !== "" && value != null) {
+            next[field] = value;
+            changed = true;
+          }
+        });
+        return next;
+      });
+      if (changed) {
+        saveAdminItems(key, hydrated);
+      }
+      return hydrated;
+    }
     return stored;
   });
 
@@ -27,11 +50,17 @@ export function useAdminData(key, seedData = []) {
     saveAdminItems(key, next);
   };
 
-  const add = (item) =>
-    persist([...data, { ...item, active: true, id: Date.now().toString() }]);
+  const add = (item) => {
+    const created = { ...item, active: true, id: Date.now().toString() };
+    persist([...data, created]);
+    return created;
+  };
 
-  const update = (id, item) =>
-    persist(data.map((d) => (d.id === id ? { ...item, id } : d)));
+  const update = (id, item) => {
+    const updated = { ...item, id };
+    persist(data.map((d) => (d.id === id ? updated : d)));
+    return updated;
+  };
 
   const remove = (id) => persist(data.filter((d) => d.id !== id));
 
