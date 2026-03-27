@@ -1,6 +1,8 @@
 import ManagePage from "./ManagePage";
 import { campingList } from "../data/campingData";
 
+const CAMPING_PREVIEW_KEY = "gt_camping_preview";
+
 const FIELDS = [
   { key: "name",          label: "Site Name (Full)", required: true, col: 8 },
   { key: "shortName",     label: "Short Name",       placeholder: "Pawna Lake Camping" },
@@ -28,6 +30,21 @@ export default function ManageCamping() {
       fields={FIELDS}
       defaultForm={DEFAULT}
       seedData={campingList}
+      onPreview={(form) => {
+        const previewCamp = {
+          ...form,
+          id: "preview",
+          image: form.image || "https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=800&q=80",
+          shortName: form.shortName || form.name || "Preview Campsite",
+          availability: "Preview",
+          coupon: "PREVIEW",
+          nextDates: ["Preview Batch"],
+          description: form.description || "Preview campsite details page.",
+        };
+
+        sessionStorage.setItem(CAMPING_PREVIEW_KEY, JSON.stringify(previewCamp));
+        window.open("/camping/preview", "_blank", "noopener,noreferrer");
+      }}
     />
   );
 }

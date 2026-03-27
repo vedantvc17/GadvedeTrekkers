@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DownloadButton from "../components/DownloadButton";
+import { logActivity } from "../data/activityLogStorage";
 import {
   queryTransactions,
   updateTransactionStatus,
@@ -61,6 +62,13 @@ export default function ManageTransactions() {
     if (!amt || amt <= 0) { setRefundError("Enter a valid amount."); return; }
     const result = createRefund({ transactionId: txnId, amount: amt });
     if (result.error) { setRefundError(result.error); return; }
+    logActivity({
+      action: "REFUND_PROCESSED",
+      actionLabel: `Processed refund ₹${amt}`,
+      details: `Transaction ID: ${txnId} | Refund ID: ${result.refund.refundId} | Amount: ₹${amt}`,
+      module: "Transactions",
+      severity: "warning",
+    });
     setRefundMsg(`Refund ₹${amt} processed. ID: ${result.refund.refundId}`);
     setRefundAmount("");
     setRefundTxnId(null);
@@ -70,6 +78,13 @@ export default function ManageTransactions() {
   /* ── Mark failed ── */
   const markFailed = (txnId) => {
     if (window.confirm("Mark this transaction as FAILED?")) {
+      logActivity({
+        action: "TRANSACTION_MARKED_FAILED",
+        actionLabel: `Marked transaction as FAILED`,
+        details: `Transaction ID: ${txnId}`,
+        module: "Transactions",
+        severity: "warning",
+      });
       updateTransactionStatus(txnId, "FAILED");
       refresh();
     }

@@ -1,3 +1,5 @@
+import { upsertCustomerActivity } from "./customerStorage";
+
 /* ─────────────────────────────────────────────────────────────
    Booking Storage Service
    - Generates human-readable GT-YYYY-XXXXXX IDs
@@ -218,4 +220,19 @@ const SEED_BOOKINGS = _CUST_DATA.map((c, i) => {
       _save(SEED_BOOKINGS);
     }
   } catch { /* ignore */ }
+})();
+
+(function hydrateSeedBookingsIntoCustomers() {
+  try {
+    getAllBookings().forEach((booking) => {
+      upsertCustomerActivity({
+        name: `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
+        phone: booking.contactNumber || "",
+        email: booking.email || "",
+        booking,
+      });
+    });
+  } catch {
+    /* ignore hydration failures */
+  }
 })();

@@ -6,6 +6,11 @@ import {
   getAvailabilityMap, setEmployeeAvailability, getEmployeeAvailability,
 } from "../data/employeeStorage";
 import DownloadButton from "../components/DownloadButton";
+import { logActivity } from "../data/activityLogStorage";
+import { getUserPermissions, togglePermission, ALL_PERMISSIONS, currentUserHasPermission } from "../data/permissionStorage";
+import { submitRateApproval, getPendingApprovals, approveRateRequest, rejectRateRequest, hasPendingRequest } from "../data/rateApprovalStorage";
+import { getWhatsAppLinkForDate } from "../data/trekDatesStorage";
+import { slugifyTrekName } from "../data/treks";
 
 /* ─── constants ─── */
 const ROLES      = ["Trek Leader", "Coordinator", "Support Staff", "Guide", "Instructor"];
@@ -41,7 +46,7 @@ const EMPTY_EMP = {
   fullName:"", contactNumber:"", email:"", address:"",
   skills:[], certifications:[], experience:{ years:"", description:"" },
   expertise:"Trek Leader", linkedin:"", instagram:"",
-  role:"Trek Leader", status:"active", profilePhoto:"",
+  role:"Trek Leader", status:"active", profilePhoto:"", payPerTrek:"",
 };
 
 function EmployeeForm({ initial, onSave, onCancel }) {
@@ -129,6 +134,25 @@ function EmployeeForm({ initial, onSave, onCancel }) {
                 <option value="inactive">Inactive</option>
               </select>
             </div>
+            {f.role === "Trek Leader" && (
+              <div className="col-md-4">
+                <label className="emp-label">
+                  Pay per Trek (₹)
+                  {!currentUserHasPermission("trek_allocation") && <span style={{color:"#ef4444", fontSize:10, marginLeft:4}}>🔒 Pratik/Akshay only</span>}
+                </label>
+                <input
+                  type="number" min="0"
+                  className="form-control form-control-sm"
+                  value={f.payPerTrek || ""}
+                  onChange={e=>set("payPerTrek", e.target.value)}
+                  placeholder="e.g. 2000"
+                  disabled={!currentUserHasPermission("trek_allocation")}
+                />
+                {f.employeeId && hasPendingRequest(f.employeeId, "payPerTrek") && (
+                  <small style={{color:"#f59e0b", fontSize:10}}>⏳ Approval pending</small>
+                )}
+              </div>
+            )}
             <div className="col-md-6">
               <label className="emp-label">Experience (years)</label>
               <input type="number" min="0" className="form-control form-control-sm" value={f.experience.years} onChange={e=>setExp("years",e.target.value)} />
@@ -213,12 +237,93 @@ function EmployeesTab({ tick, onTick }) {
   const list = queryEmployees({ search: search||undefined, role: roleF||undefined, status: statusF||undefined });
 
   const handleSave = (emp) => {
-    saveEmployee(emp);
+    const hasVendorPayments = currentUserHasPermission("vendor_payments");
+    if (emp.payPerTrek && !hasVendorPayments) {
+      const existingEmp = getAllEmployees().find(e => e.employeeId === emp.employeeId);
+      const empToSave = { ...emp, payPerTrek: existingEmp?.payPerTrek || "" };
+      const savedEmp = saveEmployee(empToSave);
+      submitRateApproval({
+        type: "employee",
+        targetId: savedEmp?.employeeId || emp.employeeId || empToSave.employeeId,
+        targetName: emp.fullName,
+        field: "payPerTrek",
+        proposedAmount: emp.payPerTrek,
+        currentAmount: existingEmp?.payPerTrek || 0,
+      });
+      alert(`Pay per trek submitted for Rohit's approval.`);
+    } else {
+      saveEmployee(emp);
+    }
     setShowForm(false); setEditing(null); onTick();
   };
 
+  const pendingEmpApprovals = getPendingApprovals().filter(a => a.type === "employee");
+  const hasVendorPaymentsForBanner = currentUserHasPermission("vendor_payments");
+
   return (
     <div>
+      {/* ── Rate Approvals Banner ── */}
+      {pendingEmpApprovals.length > 0 && (
+        <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: "#92400e", marginBottom: 10 }}>
+            🔔 Pending Rate Approvals ({pendingEmpApprovals.length})
+          </div>
+          {pendingEmpApprovals.map(approval => (
+            <div key={approval.id} style={{ background: "#fff", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 8, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{approval.targetName}</div>
+                <div style={{ fontSize: 12, color: "#64748b" }}>
+                  Proposed: <strong style={{ color: "#1e293b" }}>₹{Number(approval.proposedAmount).toLocaleString("en-IN")}/trek</strong>
+                  {" · "}Current: ₹{Number(approval.currentAmount || 0).toLocaleString("en-IN")}
+                </div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  By {approval.proposedBy} · {new Date(approval.proposedAt).toLocaleDateString("en-IN")}
+                </div>
+              </div>
+              {hasVendorPaymentsForBanner ? (
+                <div className="d-flex gap-2">
+                  <button
+                    className="btn btn-success btn-sm py-0 px-2" style={{ fontSize: 12 }}
+                    onClick={() => {
+                      const existingEmp = getAllEmployees().find(e => e.employeeId === approval.targetId);
+                      if (!existingEmp) { alert("Employee not found."); return; }
+                      approveRateRequest(approval.id);
+                      saveEmployee({ ...existingEmp, payPerTrek: approval.proposedAmount });
+                      logActivity({
+                        action: "RATE_APPROVAL_APPROVED",
+                        actionLabel: "Approved Rate Request",
+                        details: `Approved payPerTrek ₹${approval.proposedAmount} for ${approval.targetName}`,
+                        module: "Employees",
+                        severity: "success",
+                      });
+                      onTick();
+                    }}
+                  >Approve</button>
+                  <button
+                    className="btn btn-danger btn-sm py-0 px-2" style={{ fontSize: 12 }}
+                    onClick={() => {
+                      const reason = window.prompt("Reason for rejection:");
+                      if (reason === null) return;
+                      rejectRateRequest(approval.id, reason);
+                      logActivity({
+                        action: "RATE_APPROVAL_REJECTED",
+                        actionLabel: "Rejected Rate Request",
+                        details: `Rejected payPerTrek ₹${approval.proposedAmount} for ${approval.targetName}. Reason: ${reason}`,
+                        module: "Employees",
+                        severity: "warning",
+                      });
+                      onTick();
+                    }}
+                  >Reject</button>
+                </div>
+              ) : (
+                <span style={{ fontSize: 12, color: "#64748b", fontStyle: "italic" }}>Awaiting Rohit's approval</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="adm-page-header">
         <h3 className="adm-page-title">👥 Employees</h3>
         <div className="d-flex gap-2 align-items-center">
@@ -323,7 +428,15 @@ function EmployeesTab({ tick, onTick }) {
 /* ═══════════════════════════════════════════════════════
    ASSIGNMENTS TAB
 ═══════════════════════════════════════════════════════ */
-const EMPTY_ASGN = { eventName:"", eventType:"Trek", date:"", assignedRole:"", employeeIds:[], notes:"" };
+const EMPTY_ASGN = {
+  eventName:"",
+  eventType:"Trek",
+  date:"",
+  assignedRole:"",
+  employeeIds:[],
+  notes:"",
+  whatsappGroupLink:"",
+};
 
 function AssignmentsTab({ tick, onTick }) {
   const [showForm, setShowForm] = useState(false);
@@ -337,11 +450,36 @@ function AssignmentsTab({ tick, onTick }) {
     ...p,
     employeeIds: p.employeeIds.includes(id) ? p.employeeIds.filter(x=>x!==id) : [...p.employeeIds, id]
   }));
+  const autofillWhatsAppLink = (eventName, date) => {
+    const link = getWhatsAppLinkForDate(slugifyTrekName(eventName || ""), date);
+    if (link) {
+      setForm((current) => ({
+        ...current,
+        eventName,
+        date,
+        whatsappGroupLink: current.whatsappGroupLink || link,
+      }));
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      eventName,
+      date,
+    }));
+  };
 
   const handleSave = () => {
     if (!form.eventName.trim()) { alert("Event name required"); return; }
     if (!form.date)             { alert("Date required"); return; }
     saveAssignment({ ...form, assignmentId: editing?.assignmentId });
+    logActivity({
+      action: editing ? "ASSIGNMENT_UPDATED" : "ASSIGNMENT_CREATED",
+      actionLabel: editing ? "Updated Assignment" : "Created Assignment",
+      details: `${form.eventType}: "${form.eventName}" on ${form.date} — ${form.employeeIds.length} assigned`,
+      module: "Assignments",
+      severity: "success",
+    });
     setShowForm(false); setForm(EMPTY_ASGN); setEditing(null); onTick();
   };
 
@@ -367,7 +505,11 @@ function AssignmentsTab({ tick, onTick }) {
           <div className="row g-2">
             <div className="col-md-5">
               <label className="emp-label">Event Name *</label>
-              <input className="form-control form-control-sm" value={form.eventName} onChange={e=>set("eventName",e.target.value)} />
+              <input
+                className="form-control form-control-sm"
+                value={form.eventName}
+                onChange={e=>autofillWhatsAppLink(e.target.value, form.date)}
+              />
             </div>
             <div className="col-md-3">
               <label className="emp-label">Event Type</label>
@@ -377,7 +519,12 @@ function AssignmentsTab({ tick, onTick }) {
             </div>
             <div className="col-md-2">
               <label className="emp-label">Date *</label>
-              <input type="date" className="form-control form-control-sm" value={form.date} onChange={e=>set("date",e.target.value)} />
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                value={form.date}
+                onChange={e=>autofillWhatsAppLink(form.eventName, e.target.value)}
+              />
             </div>
             <div className="col-md-2">
               <label className="emp-label">Assigned Role</label>
@@ -400,6 +547,19 @@ function AssignmentsTab({ tick, onTick }) {
               <label className="emp-label">Notes</label>
               <input className="form-control form-control-sm" value={form.notes} onChange={e=>set("notes",e.target.value)} />
             </div>
+            <div className="col-12">
+              <label className="emp-label">WhatsApp Group Link</label>
+              <input
+                type="url"
+                className="form-control form-control-sm"
+                placeholder="https://chat.whatsapp.com/..."
+                value={form.whatsappGroupLink || ""}
+                onChange={e=>set("whatsappGroupLink", e.target.value)}
+              />
+              <small style={{ color:"#64748b", fontSize:11 }}>
+                If this trek date already has a WhatsApp group link in Trek Dates, it auto-fills here and can still be edited before leader allocation.
+              </small>
+            </div>
           </div>
           <div className="d-flex gap-2 mt-3">
             <button className="btn btn-success btn-sm" onClick={handleSave}>{editing?"Update":"Save Assignment"}</button>
@@ -415,7 +575,7 @@ function AssignmentsTab({ tick, onTick }) {
             <table className="table table-hover adm-table mb-0">
               <thead>
                 <tr>
-                  <th>Event</th><th>Type</th><th>Date</th><th>Role</th><th>Employees</th><th>Notes</th><th>Actions</th>
+                  <th>Event</th><th>Type</th><th>Date</th><th>Role</th><th>Employees</th><th>WhatsApp Link</th><th>Notes</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -431,6 +591,13 @@ function AssignmentsTab({ tick, onTick }) {
                         return emp ? <span key={id} className="emp-skill-tag">{emp.fullName}</span> : null;
                       })}
                       {(a.employeeIds||[]).length===0 && <span style={{color:"#94a3b8",fontSize:12}}>None</span>}
+                    </td>
+                    <td style={{ fontSize:12, maxWidth:180 }}>
+                      {a.whatsappGroupLink
+                        ? <a href={a.whatsappGroupLink} target="_blank" rel="noopener noreferrer" style={{ color:"#059669", fontWeight:600, wordBreak:"break-all" }}>
+                            Join Group Link
+                          </a>
+                        : <span style={{color:"#94a3b8"}}>—</span>}
                     </td>
                     <td style={{fontSize:12,maxWidth:160}}>{a.notes||"—"}</td>
                     <td>
@@ -873,9 +1040,106 @@ function DashboardTab({ tick }) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   MANAGEMENT TAB
+═══════════════════════════════════════════════════════ */
+const MANAGEMENT_TEAM = [
+  { id: "MGT-001", name: "Pratik Ubhe",     role: "Management", username: "pratik.ubhe",     initials: "PU", color: "#1a9b65" },
+  { id: "MGT-002", name: "Rohit Panhalkar", role: "Management", username: "rohit.panhalkar", initials: "RP", color: "#2563eb" },
+  { id: "MGT-003", name: "Akshay Kangude",  role: "Management", username: "akshay.kangude",  initials: "AK", color: "#d97706" },
+];
+
+function ManagementTab() {
+  const [tick, setTick] = useState(0);
+
+  const handleToggle = (username, permission) => {
+    togglePermission(username, permission);
+    logActivity({
+      action: "PERMISSION_CHANGED",
+      actionLabel: "Permission Updated",
+      details: `Toggled "${ALL_PERMISSIONS[permission]?.label}" for ${username}`,
+      module: "Employees",
+      severity: "warning",
+    });
+    setTick(t => t + 1);
+  };
+
+  return (
+    <div>
+      <div className="adm-page-header">
+        <h3 className="adm-page-title">🏅 Management Team</h3>
+        <span className="adm-count-badge">{MANAGEMENT_TEAM.length} members</span>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {MANAGEMENT_TEAM.map(m => {
+          const perms = getUserPermissions(m.username);
+          return (
+            <div key={m.id} className="emp-form-card" style={{ padding: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+                <div className="emp-avatar" style={{ background: m.color, width: 52, height: 52, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>{m.initials}</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>{m.name}</div>
+                  <div style={{ fontSize: 12, color: "#64748b", fontFamily: "monospace" }}>{m.username} · {m.id}</div>
+                </div>
+                <span className="emp-badge emp-badge--active">Active</span>
+              </div>
+
+              <div style={{ background: "#f8fafc", borderRadius: 8, padding: "10px 14px", marginBottom: 14, fontSize: 13 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ color: "#64748b" }}>Login ID</span>
+                  <strong style={{ fontFamily: "monospace", fontSize: 12 }}>{m.username}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#64748b" }}>Password</span>
+                  <span style={{ fontFamily: "monospace", fontSize: 12, letterSpacing: 2, color: "#94a3b8" }}>••••••••••••</span>
+                </div>
+              </div>
+
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: "#1a2e1a" }}>
+                Access Permissions
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {Object.entries(ALL_PERMISSIONS).map(([key, perm]) => {
+                  const has = perms.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleToggle(m.username, key)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+                        cursor: "pointer", transition: "all 0.15s",
+                        border: has ? "2px solid #1a9b65" : "2px solid #e2e8f0",
+                        background: has ? "#f0fdf4" : "#f8fafc",
+                        color: has ? "#0c6e44" : "#94a3b8",
+                      }}
+                      title={perm.desc}
+                    >
+                      <span>{perm.icon}</span>
+                      <span>{perm.label}</span>
+                      <span style={{ fontSize: 10, marginLeft: 2 }}>{has ? "✓" : "✕"}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ marginTop: 10, fontSize: 11, color: "#94a3b8" }}>
+                Click any permission to toggle on/off. Changes take effect on next login.
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
    MAIN  ManageEmployees
 ═══════════════════════════════════════════════════════ */
 const TABS = [
+  { id:"management",   icon:"🏅", label:"Management"  },
   { id:"employees",    icon:"👥", label:"Employees"   },
   { id:"assignments",  icon:"📅", label:"Assignments" },
   { id:"expenses",     icon:"💸", label:"Expenses"    },
@@ -884,7 +1148,7 @@ const TABS = [
 ];
 
 export default function ManageEmployees() {
-  const [tab,  setTab]  = useState("employees");
+  const [tab,  setTab]  = useState("management");
   const [tick, setTick] = useState(0);
   const onTick = () => setTick(t=>t+1);
 
@@ -898,6 +1162,7 @@ export default function ManageEmployees() {
         ))}
       </div>
 
+      {tab==="management"   && <ManagementTab />}
       {tab==="employees"    && <EmployeesTab    tick={tick} onTick={onTick} />}
       {tab==="assignments"  && <AssignmentsTab  tick={tick} onTick={onTick} />}
       {tab==="expenses"     && <ExpensesTab     tick={tick} onTick={onTick} />}

@@ -73,10 +73,16 @@ function _saveAssignments(arr) { localStorage.setItem(ASSIGNMENTS_KEY, JSON.stri
 export function saveAssignment(asgn) {
   const all = getAllAssignments();
   if (asgn.assignmentId) {
-    _saveAssignments(all.map(a => a.assignmentId === asgn.assignmentId ? { ...a, ...asgn } : a));
+    _saveAssignments(all.map(a => a.assignmentId === asgn.assignmentId ? { ...a, ...asgn, updatedAt: new Date().toISOString() } : a));
     return asgn;
   }
-  const n = { ...asgn, assignmentId: _uid("ASGN"), createdAt: new Date().toISOString() };
+  const n = {
+    ...asgn,
+    whatsappGroupLink: asgn.whatsappGroupLink || "",
+    assignmentId: _uid("ASGN"),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
   _saveAssignments([n, ...all]);
   /* bump eventsHandled for assigned employees */
   _saveEmployees(getAllEmployees().map(e =>

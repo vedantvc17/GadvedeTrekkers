@@ -24,10 +24,13 @@ import ManageEmployees  from "../backend/ManageEmployees";
 import EmployeeOnboarding from "../backend/EmployeeOnboarding";
 import EmployeeLogin  from "../pages/Employee/EmployeeLogin";
 import EmployeePortal from "../pages/Employee/EmployeePortal";
+import DirectBookingForm from "../pages/Employee/DirectBookingForm";
 import AddNew           from "../backend/AddNew";
 import ManageBlogs      from "../backend/ManageBlogs";
+import ManageEnquiries  from "../backend/ManageEnquiries";
 import ActivityLogs     from "../backend/ActivityLogs";
 import ManageDocs       from "../backend/ManageDocs";
+import ManageBookingForm from "../backend/ManageBookingForm";
 
 /* ================= TREK PAGES ================= */
 import Trek           from "../pages/Treks/Trek";
@@ -59,6 +62,7 @@ import RentalDetails from "../pages/Rentals/RentalDetails";
 
 /* ================= CORPORATE ================= */
 import Corporate from "../pages/Corporate/Corporate";
+import IndustrialVisits from "../pages/IndustrialVisits/IndustrialVisits";
 
 /* ================= VILLAS ================= */
 import Villas from "../pages/Villas/Villas";
@@ -68,6 +72,7 @@ import VendorRegister from "../pages/Opportunities/VendorRegister";
 import FeedbackForm   from "../pages/Feedback/FeedbackForm";
 import TicketPage     from "../pages/Ticket/TicketPage";
 import WeekendTrips from "../components/WeekendTrips";
+import CancellationPolicy from "../pages/CancellationPolicy";
 
 function AppRoutes() {
   return (
@@ -107,6 +112,7 @@ function AppRoutes() {
 
       {/* ================= EMPLOYEE PORTAL ================= */}
       <Route path="/employee-login"  element={<EmployeeLogin />} />
+      <Route path="/employee/direct-booking" element={<DirectBookingForm />} />
       <Route path="/employee/*"      element={<EmployeePortal />} />
 
       {/* ================= OPPORTUNITIES ================= */}
@@ -121,8 +127,14 @@ function AppRoutes() {
       {/* ================= QA / TEST ROUTES ================= */}
       <Route path="/qa/weekend-trips" element={<WeekendTrips />} />
 
+      {/* ================= POLICIES ================= */}
+      <Route path="/cancellation-policy" element={<CancellationPolicy />} />
+
       {/* ================= VILLAS ================= */}
       <Route path="/villas" element={<Villas />} />
+
+      {/* ================= INDUSTRIAL VISITS ================= */}
+      <Route path="/industrial-visits" element={<IndustrialVisits />} />
 
       {/* ================= CORPORATE ================= */}
       <Route path="/corporate"            element={<Corporate />} />
@@ -143,6 +155,8 @@ function AppRoutes() {
         <Route path="rentals"      element={<ManageRentals />} />
         <Route path="vendors"      element={<ManageVendors />} />
         <Route path="bookings"     element={<ManageBookings />} />
+        <Route path="enquiries"    element={<ManageEnquiries />} />
+        <Route path="booking-form" element={<ManageBookingForm />} />
         <Route path="transactions" element={<ManageTransactions />} />
         <Route path="customers"    element={<ManageCustomers />} />
         <Route path="reports"      element={<ManageReports />} />

@@ -48,7 +48,7 @@ function BookingSuccess() {
               </div>
               <div className="booking-success-row">
                 <span>Trek Date</span>
-                <strong>{booking.nextDate}</strong>
+                <strong>{booking.travelDate || booking.nextDate}</strong>
               </div>
               <div className="booking-success-row">
                 <span>Tickets</span>
@@ -98,8 +98,30 @@ function BookingSuccess() {
                 <span>Remaining Amount</span>
                 <strong>₹{booking.remainingAmount}</strong>
               </div>
+              {booking.whatsappGroupLink && (
+                <div className="booking-success-row">
+                  <span>WhatsApp Group</span>
+                  <strong>Available</strong>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* ── Referral Code Applied Banner ── */}
+          {booking.referralCode && (
+            <div style={{
+              background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10,
+              padding: "12px 18px", marginTop: 16, display: "flex", alignItems: "center", gap: 10,
+            }}>
+              <span style={{ fontSize: 22 }}>🎁</span>
+              <div>
+                <div style={{ fontWeight: 700, color: "#166534", fontSize: 14 }}>Referral Code Applied!</div>
+                <div style={{ color: "#15803d", fontSize: 13 }}>
+                  Code <strong>{booking.referralCode}</strong> was successfully applied to this booking.
+                </div>
+              </div>
+            </div>
+          )}
 
           {booking.additionalTravelers?.length > 0 && (
             <div className="booking-success-panel booking-success-extra">
@@ -149,6 +171,33 @@ function BookingSuccess() {
               )}
             </div>
           </div>
+
+          {/* ── WhatsApp Group Link ── */}
+          {booking.whatsappGroupLink && (
+            <div style={{
+              background: "linear-gradient(135deg, #dcfce7, #bbf7d0)",
+              border: "1px solid #86efac",
+              borderRadius: 12,
+              padding: "18px 22px",
+              marginTop: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              flexWrap: "wrap",
+            }}>
+              <span style={{ fontSize: 32 }}>📱</span>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontWeight: 800, color: "#166534", fontSize: "1rem", marginBottom: 4 }}>Join Your Trek WhatsApp Group</div>
+                <div style={{ fontSize: "0.85rem", color: "#15803d" }}>
+                  Trek leader details, meetup point updates, and event info will be shared here. Join now to stay connected!
+                </div>
+              </div>
+              <a href={booking.whatsappGroupLink} target="_blank" rel="noopener noreferrer"
+                style={{ background: "#25d366", color: "#fff", borderRadius: 10, padding: "12px 24px", fontWeight: 800, fontSize: "0.95rem", textDecoration: "none", whiteSpace: "nowrap" }}>
+                💬 Join WhatsApp Group
+              </a>
+            </div>
+          )}
 
           {/* ── What's Next ── */}
           <div className="booking-next-steps">

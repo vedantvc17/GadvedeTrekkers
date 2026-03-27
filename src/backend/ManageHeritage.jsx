@@ -1,5 +1,7 @@
+import { useState } from "react";
 import ManagePage from "./ManagePage";
 import { heritageList } from "../data/heritageData";
+import { isHeritageEnabled, setHeritageEnabled } from "../data/featureFlags";
 
 const FIELDS = [
   { key: "name",          label: "Walk Name",       required: true, col: 8 },
@@ -19,14 +21,70 @@ const DEFAULT = {
 };
 
 export default function ManageHeritage() {
+  const [enabled, setEnabled] = useState(isHeritageEnabled());
+
+  const handleToggle = () => {
+    const next = !enabled;
+    setHeritageEnabled(next);
+    setEnabled(next);
+  };
+
   return (
-    <ManagePage
-      title="Heritage Walks"
-      icon="🏛"
-      storageKey="gt_heritage"
-      fields={FIELDS}
-      defaultForm={DEFAULT}
-      seedData={heritageList}
-    />
+    <div>
+      {/* ── Visibility Toggle ── */}
+      <div style={{
+        background: enabled ? "#d1fae5" : "#fef2f2",
+        border: `1.5px solid ${enabled ? "#6ee7b7" : "#fca5a5"}`,
+        borderRadius: 12,
+        padding: "16px 24px",
+        marginBottom: 24,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: 12,
+      }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: "0.95rem", color: enabled ? "#065f46" : "#991b1b", marginBottom: 2 }}>
+            🏛 Heritage Walk — {enabled ? "Visible on Website" : "Hidden from Website"}
+          </div>
+          <div style={{ fontSize: "0.82rem", color: enabled ? "#047857" : "#b91c1c" }}>
+            {enabled
+              ? "Heritage Walk section and nav links are currently shown to visitors."
+              : "Heritage Walk is hidden from the homepage and all public UI. Turn on when events are available."}
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: "0.82rem", fontWeight: 600, color: enabled ? "#065f46" : "#991b1b" }}>
+            {enabled ? "ON" : "OFF"}
+          </span>
+          <div
+            onClick={handleToggle}
+            style={{
+              width: 52, height: 28, borderRadius: 999, cursor: "pointer",
+              background: enabled ? "#059669" : "#d1d5db",
+              position: "relative", transition: "background 0.25s",
+            }}
+          >
+            <div style={{
+              width: 22, height: 22, borderRadius: "50%", background: "#fff",
+              position: "absolute", top: 3,
+              left: enabled ? 27 : 3,
+              transition: "left 0.25s",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+            }} />
+          </div>
+        </div>
+      </div>
+
+      <ManagePage
+        title="Heritage Walks"
+        icon="🏛"
+        storageKey="gt_heritage"
+        fields={FIELDS}
+        defaultForm={DEFAULT}
+        seedData={heritageList}
+      />
+    </div>
   );
 }

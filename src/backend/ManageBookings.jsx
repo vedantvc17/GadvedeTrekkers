@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { queryBookings, updateBookingStatus } from "../data/bookingStorage";
 import DownloadButton from "../components/DownloadButton";
+import { logActivity } from "../data/activityLogStorage";
 
 const PAYMENT_OPTIONS = ["", "Debit Card / Credit Card", "UPI", "Net Banking", "Partial Payment"];
 const STATUS_OPTIONS  = ["CONFIRMED", "CANCELLED"];
@@ -38,17 +39,38 @@ export default function ManageBookings() {
   const handleCancelBooking = (b) => {
     if (!window.confirm(`Cancel booking ${b.enhancedBookingId || b.bookingId} for ${b.firstName} ${b.lastName}?`)) return;
     updateBookingStatus(b.bookingId, "CANCELLED");
+    logActivity({
+      action: "BOOKING_CANCELLED",
+      actionLabel: `Cancelled booking for ${b.firstName} ${b.lastName}`,
+      details: `Booking ID: ${b.enhancedBookingId || b.bookingId} | Trek: ${b.trekName || "—"} | Amount: ₹${b.payableNow || b.totalAmount || "—"}`,
+      module: "Bookings",
+      severity: "warning",
+    });
     setActionOpen(null);
     setActionMsg(`Booking ${b.enhancedBookingId || b.bookingId} has been cancelled.`);
     refresh();
   };
 
   const handleResendTicket = (b) => {
+    logActivity({
+      action: "TICKET_RESENT",
+      actionLabel: `Resent ticket to ${b.firstName} ${b.lastName}`,
+      details: `Booking ID: ${b.enhancedBookingId || b.bookingId} | Contact: ${b.contactNumber || b.email || "—"}`,
+      module: "Bookings",
+      severity: "info",
+    });
     setActionOpen(null);
     setActionMsg(`Ticket for ${b.firstName} ${b.lastName} (${b.enhancedBookingId || b.bookingId}) has been queued for resend.`);
   };
 
   const handleTransferTicket = (b) => {
+    logActivity({
+      action: "BOOKING_TRANSFER_INITIATED",
+      actionLabel: `Transfer initiated for ${b.firstName} ${b.lastName}`,
+      details: `Booking ID: ${b.enhancedBookingId || b.bookingId} | Trek: ${b.trekName || "—"}`,
+      module: "Bookings",
+      severity: "info",
+    });
     setActionOpen(null);
     setActionMsg(`Transfer request for ${b.enhancedBookingId || b.bookingId} has been initiated. Complete the transfer in the customer profile.`);
   };
@@ -224,6 +246,7 @@ export default function ManageBookings() {
                             <div><span>WhatsApp</span><strong>{b.whatsappNumber || b.contactNumber}</strong></div>
                             <div><span>Departure</span><strong>{b.departureOrigin}</strong></div>
                             <div><span>Pickup</span><strong>{b.pickupLocation}</strong></div>
+                            <div><span>Travel Date</span><strong>{b.travelDate || b.nextDate || "—"}</strong></div>
                             <div><span>DOB</span><strong>{b.dob || "—"}</strong></div>
                             <div><span>Emergency Contact</span><strong>{b.emergencyContact || "—"}</strong></div>
                             <div><span>Base Amount</span><strong>₹{b.baseAmount?.toLocaleString("en-IN")}</strong></div>
@@ -233,9 +256,25 @@ export default function ManageBookings() {
                             {b.remainingAmount > 0 && (
                               <div><span>Remaining</span><strong>₹{b.remainingAmount?.toLocaleString("en-IN")}</strong></div>
                             )}
-                            <div><span>Trek Date</span><strong>{b.nextDate || "—"}</strong></div>
+                            <div><span>WhatsApp Group</span><strong>{b.whatsappGroupLink ? "Available" : "Not set"}</strong></div>
                             <div><span>Booking Status</span><strong>{b.bookingStatus || "CONFIRMED"}</strong></div>
                           </div>
+
+                          {b.whatsappGroupLink && (
+                            <div className="mt-3">
+                              <strong style={{ fontSize: 13 }}>WhatsApp Group Link</strong>
+                              <div className="mt-1">
+                                <a
+                                  href={b.whatsappGroupLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ color: "#059669", fontWeight: 700, fontSize: 12, wordBreak: "break-all" }}
+                                >
+                                  {b.whatsappGroupLink}
+                                </a>
+                              </div>
+                            </div>
+                          )}
 
                           {b.additionalTravelers?.length > 0 && (
                             <div className="mt-3">

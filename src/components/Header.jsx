@@ -1,19 +1,19 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import logo from "../assets/gadvedelogo.png";
-import { uniqueTreks, slugifyTrekName } from "../data/treks";
 
 function Header() {
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const headerRef = useRef(null);
-  const campingSites = [
-    "Pavna Lake Camping",
-    "Alibag Beach Side Camping",
-    "Panshet Lake Camping",
-    "Matheran Camping",
+  const rentalCategories = ["Tents"];
+  const featuredTours = [
+    { label: "Goa", to: "/tours/goa-backpacking" },
+    { label: "Malvan Tarkarli", to: "/tours/malvan-tarkarli-with-scuba-diving-and-watersports" },
+    { label: "Hampi", to: "/tours/hampi-tour" },
+    { label: "Hampi Gokarna Murudeshwar", to: "/tours/hampi-gokarna-murudeshwar" },
+    { label: "Gokarna Murudeshwar", to: "/tours/gokarna-honnavar-murudeshwar" },
   ];
-  const rentalCategories = ["Tents", "Villas"];
 
   useEffect(() => {
     function handlePointerDown(event) {
@@ -52,13 +52,32 @@ function Header() {
   };
 
   return (
+    <header ref={headerRef}>
+      {/* ── Top contact bar – desktop only ── */}
+      <div
+        className="d-none d-lg-block"
+        style={{ backgroundColor: "#146c43", borderBottom: "1px solid rgba(255,255,255,0.15)" }}
+      >
+        <div className="container d-flex justify-content-end align-items-center py-1 gap-3">
+          <span className="text-white" style={{ fontSize: "0.8rem" }}>
+            📞{" "}
+            <a href="tel:9856112727" className="text-white text-decoration-none fw-semibold">
+              9856112727
+            </a>
+            {" / "}
+            <a href="tel:9856122727" className="text-white text-decoration-none fw-semibold">
+              9856122727
+            </a>
+          </span>
+        </div>
+      </div>
+
     <nav
-         ref={headerRef}
          className="navbar navbar-expand-lg navbar-dark shadow-sm py-3"
          style={{ backgroundColor: "#198754" }}>
       <div className="container">
 
-        {/* 🔥 LOGO + NAME */}
+        {/* LOGO + NAME */}
         <Link
           className="navbar-brand d-flex align-items-center fw-semibold fs-5 text-white"
           to="/"
@@ -70,6 +89,15 @@ function Header() {
           />
           Gadvede Trekkers
         </Link>
+
+        {/* Mobile phone number – shown between logo and hamburger */}
+        <a
+          href="tel:9856112727"
+          className="d-lg-none text-white text-decoration-none ms-auto me-3"
+          style={{ fontSize: "0.78rem", whiteSpace: "nowrap" }}
+        >
+          📞 9856112727
+        </a>
 
         <button
           className={`navbar-toggler border-0 mobile-nav-toggle ${
@@ -92,100 +120,50 @@ function Header() {
           id="navbarContent"
         >
           <ul className="navbar-nav align-items-center">
-
-            {/* Treks Dropdown */}
-            <li
-              className="nav-item dropdown mx-3 trek-dropdown"
-              onMouseEnter={() => setOpenMenu("treks")}
-              onMouseLeave={() => setOpenMenu(null)}
-            >
-              <span
-                className={`nav-link dropdown-toggle text-white ${
-                  openMenu === "treks" ? "show" : ""
-                }`}
-                role="button"
-                aria-expanded={openMenu === "treks"}
-                onClick={() => toggleDropdownMenu("treks")}
-              >
-                Treks
-              </span>
-              <div
-                className={`dropdown-menu trek-dropdown-menu p-3 ${
-                  openMenu === "treks" ? "show" : ""
-                }`}
-              >
-                <div className="dropdown-region-title">
-                  Maharashtra Treks
-                </div>
-
-                <div className="trek-dropdown-list">
-                  {uniqueTreks.map((trek) => (
-                    <Link
-                      key={trek.name}
-                      className="dropdown-item"
-                      to={`/treks/${slugifyTrekName(trek.name)}`}
-                      onClick={closeMenus}
-                    >
-                      {trek.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </li>
-
             <li
               className="nav-item dropdown mx-3"
-              onMouseEnter={() => setOpenMenu("camping")}
+              onMouseEnter={() => setOpenMenu("events")}
               onMouseLeave={() => setOpenMenu(null)}
             >
               <span
                 className={`nav-link dropdown-toggle text-white ${
-                  openMenu === "camping" ? "show" : ""
+                  openMenu === "events" ? "show" : ""
                 }`}
                 role="button"
-                aria-expanded={openMenu === "camping"}
-                onClick={() => toggleDropdownMenu("camping")}
+                aria-expanded={openMenu === "events"}
+                onClick={() => toggleDropdownMenu("events")}
               >
-                Camping
+                Events Category
               </span>
-              <ul className={`dropdown-menu ${openMenu === "camping" ? "show" : ""}`}>
-                {campingSites.map((site) => (
-                  <li key={site}>
-                    <Link className="dropdown-item" to="/camping" onClick={closeMenus}>
-                      {site}
+              <ul className={`dropdown-menu ${openMenu === "events" ? "show" : ""}`} style={{ minWidth: "280px" }}>
+                <li>
+                  <Link className="dropdown-item" to="/treks" onClick={closeMenus}>
+                    🥾 Treks
+                  </Link>
+                </li>
+                <li>
+                  <Link className="dropdown-item" to="/camping" onClick={closeMenus}>
+                    ⛺ Camping
+                  </Link>
+                </li>
+                <li>
+                  <Link className="dropdown-item" to="/tours" onClick={closeMenus}>
+                    🗺 Tours
+                  </Link>
+                </li>
+                <li><hr className="dropdown-divider" /></li>
+                <li>
+                  <span className="dropdown-item-text fw-semibold text-success">
+                    Featured Tours
+                  </span>
+                </li>
+                {featuredTours.map((tour) => (
+                  <li key={tour.to}>
+                    <Link className="dropdown-item" to={tour.to} onClick={closeMenus}>
+                      {tour.label}
                     </Link>
                   </li>
                 ))}
-              </ul>
-            </li>
-
-            {/* Tours Dropdown */}
-            <li
-              className="nav-item dropdown mx-3"
-              onMouseEnter={() => setOpenMenu("tours")}
-              onMouseLeave={() => setOpenMenu(null)}
-            >
-              <span
-                className={`nav-link dropdown-toggle text-white ${
-                  openMenu === "tours" ? "show" : ""
-                }`}
-                role="button"
-                aria-expanded={openMenu === "tours"}
-                onClick={() => toggleDropdownMenu("tours")}
-              >
-                Tours
-              </span>
-              <ul className={`dropdown-menu ${openMenu === "tours" ? "show" : ""}`}>
-                <li>
-                  <Link className="dropdown-item" to="/tours/group" onClick={closeMenus}>
-                    Group Tours
-                  </Link>
-                </li>
-                <li>
-                  <Link className="dropdown-item" to="/tours/private" onClick={closeMenus}>
-                    Private Tours
-                  </Link>
-                </li>
               </ul>
             </li>
 
@@ -217,11 +195,16 @@ function Header() {
                     </Link>
                   </li>
                 ))}
+                <li>
+                  <Link className="dropdown-item" to="/villas" onClick={closeMenus}>
+                    🏡 Villas
+                  </Link>
+                </li>
               </ul>
             </li>
 
             <li className="nav-item mx-3">
-              <Link className="nav-link text-white" to="/corporate" onClick={closeMenus}>
+              <Link className="nav-link text-white" to="/industrial-visits" onClick={closeMenus}>
                 College Industrial Visits
               </Link>
             </li>
@@ -302,6 +285,7 @@ function Header() {
 
       </div>
     </nav>
+    </header>
   );
 }
 

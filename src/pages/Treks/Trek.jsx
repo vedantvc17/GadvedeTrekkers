@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { uniqueTreks, slugifyTrekName } from "../../data/treks";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
+import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 
 const parseGallery = (value, fallback) => {
   try {
@@ -424,6 +425,18 @@ function Trek() {
                     >
                       View Details
                     </Link>
+                    <a
+                      href={createWhatsAppInquiryUrl({
+                        packageName: trek.name,
+                        location: trek.location,
+                        category: "Trek",
+                      })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn trek-secondary-btn"
+                    >
+                      WhatsApp
+                    </a>
                   </div>
                 </div>
               </article>

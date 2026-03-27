@@ -611,7 +611,7 @@ function ManagePage({
                   <th key={f.key}>{f.label}</th>
                 ))}
                 <th style={{ width: 80 }}>Status</th>
-                <th style={{ width: 120 }}>Actions</th>
+                <th style={{ width: onPreview ? 180 : 120 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -657,6 +657,9 @@ function ManagePage({
                   </td>
                   <td>
                     <button className="btn btn-outline-primary btn-sm me-1" onClick={() => openEdit(item)}>Edit</button>
+                    {onPreview && (
+                      <button className="btn btn-outline-success btn-sm me-1" onClick={() => onPreview(item)}>Preview</button>
+                    )}
                     <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(item.id)}>Del</button>
                   </td>
                 </tr>

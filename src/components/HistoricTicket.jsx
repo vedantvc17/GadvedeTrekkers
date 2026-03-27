@@ -84,12 +84,15 @@ export default function HistoricTicket({ booking }) {
     bookingDate = "",
     bookingStatus = "CONFIRMED",
     additionalTravelers = [],
+    whatsappGroupLink = "",
+    travelDate = "",
   } = booking;
 
   const displayId = enhancedBookingId || bookingId || "—";
   const customerName = [firstName, lastName].filter(Boolean).join(" ") || "—";
-  const formattedDate = nextDate
-    ? new Date(nextDate).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })
+  const dateToShow = travelDate || nextDate;
+  const formattedDate = dateToShow
+    ? new Date(dateToShow).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })
     : "—";
   const bookedOn = bookingDate || "—";
   const qrData = encodeURIComponent(displayId);
@@ -121,6 +124,7 @@ export default function HistoricTicket({ booking }) {
       `Pickup      : ${pickupLocation}\n` +
       `Tickets     : ${tickets}\n` +
       `Amount Paid : ₹${Number(payableNow).toLocaleString("en-IN")}\n\n` +
+      `${whatsappGroupLink ? `WhatsApp Group : ${whatsappGroupLink}\n\n` : ""}` +
       `आपली यात्रा सुखद आणि सुरक्षित होवो 🙏\n` +
       `— Gadvede Trekkers`
     );
@@ -157,15 +161,6 @@ export default function HistoricTicket({ booking }) {
             <div className="ht-org-tagline">Explore · Discover · Conquer</div>
           </div>
           <Stamp text={bookingStatus || "CONFIRMED"} />
-        </div>
-
-        <Divider />
-
-        {/* ── Ticket Title ── */}
-        <div className="ht-title-band">
-          <span className="ht-title-deco">॥</span>
-          <span className="ht-title-text">प्रवास परवाना &nbsp;/&nbsp; TRAVEL PERMIT</span>
-          <span className="ht-title-deco">॥</span>
         </div>
 
         <Divider />
@@ -232,6 +227,30 @@ export default function HistoricTicket({ booking }) {
           🕐 Please arrive <strong>15 minutes</strong> before departure
         </div>
 
+        {whatsappGroupLink && (
+          <div style={{
+            margin: "12px 0",
+            background: "#dcfce7",
+            border: "1px solid #86efac",
+            borderRadius: 8,
+            padding: "10px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexWrap: "wrap",
+          }}>
+            <span style={{ fontSize: 18 }}>📱</span>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <div style={{ fontWeight: 700, fontSize: 12, color: "#166534" }}>Join Your Trek WhatsApp Group</div>
+              <div style={{ fontSize: 11, color: "#15803d" }}>Trek leader &amp; event details will be shared here 8 hrs before departure.</div>
+            </div>
+            <a href={whatsappGroupLink} target="_blank" rel="noopener noreferrer"
+              style={{ background: "#25d366", color: "#fff", borderRadius: 6, padding: "6px 14px", fontWeight: 700, fontSize: 12, textDecoration: "none", whiteSpace: "nowrap" }}>
+              Join Group →
+            </a>
+          </div>
+        )}
+
         <Divider label="✦ PAYMENT ✦" />
 
         {/* ── Payment + QR ── */}
@@ -278,9 +297,12 @@ export default function HistoricTicket({ booking }) {
 
         {/* ── Footer ── */}
         <div className="ht-footer">
-          <div className="ht-footer-marathi">आपली यात्रा सुखद आणि सुरक्षित होवो 🙏</div>
-          <div className="ht-footer-english">May your journey be joyful and safe</div>
           <div className="ht-footer-id">Ticket ID: {displayId}</div>
+          <div className="ht-footer-policy no-print">
+            <a href="/cancellation-policy" target="_blank" rel="noopener noreferrer">
+              Cancellation &amp; Refund Policy
+            </a>
+          </div>
         </div>
 
       </div>

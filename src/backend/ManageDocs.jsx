@@ -99,6 +99,16 @@ function CredRow({ role, username, password, portal, notes }) {
 function UserManual() {
   const modules = [
     {
+      icon: "🧭", title: "Public Website Navigation", path: "/",
+      desc: "The homepage and top navigation now use grouped event browsing instead of separate top-level buttons everywhere.",
+      steps: [
+        "Homepage sliders now showcase Treks, Campsites, Rentals, Tours, and School/Corporate packages",
+        "Top navigation has an Events Category menu with Treks, Camping, and Tours",
+        "Featured home-page cards for tours/camping/rentals open the respective listing or detail pages directly",
+        "Use this flow when guiding customers on call or WhatsApp so they land on the right page quickly",
+      ]
+    },
+    {
       icon: "📊", title: "Dashboard", path: "/admin/dashboard",
       desc: "Overview of all listings, financial health widgets (Revenue, Expenses, GST, Net P&L), upcoming trek events timeline, bookings & revenue counts, emergency contacts.",
       steps: ["Login at /admin with admin credentials", "View financial health cards — green = profit, red = loss", "Check Upcoming Trek Events section for active assignments", "Click 'View All →' to jump to Reports → Trek Lifecycle"]
@@ -112,6 +122,34 @@ function UserManual() {
       icon: "📋", title: "Bookings", path: "/admin/bookings",
       desc: "View all customer bookings. Filter by status (Confirmed/Pending/Cancelled). See booking details: customer, trek, date, pickup, payment status.",
       steps: ["Go to Admin → Bookings", "Use search/filter to find specific bookings", "Click any row to expand booking details", "Payment status updates automatically when leader collects partial payment"]
+    },
+    {
+      icon: "📬", title: "Enquiries", path: "/admin/enquiries",
+      desc: "Track all incoming enquiries in a CRM-style pipeline. Enquiries are permanent records, can be archived, assigned to sales, tagged as High Intent, and auto-convert when the same customer books.",
+      steps: [
+        "Go to Admin → Enquiries",
+        "New enquiries enter the pipeline as New Lead",
+        "Use the board columns to move leads through Contacted, Quoted, Converted, or Lost",
+        "View does not change the status by itself anymore",
+        "Use the Assign Sales dropdown so Pratik or the assigned sales owner can handle the lead from their portal",
+        "Use the High Intent tag to highlight hot leads in the dedicated section",
+        "If the same customer books the same event using the same phone number or email, the enquiry auto-updates to Converted",
+        "Use Archive instead of Delete — archived enquiries stay stored in CRM and customers",
+      ]
+    },
+    {
+      icon: "🧾", title: "Booking Desk", path: "/admin/booking-form",
+      desc: "Control the booking experience from backend settings and give staff a separate direct-payment form for offline UPI/cash/bank-transfer bookings.",
+      steps: [
+        "Go to Admin → Booking Desk",
+        "Read-only preview cards show the public booking copy and staff-form content",
+        "Editable sections are limited to shared dropdowns and staff operational controls",
+        "The public booking page now shows only the joining destinations and pickups configured for that selected trek/event",
+        "The employee direct-booking form also follows the selected event’s actual departure plan instead of generic pickup lists",
+        "Use Preview Staff Form to check the employee-facing booking flow before sharing it",
+        "Use Copy Link to share the employee direct-booking form with login redirect support",
+        "Manual direct bookings are saved tax-free and still update bookings, customers, transactions, and alerts",
+      ]
     },
     {
       icon: "💰", title: "Payments & Earnings", path: "/admin/earnings",
@@ -138,6 +176,16 @@ function UserManual() {
       icon: "🏪", title: "Vendors", path: "/admin/vendors",
       desc: "Manage food vendors and transport (bus) vendors. Each vendor has service type, contact, and rate amount.",
       steps: ["Add vendor with service type: Food or Bus", "Set rate: Food vendors = ₹/person, Bus vendors = ₹/trip (fixed)", "Rates auto-populate in Trek Payment form when vendor is selected"]
+    },
+    {
+      icon: "👀", title: "Preview Buttons", path: "/admin/camping",
+      desc: "Camping and Rentals now support preview before publishing, so you can check how the public detail page will look.",
+      steps: [
+        "Go to Admin → Camping or Admin → Rentals",
+        "Use Preview while adding/editing an item to open a public-style preview in a new tab",
+        "You can also use Preview directly from the listing row after the item is saved",
+        "Preview mode does not publish changes by itself — you still need to Save Listing",
+      ]
     },
     {
       icon: "📊", title: "Reports & Analytics", path: "/admin/reports",
@@ -281,6 +329,7 @@ function SRSTab() {
           <tbody>
             {[
               ["gt_bookings", "Customer booking records", "Booking form, ManageBookings, Reports, Employee Portal"],
+              ["gt_enquiries", "Incoming enquiry records + status + tags + booking linkage", "Enquiry modal, ManageEnquiries, Customers"],
               ["gt_trek_payments", "Trek event payment configs (leader, vendors, costs, WhatsApp link)", "ManageEarnings, Reports, Employee Portal"],
               ["gt_treks", "Trek listings (public content)", "ManageTreks, Booking form, Employee Portal"],
               ["gt_employees", "Employee profiles (role, pay, skills)", "ManageEmployees, Trek Payments form"],
@@ -615,6 +664,9 @@ function CredentialsTab() {
               ["/book?ref=REF-RP001", "Book via referral link", "Customers (referred)"],
               ["/admin", "Admin login page", "Akshay, Pratik, Rohit, Admin"],
               ["/admin/dashboard", "Admin dashboard", "Admins"],
+              ["/admin/enquiries", "Enquiries workflow dashboard", "Admins / sales follow-up"],
+              ["/admin/booking-form", "Booking desk text/options editor", "Admins"],
+              ["/employee/direct-booking", "Direct payment booking form", "Employees / admins"],
               ["/admin/earnings", "Payments & Earnings", "Rohit / Pratik"],
               ["/admin/reports", "Reports & Analytics", "Akshay / Pratik"],
               ["/admin/onboarding", "Employee onboarding approvals", "Akshay / Pratik"],
@@ -636,6 +688,206 @@ function CredentialsTab() {
   );
 }
 
+function ApiReferenceTab() {
+  const apis = [
+    {
+      group: "Lead & WhatsApp APIs",
+      rows: [
+        {
+          name: "handleWhatsAppLead(payload)",
+          file: "src/utils/leadActions.js",
+          use: "Main lead-capture API for WhatsApp buttons and enquiry popups.",
+          behavior: "Saves enquiry locally first, tries POST /api/leads with timeout protection, then opens WhatsApp. Returns local enquiry + API result.",
+        },
+        {
+          name: "buildWhatsAppMessage(payload)",
+          file: "src/utils/leadActions.js",
+          use: "Builds the prefilled WhatsApp sales message.",
+          behavior: "Used in listings, enquiry board, and employee portal quick actions.",
+        },
+        {
+          name: "createWhatsAppInquiryUrl(payload)",
+          file: "src/utils/leadActions.js",
+          use: "Generates direct WhatsApp CTA links for cards.",
+          behavior: "Used alongside Book Now / View Details buttons on listing pages.",
+        },
+        {
+          name: "openSmsWithMessage(phone, message)",
+          file: "src/utils/leadActions.js",
+          use: "Launches SMS app with prefilled text.",
+          behavior: "Used for quick contact actions from enquiry dashboards and portals.",
+        },
+      ],
+    },
+    {
+      group: "Enquiry CRM APIs",
+      rows: [
+        {
+          name: "saveEnquiry(enquiry)",
+          file: "src/data/enquiryStorage.js",
+          use: "Creates a new lead record.",
+          behavior: "Default status = New Lead. Saves into enquiries, creates alert/email alert record, and stores the lead in customers.",
+        },
+        {
+          name: "syncEnquiriesWithBookings()",
+          file: "src/data/enquiryStorage.js",
+          use: "Keeps enquiry conversion state in sync with bookings.",
+          behavior: "Auto-converts when same customer books same event by phone or email. Also pushes enquiry + booking linkage into customers.",
+        },
+        {
+          name: "setEnquiryStatus(id, status)",
+          file: "src/data/enquiryStorage.js",
+          use: "Moves enquiry through sales stages.",
+          behavior: "Supports New Lead, Contacted, Quoted, Converted, Lost and records response/conversion timestamps.",
+        },
+        {
+          name: "setEnquiryTags(id, tags)",
+          file: "src/data/enquiryStorage.js",
+          use: "Updates enquiry tags.",
+          behavior: "Currently used for High Intent tagging.",
+        },
+        {
+          name: "setEnquiryAssignment(id, assignee)",
+          file: "src/data/enquiryStorage.js",
+          use: "Assigns a lead to a sales person.",
+          behavior: "Assigned enquiries become visible in that sales person’s employee portal.",
+        },
+        {
+          name: "archiveEnquiry(id)",
+          file: "src/data/enquiryStorage.js",
+          use: "Archives enquiry without deleting it.",
+          behavior: "Keeps history intact in enquiries + customers while hiding it from the active board.",
+        },
+        {
+          name: "getEnquiryInsights(items)",
+          file: "src/data/enquiryStorage.js",
+          use: "Builds dashboard metrics for the enquiry board.",
+          behavior: "Tracks top location, best converting page, avg response time, and conversion rate.",
+        },
+      ],
+    },
+    {
+      group: "Booking & Customer APIs",
+      rows: [
+        {
+          name: "saveBookingRecord(record)",
+          file: "src/data/bookingStorage.js",
+          use: "Stores website and direct bookings.",
+          behavior: "Persists booking, keeps statuses, and works with customers / transactions / alerts.",
+        },
+        {
+          name: "generateBookingId()",
+          file: "src/data/bookingStorage.js",
+          use: "Creates GT-year-sequence booking IDs.",
+          behavior: "Used for all persistent booking records.",
+        },
+        {
+          name: "findOrCreateCustomer(payload)",
+          file: "src/data/customerStorage.js",
+          use: "Deduplicates and returns one customer record.",
+          behavior: "Matches by normalized phone first, then email.",
+        },
+        {
+          name: "upsertCustomerActivity(payload)",
+          file: "src/data/customerStorage.js",
+          use: "Pushes enquiry/booking activity into customer timeline.",
+          behavior: "Ensures customers keep enquiry counts, booking counts, tags, latest booked event, and latest enquiry status.",
+        },
+      ],
+    },
+    {
+      group: "Booking Desk & Event Pickup APIs",
+      rows: [
+        {
+          name: "getBookingFormConfig() / saveBookingFormConfig(config)",
+          file: "src/data/bookingFormStorage.js",
+          use: "Reads and updates Booking Desk settings.",
+          behavior: "Controls dropdowns, notes, and operational form configuration from backend.",
+        },
+        {
+          name: "getEventDepartureConfig(payload)",
+          file: "src/utils/eventDepartureConfig.js",
+          use: "Returns event-specific joining destinations and pickup map.",
+          behavior: "Used by both public booking page and employee direct-booking form so only relevant pickup points are shown.",
+        },
+      ],
+    },
+    {
+      group: "Notification APIs",
+      rows: [
+        {
+          name: "createAlert(payload)",
+          file: "src/data/notificationStorage.js",
+          use: "Creates browser/app alert records.",
+          behavior: "Used when enquiries arrive and when bookings are saved.",
+        },
+        {
+          name: "recordEmailAlertAttempt(payload)",
+          file: "src/data/notificationStorage.js",
+          use: "Records email-notification attempts.",
+          behavior: "Current state is tracked in-app until a real email provider is connected.",
+        },
+      ],
+    },
+  ];
+
+  const usageNotes = [
+    "Front-end enquiry popup and WhatsApp buttons should always use handleWhatsAppLead so every click becomes a CRM lead first.",
+    "Admin and employee portals should use enquiryStorage APIs instead of directly mutating localStorage.",
+    "Use archiveEnquiry instead of any delete operation. Enquiries are now permanent CRM records.",
+    "Use getEventDepartureConfig whenever an event selection should decide joining destinations or pickup points.",
+    "Treat POST /api/leads as optional external sync. The local enquiry save remains the source of truth.",
+  ];
+
+  return (
+    <div>
+      <h2 style={S.h2}>🧩 API Reference</h2>
+      <p style={S.p}>
+        This section lists the active front-end APIs/helpers used by the current system, along with what each one does and where it is used after the latest CRM and Booking Desk updates.
+      </p>
+
+      <div style={S.card}>
+        <h3 style={{ ...S.h3, marginTop: 0 }}>How To Use These APIs</h3>
+        <ol style={{ margin: 0, paddingLeft: 20 }}>
+          {usageNotes.map((note, index) => (
+            <li key={index} style={{ ...S.p, marginBottom: 4 }}>{note}</li>
+          ))}
+        </ol>
+      </div>
+
+      {apis.map((section) => (
+        <div key={section.group} style={S.card}>
+          <h3 style={{ ...S.h3, marginTop: 0 }}>{section.group}</h3>
+          <table style={S.table}>
+            <thead>
+              <tr>
+                <th style={S.th}>API / Helper</th>
+                <th style={S.th}>Use</th>
+                <th style={S.th}>Behavior</th>
+                <th style={S.th}>File</th>
+              </tr>
+            </thead>
+            <tbody>
+              {section.rows.map((row) => (
+                <tr key={row.name}>
+                  <td style={{ ...S.td, fontFamily: "monospace", fontSize: 11, color: "#7c3aed" }}>{row.name}</td>
+                  <td style={S.td}>{row.use}</td>
+                  <td style={S.td}>{row.behavior}</td>
+                  <td style={{ ...S.td, fontFamily: "monospace", fontSize: 11, color: "#0284c7" }}>{row.file}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+
+      <div style={{ ...S.section, marginTop: 16 }}>
+        <strong>External endpoint note:</strong> <code>/api/leads</code> is currently used as a non-blocking external sync endpoint. If it fails or times out, the local enquiry is still saved successfully and the user flow continues.
+      </div>
+    </div>
+  );
+}
+
 /* ═════════════════════════════════════════
    MAIN COMPONENT
 ═════════════════════════════════════════ */
@@ -645,6 +897,7 @@ export default function ManageDocs() {
     { id: "manual",      icon: "📖", label: "User Manual"  },
     { id: "srs",         icon: "📋", label: "SRS"          },
     { id: "brd",         icon: "📊", label: "BRD"          },
+    { id: "apis",        icon: "🧩", label: "APIs"         },
     { id: "flowcharts",  icon: "🔄", label: "Flowcharts"   },
     { id: "credentials", icon: "🔑", label: "Credentials"  },
   ];
@@ -663,6 +916,7 @@ export default function ManageDocs() {
       {tab === "manual"      && <UserManual />}
       {tab === "srs"         && <SRSTab />}
       {tab === "brd"         && <BRDTab />}
+      {tab === "apis"        && <ApiReferenceTab />}
       {tab === "flowcharts"  && <FlowchartsTab />}
       {tab === "credentials" && <CredentialsTab />}
     </div>

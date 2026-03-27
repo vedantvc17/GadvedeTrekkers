@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getCurrentAdminUser } from "../data/permissionStorage";
+import { getAlerts } from "../data/notificationStorage";
 
 const NAV = [
   { path: "/admin/dashboard",    icon: "📊", label: "Dashboard" },
@@ -13,6 +14,8 @@ const NAV = [
   { path: "/admin/rentals",      icon: "🏠",  label: "Rentals" },
   { path: "/admin/vendors",      icon: "🏪",  label: "Vendors" },
   { path: "/admin/bookings",     icon: "📋",  label: "Bookings" },
+  { path: "/admin/enquiries",    icon: "📬",  label: "Enquiries" },
+  { path: "/admin/booking-form", icon: "🧾",  label: "Booking Desk" },
   { path: "/admin/transactions", icon: "💳",  label: "Transactions" },
   { path: "/admin/customers",    icon: "👤",  label: "Customers" },
   { path: "/admin/reports",      icon: "📈",  label: "Reports" },
@@ -28,6 +31,8 @@ const NAV = [
 function AdminLayout() {
   const navigate = useNavigate();
   const user = getCurrentAdminUser();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const unreadAlerts = getAlerts().slice(0, 20).length;
 
   useEffect(() => {
     if (!sessionStorage.getItem("gt_admin")) navigate("/admin");
@@ -41,7 +46,7 @@ function AdminLayout() {
 
   return (
     <div className="adm-shell">
-      <aside className="adm-sidebar">
+      <aside className={`adm-sidebar ${mobileNavOpen ? "adm-sidebar--open" : ""}`}>
         <div className="adm-brand">
           <span className="adm-brand-icon">🏔</span>
           <div>
@@ -65,6 +70,7 @@ function AdminLayout() {
             <NavLink
               key={path}
               to={path}
+              onClick={() => setMobileNavOpen(false)}
               className={({ isActive }) => `adm-link ${isActive ? "adm-link--active" : ""}`}
             >
               <span className="adm-link-icon">{icon}</span>
@@ -84,8 +90,20 @@ function AdminLayout() {
       </aside>
 
       <main className="adm-main">
+        <div className="adm-mobile-topbar">
+          <button
+            type="button"
+            className="adm-mobile-toggle"
+            onClick={() => setMobileNavOpen((value) => !value)}
+          >
+            {mobileNavOpen ? "✕" : "☰"}
+          </button>
+          <div className="adm-mobile-title">Admin Panel</div>
+          <div className="adm-mobile-alerts">🔔 {unreadAlerts}</div>
+        </div>
         <Outlet />
       </main>
+      {mobileNavOpen && <div className="adm-mobile-backdrop" onClick={() => setMobileNavOpen(false)} />}
     </div>
   );
 }

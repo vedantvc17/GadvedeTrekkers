@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { getEmployeeSession, clearEmployeeSession, getCredentialsByEmployeeId, updateEmployeePassword } from "../../data/employeePortalStorage";
 import { getAllEmployees } from "../../data/employeeStorage";
 import { getEmployeeIncentiveStats, getIncentivesByEmployee, INCENTIVE_AMOUNT_PER_BOOKING } from "../../data/incentiveStorage";
+import { getAllVendors } from "../../data/vendorStorage";
+import { ENQUIRY_STATUS, ENQUIRY_TAGS, getEnquiries, setEnquiryStatus, setEnquiryTags } from "../../data/enquiryStorage";
+import { buildWhatsAppMessage, DEFAULT_SALES_SMS, openSmsWithMessage } from "../../utils/leadActions";
 
 const BASE_URL = window.location.origin;
 
@@ -60,6 +63,51 @@ function getTrekParticipants(trekName, eventDate) {
   } catch { return []; }
 }
 
+/* ── GST rate for partial payments ── */
+const GST_RATE = 0.18;
+
+/* ── Calculate 50% partial amount with tax ── */
+function calc50PercentDue(totalPrice, pricePaid) {
+  const balance     = Math.max(0, Number(totalPrice) - Number(pricePaid));
+  const halfTotal   = Math.ceil(Number(totalPrice) / 2);
+  const partialDue  = Math.max(0, halfTotal - Number(pricePaid));
+  const tax         = Math.round(partialDue * GST_RATE);
+  return { balance, partialDue, tax, totalWithTax: partialDue + tax };
+}
+
+/* ── Download participants as CSV ── */
+function downloadParticipantsCSV(trekName, eventDate, participants) {
+  const headers = ["#", "Booking ID", "First Name", "Last Name", "Contact", "WhatsApp", "Pickup", "Payment Status", "Total Price", "Paid", "Balance", "Emergency Contact", "Emergency Phone"];
+  const rows = participants.map((p, i) => {
+    const total   = Number(p.totalPrice || p.price || 0);
+    const paid    = Number(p.pricePaid || 0);
+    const balance = Math.max(0, total - paid);
+    return [
+      i + 1,
+      p.bookingId || p.enhancedBookingId || "",
+      p.firstName || "",
+      p.lastName  || "",
+      p.contactNumber || p.phone || "",
+      p.whatsappNumber || "",
+      p.pickupLocation || p.departureOrigin || "",
+      p.paymentStatus || "PENDING",
+      total,
+      paid,
+      balance,
+      p.emergencyContact?.name || p.emergencyContactName || "",
+      p.emergencyContact?.phone || p.emergencyContactPhone || p.emergencyContact || "",
+    ];
+  });
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url;
+  a.download = `participants_${trekName.replace(/\s+/g, "_")}_${eventDate || "event"}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /* ── Save partial payment collection by leader ── */
 function savePartialCollection({ bookingId, amount, collectedBy }) {
   try {
@@ -85,6 +133,22 @@ function savePartialCollection({ bookingId, amount, collectedBy }) {
   } catch { return false; }
 }
 
+function canAccessAssignedEnquiries(session, emp) {
+  const managementUsers = ["pratik.ubhe", "rohit.panhalkar", "akshay.kangude"];
+  if (managementUsers.includes(session?.username)) return true;
+  const role = String(emp?.role || emp?.expertise || "").toLowerCase();
+  return role.includes("sales") || role.includes("coordinator");
+}
+
+function getAssignedEnquiriesForUser(session) {
+  return getEnquiries().filter(
+    (item) =>
+      item.assignedSalesEmployeeId === session.employeeId ||
+      item.assignedSalesUsername === session.username ||
+      item.assignedSalesName === session.fullName
+  );
+}
+
 /* ══════════════════════════════════════════════
    EmployeePortal — main component
 ══════════════════════════════════════════════ */
@@ -104,6 +168,7 @@ export default function EmployeePortal() {
   const [pwMsg,  setPwMsg]      = useState("");
   const [collectAmts,  setCollectAmts]  = useState({}); // { bookingId: amount }
   const [collectMsg,   setCollectMsg]   = useState({});  // { bookingId: msg }
+  const [vendorSearch, setVendorSearch] = useState("");
   const [expandedEvent, setExpandedEvent] = useState(null); // paymentId
   const [showPastTreks, setShowPastTreks] = useState(false);
   const [tick, setTick] = useState(0);
@@ -115,6 +180,8 @@ export default function EmployeePortal() {
   const ratings    = useMemo(() => getEmployeeRatings(session.fullName), [tick]);
   const treks      = useMemo(() => getUpcomingTreks(), [tick]);
   const myTrekEvents = useMemo(() => getLeaderTrekEvents(session.fullName), [tick]);
+  const canViewEnquiries = useMemo(() => canAccessAssignedEnquiries(session, emp), [session, emp]);
+  const assignedEnquiries = useMemo(() => getAssignedEnquiriesForUser(session), [session, tick]);
 
   const referralCode = cred?.referralCode || session.referralCode || "";
   const referralLink = `${BASE_URL}/book?ref=${referralCode}`;
@@ -153,13 +220,44 @@ export default function EmployeePortal() {
     }
   };
 
+  const handleEnquiryStatus = (id, status) => {
+    setEnquiryStatus(id, status);
+    setTick((t) => t + 1);
+  };
+
+  const handleEnquiryTag = (enquiry, tag) => {
+    const currentTags = Array.isArray(enquiry.tags) ? enquiry.tags : [];
+    const nextTags = currentTags.includes(tag)
+      ? currentTags.filter((item) => item !== tag)
+      : [...currentTags, tag];
+    setEnquiryTags(enquiry.id, nextTags);
+    setTick((t) => t + 1);
+  };
+
+  const handleEnquiryWhatsApp = (item) => {
+    if (!item.phone) return;
+    const message = buildWhatsAppMessage({
+      packageName: item.eventName,
+      location: item.location || item.eventName?.split("–")[0]?.trim() || "Pune/Mumbai",
+      category: item.category || "Enquiry",
+      customerName: item.name,
+      customerPhone: item.phone,
+      customerEmail: item.email,
+      pax: item.pax,
+      preferredDate: item.date,
+    });
+    window.open(`https://wa.me/91${item.phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+  };
+
   const TABS = [
     { id: "dashboard", icon: "📊", label: "Dashboard" },
+    ...(canViewEnquiries ? [{ id: "enquiries", icon: "📬", label: "Assigned Enquiries", badge: assignedEnquiries.length || null }] : []),
     { id: "mytreks",   icon: "🏔",  label: "My Treks", badge: myTrekEvents.length || null },
     { id: "treks",     icon: "🥾", label: "Trek Events" },
     { id: "share",     icon: "🔗", label: "Share & Earn" },
     { id: "earnings",  icon: "💵", label: "My Earnings" },
     { id: "ratings",   icon: "⭐", label: "My Ratings" },
+    { id: "vendors",   icon: "🚌", label: "Vendors" },
     { id: "profile",   icon: "👤", label: "My Profile" },
   ];
 
@@ -249,6 +347,16 @@ export default function EmployeePortal() {
               </div>
             </div>
 
+            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, marginBottom: 20 }}>
+              <div style={{ fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>🧾 Direct Payment Booking Form</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
+                Use this when a customer pays directly by UPI, cash, or bank transfer instead of the website checkout. The booking will be saved without website tax.
+              </div>
+              <a href="/employee/direct-booking" className="btn btn-outline-primary btn-sm">
+                Open Direct Booking Form
+              </a>
+            </div>
+
             {/* Latest incentives */}
             {incentives.length > 0 && (
               <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16 }}>
@@ -264,6 +372,72 @@ export default function EmployeePortal() {
                       <span className={`badge ${inc.status === "PAID" ? "bg-success" : "bg-warning text-dark"}`} style={{ fontSize: 9 }}>
                         {inc.status}
                       </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "enquiries" && canViewEnquiries && (
+          <div>
+            <h5 style={{ fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>📬 Assigned Enquiries</h5>
+            <p style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
+              These are the enquiries currently assigned to you. Update the stage, contact the lead, and mark high-intent prospects.
+            </p>
+
+            {assignedEnquiries.length === 0 ? (
+              <div style={{ textAlign: "center", padding: 40, color: "#94a3b8", background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+                No enquiries assigned to you yet.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {assignedEnquiries.map((item) => (
+                  <div key={item.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
+                      <div>
+                        <div style={{ fontWeight: 800, color: "#0f172a" }}>{item.name}</div>
+                        <div style={{ fontSize: 12, color: "#64748b" }}>{item.phone} {item.email ? `· ${item.email}` : ""}</div>
+                        <div style={{ fontSize: 12, color: "#94a3b8" }}>{item.location || "Unknown location"} · {item.eventName}</div>
+                      </div>
+                      <span className="badge bg-primary" style={{ height: "fit-content" }}>{String(item.status || "").replace(/_/g, " ")}</span>
+                    </div>
+
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                      {Object.values(ENQUIRY_STATUS).map((status) => (
+                        <button
+                          key={status}
+                          type="button"
+                          className={`btn btn-sm ${item.status === status ? "btn-primary" : "btn-outline-primary"}`}
+                          onClick={() => handleEnquiryStatus(item.id, status)}
+                        >
+                          {String(status).replace(/_/g, " ")}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                      {ENQUIRY_TAGS.map((tag) => {
+                        const active = (item.tags || []).includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            className={`btn btn-sm ${active ? "btn-warning" : "btn-outline-secondary"}`}
+                            onClick={() => handleEnquiryTag(item, tag)}
+                          >
+                            {tag}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <a href={`tel:${item.phone}`} className="btn btn-outline-primary btn-sm">Call</a>
+                      <button type="button" className="btn btn-outline-success btn-sm" onClick={() => handleEnquiryWhatsApp(item)}>WhatsApp</button>
+                      <a href={item.email ? `mailto:${item.email}` : "#"} className="btn btn-outline-secondary btn-sm" onClick={(e) => !item.email && e.preventDefault()}>Email</a>
+                      <button type="button" className="btn btn-outline-dark btn-sm" onClick={() => openSmsWithMessage(item.phone, DEFAULT_SALES_SMS)}>SMS</button>
                     </div>
                   </div>
                 ))}
@@ -353,6 +527,12 @@ export default function EmployeePortal() {
                         <div style={{ padding: 20, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No bookings found for this trek.</div>
                       ) : (
                         <div style={{ overflowX: "auto" }}>
+                          <div style={{ padding: "10px 16px 4px", display: "flex", justifyContent: "flex-end" }}>
+                            <button className="btn btn-outline-success btn-sm" style={{ fontSize: 11 }}
+                              onClick={() => downloadParticipantsCSV(evt.trekName, evt.eventDate, participants)}>
+                              ⬇️ Download Participants CSV
+                            </button>
+                          </div>
                           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                             <thead style={{ background: "#f1f5f9" }}>
                               <tr>
@@ -395,21 +575,35 @@ export default function EmployeePortal() {
                                       {balance > 0 ? fmt(balance) : "✅ Paid"}
                                     </td>
                                     <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}>
-                                      {isPending ? (
-                                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                                          <input type="number" min="1" max={balance}
-                                            className="form-control form-control-sm"
-                                            style={{ width: 90 }}
-                                            placeholder={`Max ${balance}`}
-                                            value={collectAmts[p.bookingId] || ""}
-                                            onChange={e => setCollectAmts(prev => ({ ...prev, [p.bookingId]: e.target.value }))}
-                                          />
-                                          <button className="btn btn-success btn-sm py-0 px-2" style={{ fontSize: 11 }}
-                                            onClick={() => handleCollect(p.bookingId)}>
-                                            Collect
-                                          </button>
-                                        </div>
-                                      ) : <span style={{ fontSize: 12, color: "#16a34a" }}>—</span>}
+                                      {isPending ? (() => {
+                                        const { partialDue, tax } = calc50PercentDue(totalPrice, pricePaid);
+                                        return (
+                                          <div>
+                                            {partialDue > 0 && (
+                                              <div style={{ fontSize: 10, color: "#0284c7", marginBottom: 4 }}>
+                                                50% = ₹{partialDue.toLocaleString("en-IN")} + GST ₹{tax.toLocaleString("en-IN")}
+                                                <button style={{ marginLeft: 6, fontSize: 10, border: "none", background: "#e0f2fe", color: "#0284c7", borderRadius: 4, padding: "0 6px", cursor: "pointer" }}
+                                                  onClick={() => setCollectAmts(prev => ({ ...prev, [p.bookingId]: partialDue }))}>
+                                                  Fill 50%
+                                                </button>
+                                              </div>
+                                            )}
+                                            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                              <input type="number" min="1" max={balance}
+                                                className="form-control form-control-sm"
+                                                style={{ width: 90 }}
+                                                placeholder={`Max ${balance}`}
+                                                value={collectAmts[p.bookingId] || ""}
+                                                onChange={e => setCollectAmts(prev => ({ ...prev, [p.bookingId]: e.target.value }))}
+                                              />
+                                              <button className="btn btn-success btn-sm py-0 px-2" style={{ fontSize: 11 }}
+                                                onClick={() => handleCollect(p.bookingId)}>
+                                                Collect
+                                              </button>
+                                            </div>
+                                          </div>
+                                        );
+                                      })() : <span style={{ fontSize: 12, color: "#16a34a" }}>—</span>}
                                       {msg && <div style={{ fontSize: 10, color: msg.includes("✅") ? "#16a34a" : "#dc2626", marginTop: 2 }}>{msg}</div>}
                                     </td>
                                     <td style={{ padding: "10px 12px", fontSize: 12 }}>
@@ -650,6 +844,58 @@ export default function EmployeePortal() {
             )}
           </div>
         )}
+
+        {/* ══ VENDORS ══ */}
+        {tab === "vendors" && (() => {
+          const q = vendorSearch.toLowerCase();
+          const vendors = getAllVendors().filter(v =>
+            !q || v.name?.toLowerCase().includes(q) || v.serviceType?.toLowerCase().includes(q) || v.address?.toLowerCase().includes(q)
+          );
+          return (
+            <div>
+              <h5 style={{ fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>🚌 Vendor Directory</h5>
+              <p style={{ fontSize: 13, color: "#64748b", marginBottom: 16 }}>Contact details for transport, food, and activity vendors used on treks.</p>
+              <input
+                className="form-control form-control-sm mb-3"
+                style={{ maxWidth: 320 }}
+                placeholder="Search by name, type, location…"
+                value={vendorSearch}
+                onChange={e => setVendorSearch(e.target.value)}
+              />
+              {vendors.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 40, color: "#94a3b8", background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0" }}>No vendors found.</div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                  {vendors.map(v => (
+                    <div key={v.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 18, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: 14, color: "#0f172a" }}>{v.name}</div>
+                          <span style={{ background: "#f0fdf4", color: "#15803d", borderRadius: 20, fontSize: 11, padding: "2px 8px", fontWeight: 600 }}>{v.serviceType}</span>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 13, color: "#475569", marginBottom: 6 }}>📍 {v.address}</div>
+                      <div style={{ fontSize: 13, color: "#475569", marginBottom: 6 }}>💰 {v.rates}</div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                        <a href={`tel:${v.contactNumber}`} className="btn btn-outline-success btn-sm" style={{ fontSize: 11 }}>
+                          📱 {v.contactNumber}
+                        </a>
+                        <a href={`https://wa.me/91${v.contactNumber}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary btn-sm" style={{ fontSize: 11 }}>
+                          💬 WhatsApp
+                        </a>
+                        {v.googleMapLocation && (
+                          <a href={v.googleMapLocation} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary btn-sm" style={{ fontSize: 11 }}>
+                            🗺 Map
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ══ MY PROFILE ══ */}
         {tab === "profile" && (

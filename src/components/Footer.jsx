@@ -67,7 +67,7 @@ function Footer() {
               <li><Link className="footer-link" to="/contact">Contact</Link></li>
               <li><Link className="footer-link" to="/faq">FAQ</Link></li>
               <li><span className="footer-link" style={{ cursor: "default" }}>Privacy Policy</span></li>
-              <li><span className="footer-link" style={{ cursor: "default" }}>Cancellation Policy</span></li>
+              <li><Link className="footer-link" to="/cancellation-policy">Cancellation Policy</Link></li>
               <li><span className="footer-link" style={{ cursor: "default" }}>Terms & Conditions</span></li>
             </ul>
           </div>
