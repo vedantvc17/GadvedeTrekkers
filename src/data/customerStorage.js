@@ -4,6 +4,8 @@
    Deduplicates on phone (primary) or email (fallback).
 ───────────────────────────────────────────────────────────── */
 
+import { apiRequest } from "../api/backendClient";
+
 const KEY = "gt_customers";
 
 /* ── raw helpers ── */
@@ -13,6 +15,13 @@ export function getAllCustomers() {
 
 function _save(customers) {
   localStorage.setItem(KEY, JSON.stringify(customers));
+}
+
+function syncCustomer(customer) {
+  apiRequest("/api/customers/upsert", {
+    method: "POST",
+    body: customer,
+  }).catch((error) => console.warn("Customer sync failed", error));
 }
 
 function normalisePhone(value = "") {
@@ -64,6 +73,7 @@ export function findOrCreateCustomer({ name, phone, email = "" }) {
   };
 
   _save([customer, ...all]);
+  syncCustomer(customer);
   return customer;
 }
 
@@ -86,6 +96,7 @@ export function updateCustomerRecord(id, updates) {
     return nextCustomer;
   });
   if (nextCustomer) _save(next);
+  if (nextCustomer) syncCustomer(nextCustomer);
   return nextCustomer;
 }
 
@@ -158,7 +169,9 @@ export function upsertCustomerActivity({
   });
 
   _save(next);
-  return next.find((item) => item.id === customer.id) || customer;
+  const updatedCustomer = next.find((item) => item.id === customer.id) || customer;
+  syncCustomer(updatedCustomer);
+  return updatedCustomer;
 }
 
 /* ── look-ups ── */

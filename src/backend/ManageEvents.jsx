@@ -1,5 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  deleteListingSubmission,
+  getListingSubmissions,
+  hydrateListingSubmissions,
+  saveListingSubmissions,
+  updateListingSubmission,
+} from "../data/listingSubmissionStorage";
 
 const STATUS_COLORS = {
   PENDING:  { bg: "#fef3c7", color: "#92400e", label: "Pending Review" },
@@ -209,30 +216,39 @@ function EditModal({ event, onClose, onSave }) {
 
 export default function ManageEvents() {
   const navigate = useNavigate();
-  const [events, setEvents] = useState(() =>
-    JSON.parse(localStorage.getItem("gt_event_listings") || "[]")
-  );
+  const [events, setEvents] = useState(() => getListingSubmissions("event"));
   const [editingEvent, setEditingEvent] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
+  useEffect(() => {
+    hydrateListingSubmissions("event")
+      .then((remote) => {
+        if (remote) setEvents(remote);
+      })
+      .catch((error) => console.warn("Event listing fetch failed", error));
+  }, []);
+
   const save = (updated) => {
-    localStorage.setItem("gt_event_listings", JSON.stringify(updated));
+    saveListingSubmissions("event", updated);
     setEvents(updated);
   };
 
   const handleSaveEdit = (updatedEvent) => {
-    save(events.map((ev) => (ev.id === updatedEvent.id ? updatedEvent : ev)));
+    updateListingSubmission("event", updatedEvent.id, updatedEvent);
+    setEvents(events.map((ev) => (ev.id === updatedEvent.id ? updatedEvent : ev)));
     setEditingEvent(null);
   };
 
   const handleDelete = (id) => {
     if (!window.confirm("Delete this event listing?")) return;
-    save(events.filter((ev) => ev.id !== id));
+    deleteListingSubmission("event", id);
+    setEvents(events.filter((ev) => ev.id !== id));
   };
 
   const handleStatusChange = (id, newStatus) => {
-    save(events.map((ev) => (ev.id === id ? { ...ev, status: newStatus } : ev)));
+    updateListingSubmission("event", id, { status: newStatus });
+    setEvents(events.map((ev) => (ev.id === id ? { ...ev, status: newStatus } : ev)));
   };
 
   const filtered = events.filter((ev) => {

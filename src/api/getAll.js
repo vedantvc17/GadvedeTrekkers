@@ -1,24 +1,6 @@
-import app from "../../backend/src/app";
-import supabase from "../../backend/src/config/supabaseClient";
+import { apiRequest } from "./backendClient";
 
-app.get("/api/products", async (req, res) => {
-  const { type } = req.query;
-
-  let query = supabase.from("products").select("*");
-
-  // Optional filtering by type
-  if (type) {
-    query = query.eq("type", type);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
-
-  res.json({
-    success: true,
-    data
-  });
-});
+export async function getAllProducts(type) {
+  const query = type ? `?type=${encodeURIComponent(type)}` : "";
+  return apiRequest(`/api/products${query}`);
+}

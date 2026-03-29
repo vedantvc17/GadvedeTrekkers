@@ -15,6 +15,12 @@ playwright-report
 test-results
 .playwright
 
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.*.local
+backend/.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,24 +1,16 @@
 import dotenv from "dotenv";
-dotenv.config(); // ✅ MUST BE FIRST LINE
+import path from "path";
+import { fileURLToPath } from "url";
 
-import express from "express";
-import cors from "cors";
-import productsRoutes from "./routes/products.routes.js";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const app = express();
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
-app.use(cors());
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("Backend working 🚀");
-});
-
-app.use("/api/products", productsRoutes);
+const { default: app } = await import("./app.js");
 
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
-  console.log("ENV SUPABASE_URL:", process.env.SUPABASE_URL);
   console.log(`Server running on http://localhost:${PORT}`);
 });

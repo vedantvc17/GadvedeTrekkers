@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getAllCustomers, searchCustomers } from "../data/customerStorage";
+import { useCustomers } from "../hooks/useCustomers";
 import DownloadButton from "../components/DownloadButton";
 import InfoTooltip from "../components/InfoTooltip";
 
@@ -9,9 +9,9 @@ export default function ManageCustomers() {
   const [search, setSearch] = useState("");
   const [page,   setPage]   = useState(1);
 
-  const filtered = search.trim() ? searchCustomers(search) : getAllCustomers();
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const displayed  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { customers, loading } = useCustomers({ search });
+  const totalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
+  const displayed  = customers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleSearch = (e) => {
     setSearch(e.target.value);
@@ -26,14 +26,16 @@ export default function ManageCustomers() {
           <InfoTooltip text="Customers are automatically created or updated whenever an enquiry or booking is submitted. Duplicate phone/email entries are merged. Use search to find customers by name, phone, or email." />
         </h3>
         <div className="d-flex align-items-center gap-2">
-          <span className="adm-count-badge">{filtered.length} total</span>
+          <span className="adm-count-badge">{customers.length} total</span>
           <DownloadButton
-            getData={() => filtered.map(({ id, name, phone, email, createdAt }) => ({ id, name, phone, email, registered: new Date(createdAt).toLocaleDateString("en-IN") }))}
+            getData={() => customers.map(({ id, name, phone, email, createdAt }) => ({ id, name, phone, email, registered: new Date(createdAt).toLocaleDateString("en-IN") }))}
             filename="customers"
             title="Customer List — Gadvede Trekkers"
           />
         </div>
       </div>
+
+      {loading && <div className="text-muted small mb-2">Loading customers…</div>}
 
       <div className="adm-search-row">
         <input
@@ -44,7 +46,7 @@ export default function ManageCustomers() {
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {customers.length === 0 ? (
         <div className="adm-empty">
           <div className="adm-empty-icon">👤</div>
           <p className="adm-empty-text">

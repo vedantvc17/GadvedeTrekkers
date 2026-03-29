@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useEnquiries } from "../hooks/useEnquiries";
 import DownloadButton from "../components/DownloadButton";
 import {
   archiveEnquiry,
   ENQUIRY_STATUS,
   ENQUIRY_TAGS,
   getAssignableSalesPeople,
-  getEnquiries,
   getEnquiryInsights,
   setEnquiryAssignment,
   setEnquiryStatus,
@@ -242,18 +242,15 @@ function EnquiryBoard({ items, expanded, setExpanded, onStatusDrop, onStatusUpda
 }
 
 export default function ManageEnquiries() {
-  const [tick, setTick] = useState(0);
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(null);
   const [salesFilter, setSalesFilter] = useState("");
 
-  const refresh = () => setTick((value) => value + 1);
+  const { enquiries, loading, refresh } = useEnquiries({ limit: 500 });
 
-  const enquiries = useMemo(() => {
-    syncEnquiriesWithBookings();
-    return getEnquiries();
-  }, [tick]);
-  const insights = useMemo(() => getEnquiryInsights(enquiries), [enquiries]);
+  useEffect(() => { syncEnquiriesWithBookings(); }, []);
+
+  const insights    = useMemo(() => getEnquiryInsights(enquiries), [enquiries]);
   const salesPeople = useMemo(() => getAssignableSalesPeople(), []);
 
   const filtered = enquiries.filter((item) => {
@@ -360,6 +357,8 @@ export default function ManageEnquiries() {
           />
         </div>
       </div>
+
+      {loading && <div className="text-muted small mb-2">Loading enquiries…</div>}
 
       <div className="row g-3 mb-4">
         <div className="col-md-3"><div className="adm-form-card h-100"><div className="text-muted small">Top Lead Location</div><div className="fw-bold mt-1">{insights.topLocation.label}</div><div className="small text-success">{insights.topLocation.count} leads</div></div></div>

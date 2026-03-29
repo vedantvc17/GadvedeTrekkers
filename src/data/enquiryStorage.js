@@ -2,6 +2,17 @@ import { getAllBookings } from "./bookingStorage";
 import { upsertCustomerActivity } from "./customerStorage";
 import { createAlert, recordEmailAlertAttempt } from "./notificationStorage";
 import { getAllCredentials } from "./employeePortalStorage";
+import { apiRequest } from "../api/backendClient";
+
+function _syncEnquiry(entry) {
+  apiRequest("/api/enquiries", { method: "POST", body: entry })
+    .catch((err) => console.warn("Enquiry sync failed", err.message));
+}
+
+function _syncEnquiryUpdate(id, updates) {
+  apiRequest(`/api/enquiries/${id}`, { method: "PATCH", body: updates, admin: true })
+    .catch((err) => console.warn("Enquiry update sync failed", err.message));
+}
 
 const KEY = "gt_enquiries";
 
@@ -134,6 +145,7 @@ export function saveEnquiry(enquiry) {
 
   const nextEntry = { ...entry, customerId: customer.id };
   saveAllEnquiries([nextEntry, ...list.slice(1)]);
+  _syncEnquiry(nextEntry);
 
   createAlert({
     type: "ENQUIRY",
@@ -188,6 +200,7 @@ export function updateEnquiry(id, updates) {
       email: updatedEntry.email || "",
       enquiry: updatedEntry,
     });
+    _syncEnquiryUpdate(id, updates);
   }
 
   return updatedEntry;
