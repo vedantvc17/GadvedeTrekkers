@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
+import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 import { toursList } from "../../data/toursData";
 import { ADDITIONAL_TOUR_SEEDS } from "../../data/additionalTourDetails";
 import {
@@ -204,6 +205,16 @@ function TourDetails() {
               <Link to="/book" state={{ trek: tour }} className="btn" style={{ background: "#13a567", color: "#fff", borderRadius: 12, padding: "14px 24px", fontWeight: 800 }}>
                 Book Now - ₹{tour.price}
               </Link>
+              <a
+                href={createWhatsAppInquiryUrl({ packageName: tour.name, location: tour.destinationLine || tour.location || "Maharashtra", category: "Tour" })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn"
+                style={{ background: "#25d366", color: "#fff", borderRadius: 12, padding: "14px 24px", fontWeight: 800 }}
+                title="Chat with us on WhatsApp"
+              >
+                💬 WhatsApp
+              </a>
               <a href="#tour-itinerary" className="btn" style={{ background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "14px 24px", fontWeight: 700 }}>
                 View Itinerary
               </a>
@@ -476,9 +487,18 @@ function TourDetails() {
                   <span>₹{Number(tour.price || 0) + gstAmount}</span>
                 </div>
               </div>
-              <Link to="/book" state={{ trek: tour }} className="btn w-100" style={{ background: "#0f9d63", color: "#fff", borderRadius: 12, padding: "13px 16px", fontWeight: 800, marginBottom: 12 }}>
+              <Link to="/book" state={{ trek: tour }} className="btn w-100" style={{ background: "#0f9d63", color: "#fff", borderRadius: 12, padding: "13px 16px", fontWeight: 800, marginBottom: 8 }}>
                 Book Now
               </Link>
+              <a
+                href={createWhatsAppInquiryUrl({ packageName: tour.name, location: tour.destinationLine || tour.location || "Maharashtra", category: "Tour" })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn w-100"
+                style={{ background: "#25d366", color: "#fff", borderRadius: 12, padding: "13px 16px", fontWeight: 800, marginBottom: 12 }}
+              >
+                💬 WhatsApp Enquiry
+              </a>
               <div style={{ color: "#31483d", fontSize: ".95rem", lineHeight: 1.7 }}>
                 <strong>{tour.pickupPointLabel}</strong> <span style={{ color: "#0a6a47", fontWeight: 700 }}>{tour.pickupPointMapLabel}</span>
               </div>

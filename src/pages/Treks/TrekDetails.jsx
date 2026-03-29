@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { findTrekBySlug, slugifyTrekName } from "../../data/treks";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
+import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 import {
   kalsubaiOverview,
   kalsubaiHistory,
@@ -70,7 +71,20 @@ const parseDeparturePlanItineraries = (departurePlans) =>
       const key = normaliseRouteKey(city);
       const lines = parseLineItems(plan?.itinerary || "");
       const events = lines.map((line) => {
-        const [, time = "", desc = line] = line.split("|");
+        const parts = line.split("|");
+        let time, desc;
+        if (parts.length >= 3) {
+          // Legacy format: label|time|description
+          time = parts[1].trim();
+          desc = parts.slice(2).join("|").trim();
+        } else if (parts.length === 2) {
+          // Simple format: time|description
+          time = parts[0].trim();
+          desc = parts[1].trim();
+        } else {
+          time = "";
+          desc = parts[0].trim();
+        }
         return { time, desc };
       });
       return [
@@ -78,7 +92,7 @@ const parseDeparturePlanItineraries = (departurePlans) =>
         {
           label: `From ${city}`,
           sublabel: `${city} Route`,
-          icon: city === "Mumbai" ? "🚂" : "🚌",
+          icon: city === "Mumbai" || city === "Kasara" ? "🚂" : "🚌",
           note: `${city} departure itinerary`,
           days: [{ title: `${city} Departure`, events }],
         },
@@ -117,10 +131,15 @@ function TrekDetails() {
   const trek = previewTrek || adminTrek || (id ? findTrekBySlug(id) : null);
   const isKalsubai = trek?.name === "Kalsubai Trek";
   const isHarishchandragad = trek?.name === "Harishchandragad Trek";
-  const isRich = isKalsubai || isHarishchandragad;
+  const isRich = isKalsubai || isHarishchandragad || !!(adminTrek || previewTrek);
+
+  const adminItineraryKeys = (adminTrek || previewTrek)
+    ? Object.keys(parseDeparturePlanItineraries(trek?.departurePlans))
+    : [];
+  const defaultItineraryKey = adminItineraryKeys[0] || "kasara";
 
   const [activeTab, setActiveTab] = useState("overview");
-  const [activeItinerary, setActiveItinerary] = useState("kasara");
+  const [activeItinerary, setActiveItinerary] = useState(defaultItineraryKey);
   const [lightboxImg, setLightboxImg] = useState(null);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
 
@@ -211,6 +230,16 @@ function TrekDetails() {
                   <button className="btn td-itinerary-btn" onClick={() => setActiveTab("gallery")}>
                     View Photos
                   </button>
+                  <a
+                    href={createWhatsAppInquiryUrl({ packageName: trek.name, location: trek.location, category: "Trek" })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn td-itinerary-btn"
+                    style={{ background: "#25d366", color: "#fff", borderColor: "#25d366" }}
+                    title="Chat with us on WhatsApp"
+                  >
+                    💬 WhatsApp
+                  </a>
                 </div>
 
                 {heroImages.length > 1 && (
@@ -399,6 +428,16 @@ function TrekDetails() {
             <button className="btn td-itinerary-btn" onClick={() => setActiveTab("itinerary")}>
               View Itinerary
             </button>
+            <a
+              href={createWhatsAppInquiryUrl({ packageName: trek.name, location: trek.location, category: "Trek" })}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn td-itinerary-btn"
+              style={{ background: "#25d366", color: "#fff", borderColor: "#25d366" }}
+              title="Chat with us on WhatsApp"
+            >
+              💬 WhatsApp
+            </a>
           </div>
 
           {heroImages.length > 1 && (
@@ -578,7 +617,9 @@ function TrekDetails() {
             <p className="td-muted">
               {itineraryKeys.length > 1
                 ? "Choose your departure route to see the itinerary"
-                : "Departure from Pune"}
+                : itinerary?.days?.[0]?.title
+                  ? itinerary.days[0].title
+                  : "Itinerary"}
             </p>
 
             {/* Route selector — only shown when multiple options */}
@@ -609,10 +650,12 @@ function TrekDetails() {
               </div>
             )}
 
-            {/* Note */}
-            <div className="td-itinerary-note">
-              ⚠️ {itinerary.note}
-            </div>
+            {/* Note — only show when there are no timeline events */}
+            {(!itinerary.days?.length || itinerary.days.every(d => !d.events?.length)) && itinerary.note && (
+              <div className="td-itinerary-note">
+                ⚠️ {itinerary.note}
+              </div>
+            )}
 
             {/* Timeline */}
             <div className="td-timeline">
@@ -643,9 +686,20 @@ function TrekDetails() {
                   </li>
                 ))}
               </ol>
-              <Link to="/book" state={{ trek }} className="btn td-book-btn" style={{ marginTop: 20 }}>
-                Book Now
-              </Link>
+              <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <Link to="/book" state={{ trek }} className="btn td-book-btn">
+                  Book Now
+                </Link>
+                <a
+                  href={createWhatsAppInquiryUrl({ packageName: trek.name, location: trek.location, category: "Trek" })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn td-itinerary-btn"
+                  style={{ background: "#25d366", color: "#fff", borderColor: "#25d366" }}
+                >
+                  💬 WhatsApp Enquiry
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -753,6 +807,16 @@ function TrekDetails() {
         <Link to="/book" state={{ trek }} className="btn td-cta-book-btn">
           Book Now
         </Link>
+        <a
+          href={createWhatsAppInquiryUrl({ packageName: trek.name, location: trek.location, category: "Trek" })}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn td-cta-book-btn"
+          style={{ background: "#25d366", borderColor: "#25d366" }}
+          title="Ask on WhatsApp"
+        >
+          💬 WhatsApp
+        </a>
       </div>
     </div>
   );

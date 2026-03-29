@@ -176,6 +176,61 @@ export function getEmployeeAvailability(employeeId) {
    SEED DATA  (auto-seeded on first load)
 ───────────────────────────────────────────────── */
 const SEED_EMPLOYEES = [
+  /* ── Management / Admin users ── */
+  {
+    employeeId: "EMP-ADMIN-PRATIK",
+    fullName: "Pratik Ubhe",
+    contactNumber: "9856112727",
+    email: "pratik.ubhe@gadvedetrekkers.com",
+    address: "Pune, Maharashtra",
+    skills: ["Sales", "Lead Management", "Business Development", "CRM", "Customer Success"],
+    certifications: [],
+    experience: { years: 7, description: "Co-founder and Sales Head. Manages all inbound leads, corporate deals, and customer relationships." },
+    expertise: "Sales",
+    linkedin: "",
+    instagram: "",
+    role: "Sales Manager",
+    status: "active",
+    performanceRating: 4.9,
+    eventsHandled: 120,
+    createdAt: "2020-01-01T10:00:00.000Z",
+  },
+  {
+    employeeId: "EMP-ADMIN-ROHIT",
+    fullName: "Rohit Panhalkar",
+    contactNumber: "9876500001",
+    email: "rohit.panhalkar@gadvedetrekkers.com",
+    address: "Pune, Maharashtra",
+    skills: ["Operations", "Trek Leadership", "Vendor Management", "Route Planning"],
+    certifications: [{ name: "Mountaineering Basic", details: "NIM Certified 2019" }],
+    experience: { years: 8, description: "Operations Head. Plans all trek routes and manages vendor partnerships." },
+    expertise: "Trek Leader",
+    linkedin: "",
+    instagram: "",
+    role: "Operations Head",
+    status: "active",
+    performanceRating: 4.8,
+    eventsHandled: 200,
+    createdAt: "2019-06-01T10:00:00.000Z",
+  },
+  {
+    employeeId: "EMP-ADMIN-AKSHAY",
+    fullName: "Akshay Kangude",
+    contactNumber: "9876500002",
+    email: "akshay.kangude@gadvedetrekkers.com",
+    address: "Pune, Maharashtra",
+    skills: ["Digital Marketing", "SEO", "Content", "Social Media", "Analytics"],
+    certifications: [],
+    experience: { years: 5, description: "Marketing and Tech Head. Manages the website, bookings platform, and digital campaigns." },
+    expertise: "Coordinator",
+    linkedin: "",
+    instagram: "",
+    role: "Marketing Head",
+    status: "active",
+    performanceRating: 4.7,
+    eventsHandled: 60,
+    createdAt: "2021-03-01T10:00:00.000Z",
+  },
   {
     employeeId: "EMP-SEED-001",
     fullName: "Rahul Patil",
@@ -375,7 +430,16 @@ const SEED_ASSIGNMENTS = [
 ];
 
 (function _seedOnce() {
-  if (!localStorage.getItem(EMPLOYEES_KEY))   localStorage.setItem(EMPLOYEES_KEY,   JSON.stringify(SEED_EMPLOYEES));
+  /* Merge employees — preserve existing records, add any missing seed employees */
+  try {
+    const existing = JSON.parse(localStorage.getItem(EMPLOYEES_KEY) || "[]");
+    const existingIds = new Set(existing.map(e => e.employeeId));
+    const toAdd = SEED_EMPLOYEES.filter(e => !existingIds.has(e.employeeId));
+    if (toAdd.length > 0 || !localStorage.getItem(EMPLOYEES_KEY)) {
+      localStorage.setItem(EMPLOYEES_KEY, JSON.stringify([...existing, ...toAdd]));
+    }
+  } catch { localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(SEED_EMPLOYEES)); }
+
   if (!localStorage.getItem(EXPENSES_KEY))    localStorage.setItem(EXPENSES_KEY,    JSON.stringify(SEED_EXPENSES));
   if (!localStorage.getItem(ASSIGNMENTS_KEY)) localStorage.setItem(ASSIGNMENTS_KEY, JSON.stringify(SEED_ASSIGNMENTS));
 })();

@@ -26,6 +26,7 @@ const NAV = [
   { path: "/admin/onboarding",   icon: "📋",  label: "Onboarding" },
   { path: "/admin/logs",         icon: "📋",  label: "Activity Logs" },
   { path: "/admin/docs",         icon: "📖",  label: "How It Works" },
+  { path: "/admin/email-templates", icon: "✉️", label: "Email Templates" },
 ];
 
 function AdminLayout() {

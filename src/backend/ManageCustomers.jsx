@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getAllCustomers, searchCustomers } from "../data/customerStorage";
 import DownloadButton from "../components/DownloadButton";
+import InfoTooltip from "../components/InfoTooltip";
 
 const PAGE_SIZE = 10;
 
@@ -20,7 +21,10 @@ export default function ManageCustomers() {
   return (
     <div className="adm-page">
       <div className="adm-page-header">
-        <h3 className="adm-page-title">👤 Customers</h3>
+        <h3 className="adm-page-title">
+          👤 Customers
+          <InfoTooltip text="Customers are automatically created or updated whenever an enquiry or booking is submitted. Duplicate phone/email entries are merged. Use search to find customers by name, phone, or email." />
+        </h3>
         <div className="d-flex align-items-center gap-2">
           <span className="adm-count-badge">{filtered.length} total</span>
           <DownloadButton

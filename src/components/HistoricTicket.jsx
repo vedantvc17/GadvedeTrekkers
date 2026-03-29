@@ -86,7 +86,24 @@ export default function HistoricTicket({ booking }) {
     additionalTravelers = [],
     whatsappGroupLink = "",
     travelDate = "",
+    pickupMapUrl = "",
   } = booking;
+
+  // Look up map URL from trek departure plans if not stored on booking
+  const resolvedMapUrl = pickupMapUrl || (() => {
+    try {
+      const treks = JSON.parse(localStorage.getItem("gt_treks") || "[]");
+      const trek = treks.find((t) => t.name === trekName || t.title === trekName);
+      if (!trek) return "";
+      const plans = JSON.parse(trek.departurePlans || "{}");
+      const cityPlan = plans[departureOrigin];
+      if (!cityPlan) return "";
+      const point = (cityPlan.pickupPoints || []).find((p) => p.location === pickupLocation);
+      return point?.mapUrl || "";
+    } catch {
+      return "";
+    }
+  })();
 
   const displayId = enhancedBookingId || bookingId || "—";
   const customerName = [firstName, lastName].filter(Boolean).join(" ") || "—";
@@ -121,7 +138,7 @@ export default function HistoricTicket({ booking }) {
       `Booking ID  : ${displayId}\n` +
       `Trek        : ${trekName}\n` +
       `Date        : ${formattedDate}\n` +
-      `Pickup      : ${pickupLocation}\n` +
+      `Pickup      : ${pickupLocation}${resolvedMapUrl ? ` — ${resolvedMapUrl}` : ""}\n` +
       `Tickets     : ${tickets}\n` +
       `Amount Paid : ₹${Number(payableNow).toLocaleString("en-IN")}\n\n` +
       `${whatsappGroupLink ? `WhatsApp Group : ${whatsappGroupLink}\n\n` : ""}` +
@@ -222,7 +239,14 @@ export default function HistoricTicket({ booking }) {
         </div>
 
         <div className="ht-pickup-notice">
-          📍 Pickup Point: <strong>{pickupLocation || "—"}</strong>
+          📍 Pickup Point:{" "}
+          {resolvedMapUrl ? (
+            <a href={resolvedMapUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#0f6f4a", fontWeight: 700 }}>
+              <strong>{pickupLocation || "—"}</strong> 🗺
+            </a>
+          ) : (
+            <strong>{pickupLocation || "—"}</strong>
+          )}
           &nbsp;&nbsp;·&nbsp;&nbsp;
           🕐 Please arrive <strong>15 minutes</strong> before departure
         </div>

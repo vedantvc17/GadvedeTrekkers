@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { queryBookings, updateBookingStatus } from "../data/bookingStorage";
 import { createTransaction } from "../data/transactionStorage";
+import { createAlert, recordEmailAlertAttempt } from "../data/notificationStorage";
 import DownloadButton from "../components/DownloadButton";
 import { logActivity } from "../data/activityLogStorage";
 import InfoTooltip from "../components/InfoTooltip";
@@ -97,8 +98,24 @@ export default function ManageBookings() {
       module: "Bookings",
       severity: "success",
     });
+    createAlert({
+      type: "BOOKING",
+      title: "Booking Confirmed",
+      message: `${b.firstName} ${b.lastName}'s booking for ${b.trekName || "trek"} (${b.enhancedBookingId || b.bookingId}) has been confirmed by admin.`,
+      meta: { bookingId: b.bookingId, email: b.email },
+    });
+    recordEmailAlertAttempt({
+      kind: "Booking Confirmation",
+      bookingId: b.enhancedBookingId || b.bookingId,
+      customerName: `${b.firstName} ${b.lastName}`,
+      customerEmail: b.email,
+      eventName: b.trekName,
+      amount: b.payableNow,
+      travelDate: b.travelDate,
+      pickupLocation: b.pickupLocation,
+    });
     setActionOpen(null);
-    setActionMsg(`Booking ${b.enhancedBookingId || b.bookingId} has been approved and confirmed.`);
+    setActionMsg(`Booking ${b.enhancedBookingId || b.bookingId} confirmed. Confirmation email alert sent to ${b.email || "customer"}.`);
     refresh();
   };
 

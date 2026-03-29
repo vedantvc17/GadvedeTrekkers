@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getAllCredentials } from "../data/employeePortalStorage";
 
 /* ══════════════════════════════════════════════
    ManageDocs.jsx — Gadvede Trekkers
@@ -600,10 +601,37 @@ function FlowchartsTab() {
   );
 }
 
+/* ─── Employee cred row with local show/hide ─── */
+function EmpCredRow({ cred }) {
+  const [showPw, setShowPw] = useState(false);
+  const statusColor = cred.onboardingStatus === "APPROVED" ? "#16a34a"
+    : cred.onboardingStatus === "REJECTED" ? "#dc2626" : "#d97706";
+  return (
+    <tr>
+      <td style={S.td}><strong>{cred.fullName}</strong><div style={{ fontSize: 10, color: "#94a3b8" }}>{cred.employeeId}</div></td>
+      <td style={{ ...S.td, fontFamily: "monospace", color: "#0284c7" }}>{cred.username}</td>
+      <td style={S.td}>
+        <span style={{ fontFamily: "monospace", color: showPw ? "#dc2626" : "#94a3b8" }}>{showPw ? cred.password : "••••••••"}</span>
+        <button onClick={() => setShowPw(v => !v)} style={{ marginLeft: 6, background: "none", border: "1px solid #e2e8f0", borderRadius: 4, fontSize: 10, cursor: "pointer", padding: "1px 5px" }}>
+          {showPw ? "Hide" : "Show"}
+        </button>
+      </td>
+      <td style={{ ...S.td, fontFamily: "monospace", color: "#16a34a" }}>{cred.referralCode}</td>
+      <td style={S.td}><span style={S.badge(statusColor)}>{cred.onboardingStatus}</span></td>
+    </tr>
+  );
+}
+
 /* ═════════════════════════════════════════
    TAB: CREDENTIALS
 ═════════════════════════════════════════ */
 function CredentialsTab() {
+  const [empCreds, setEmpCreds] = useState([]);
+
+  useEffect(() => {
+    setEmpCreds(getAllCredentials());
+  }, []);
+
   return (
     <div>
       <h2 style={S.h2}>🔑 Login Credentials & Quick Reference</h2>
@@ -611,6 +639,54 @@ function CredentialsTab() {
         ⚠️ Keep these credentials confidential. For production use, store in a secure secrets manager — not in source code.
       </div>
 
+      {/* ── URL Reference ── */}
+      <div style={S.card}>
+        <h3 style={S.h3}>🔗 Quick URL Reference</h3>
+        <table style={S.table}>
+          <thead>
+            <tr>
+              <th style={S.th}>URL</th>
+              <th style={S.th}>What it opens</th>
+              <th style={S.th}>Who uses it</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ["/", "Public homepage", "Customers"],
+              ["/treks", "Browse all treks", "Customers"],
+              ["/tours", "Browse all tours", "Customers"],
+              ["/camping", "Browse camping packages", "Customers"],
+              ["/book?trekId=XXX", "Book a specific trek", "Customers"],
+              ["/book?ref=REF-RP001", "Book via referral link", "Customers (referred)"],
+              ["/feedback", "Customer feedback form", "Customers post-trek"],
+              ["/ticket", "View e-ticket", "Customers"],
+              ["/admin", "Admin login page", "Akshay, Pratik, Rohit, Admin"],
+              ["/admin/dashboard", "Admin dashboard", "Admins"],
+              ["/admin/enquiries", "Enquiries workflow dashboard", "Admins / sales"],
+              ["/admin/bookings", "All bookings", "Admins"],
+              ["/admin/booking-form", "Booking desk text/options editor", "Admins"],
+              ["/admin/customers", "Customer profiles & CRM", "Admins"],
+              ["/admin/transactions", "Financial transactions", "Rohit / Pratik"],
+              ["/admin/earnings", "Payments & Earnings", "Rohit / Pratik"],
+              ["/admin/reports", "Reports & Analytics", "Akshay / Pratik"],
+              ["/admin/employees", "Employee management", "Admins"],
+              ["/admin/onboarding", "Employee onboarding approvals", "Akshay / Pratik"],
+              ["/admin/docs", "This page — How to Use, Credentials, Docs", "Admins"],
+              ["/employee-login", "Employee portal login", "Trek Leaders / Staff"],
+              ["/employee/dashboard", "Trek leader dashboard", "Trek Leaders"],
+              ["/employee/direct-booking", "Direct payment booking form", "Employees / admins"],
+            ].map(([url, desc, who]) => (
+              <tr key={url}>
+                <td style={{ ...S.td, fontFamily: "monospace", fontSize: 11, color: "#7c3aed" }}>{url}</td>
+                <td style={S.td}>{desc}</td>
+                <td style={{ ...S.td, color: "#64748b" }}>{who}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── Admin credentials ── */}
       <div style={S.card}>
         <h3 style={S.h3}>Admin Panel <code style={{ fontSize: 11, color: "#64748b" }}>/admin</code></h3>
         <table style={S.table}>
@@ -624,65 +700,27 @@ function CredentialsTab() {
         </table>
       </div>
 
+      {/* ── Employee credentials (dynamic) ── */}
       <div style={S.card}>
         <h3 style={S.h3}>Employee Portal <code style={{ fontSize: 11, color: "#64748b" }}>/employee-login</code></h3>
-        <p style={S.p}>Employee credentials are auto-generated when a new employee profile is saved. Format: <code>first.last</code> / <code>first+id_suffix</code>. Must be approved by Akshay or Pratik before login works.</p>
-        <table style={S.table}>
-          <thead><tr>{["Employee", "Username", "Password", "Referral Code", "Status"].map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
-          <tbody>
-            {[
-              ["Rahul Patil (Demo)", "rahul.patil", "rahul001", "REF-RP001", "APPROVED"],
-              ["Other employees", "first.last", "first+id_suffix", "REF-XX000", "PENDING — needs approval"],
-            ].map(([n, u, p, r, s]) => {
-              const [showPw, setShowPw] = useState(false);
-              return (
-                <tr key={n}>
-                  <td style={S.td}><strong>{n}</strong></td>
-                  <td style={{ ...S.td, fontFamily: "monospace", color: "#0284c7" }}>{u}</td>
-                  <td style={S.td}>
-                    <span style={{ fontFamily: "monospace", color: showPw ? "#dc2626" : "#94a3b8" }}>{showPw ? p : "••••••••"}</span>
-                    <button onClick={() => setShowPw(v => !v)} style={{ marginLeft: 6, background: "none", border: "1px solid #e2e8f0", borderRadius: 4, fontSize: 10, cursor: "pointer", padding: "1px 5px" }}>{showPw ? "Hide" : "Show"}</button>
-                  </td>
-                  <td style={{ ...S.td, fontFamily: "monospace", color: "#16a34a" }}>{r}</td>
-                  <td style={S.td}><span style={S.badge(s === "APPROVED" ? "#16a34a" : "#d97706")}>{s}</span></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div style={S.card}>
-        <h3 style={S.h3}>Quick URL Reference</h3>
-        <table style={S.table}>
-          <thead><tr><th style={S.th}>URL</th><th style={S.th}>What it opens</th><th style={S.th}>Who uses it</th></tr></thead>
-          <tbody>
-            {[
-              ["/", "Public homepage", "Customers"],
-              ["/treks", "Browse all treks", "Customers"],
-              ["/book?trekId=XXX", "Book a specific trek", "Customers"],
-              ["/book?ref=REF-RP001", "Book via referral link", "Customers (referred)"],
-              ["/admin", "Admin login page", "Akshay, Pratik, Rohit, Admin"],
-              ["/admin/dashboard", "Admin dashboard", "Admins"],
-              ["/admin/enquiries", "Enquiries workflow dashboard", "Admins / sales follow-up"],
-              ["/admin/booking-form", "Booking desk text/options editor", "Admins"],
-              ["/employee/direct-booking", "Direct payment booking form", "Employees / admins"],
-              ["/admin/earnings", "Payments & Earnings", "Rohit / Pratik"],
-              ["/admin/reports", "Reports & Analytics", "Akshay / Pratik"],
-              ["/admin/onboarding", "Employee onboarding approvals", "Akshay / Pratik"],
-              ["/employee-login", "Employee portal login", "Trek Leaders"],
-              ["/employee/dashboard", "Trek leader dashboard", "Trek Leaders"],
-              ["/feedback", "Customer feedback form", "Customers post-trek"],
-              ["/ticket", "View e-ticket", "Customers"],
-            ].map(([url, desc, who]) => (
-              <tr key={url}>
-                <td style={{ ...S.td, fontFamily: "monospace", fontSize: 11, color: "#7c3aed" }}>{url}</td>
-                <td style={S.td}>{desc}</td>
-                <td style={{ ...S.td, color: "#64748b" }}>{who}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <p style={S.p}>
+          Employee credentials are auto-generated when a new employee profile is saved.
+          Format: <code>first.last</code> / <code>first+id_suffix</code>.
+          Must be <strong>APPROVED</strong> by Akshay or Pratik before login works.
+          This table updates automatically when new employees are added.
+        </p>
+        {empCreds.length === 0 ? (
+          <p style={{ ...S.p, color: "#94a3b8" }}>No employee credentials found.</p>
+        ) : (
+          <table style={S.table}>
+            <thead>
+              <tr>{["Employee", "Username", "Password", "Referral Code", "Status"].map(h => <th key={h} style={S.th}>{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {empCreds.map(cred => <EmpCredRow key={cred.credId} cred={cred} />)}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

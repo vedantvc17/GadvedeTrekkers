@@ -1,6 +1,7 @@
 import { useState } from "react";
 import DownloadButton from "../components/DownloadButton";
 import { logActivity } from "../data/activityLogStorage";
+import InfoTooltip from "../components/InfoTooltip";
 import {
   queryTransactions,
   updateTransactionStatus,
@@ -93,7 +94,10 @@ export default function ManageTransactions() {
   return (
     <div className="adm-page">
       <div className="adm-page-header">
-        <h3 className="adm-page-title">💳 Transactions</h3>
+        <h3 className="adm-page-title">
+          💳 Transactions
+          <InfoTooltip text="Each confirmed booking generates a transaction record. Direct (manual) bookings show ₹0 tax. Filter by status, payment mode, or date to reconcile collections." />
+        </h3>
         <div className="d-flex align-items-center gap-2">
           <span className="adm-count-badge">{transactions.length} result{transactions.length !== 1 ? "s" : ""}</span>
           <DownloadButton

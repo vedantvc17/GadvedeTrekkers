@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import InfoTooltip from "../components/InfoTooltip";
 import {
   DEFAULT_BOOKING_FORM,
@@ -170,34 +171,50 @@ export default function ManageBookingForm() {
       <div className="adm-form-card mb-4">
         <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
           <div>
-            <div className="fw-bold mb-1">Staff Direct Booking Form</div>
+            <div className="fw-bold mb-1">
+              Staff Direct Booking Form
+              <InfoTooltip text="Use this form when a customer pays directly by UPI, cash, or bank transfer without using the website checkout. No taxes are charged on these bookings." />
+            </div>
             <div className="text-muted small">
-              Share this with staff when a customer pays directly through UPI, cash, or bank transfer.
+              Share this link with staff when a customer pays directly through UPI, cash, or bank transfer.
+              The booking will be saved with zero tax.
             </div>
           </div>
-          <div className="d-flex gap-2 flex-wrap">
-            <a className="btn btn-primary btn-sm" href="/employee/direct-booking" target="_blank" rel="noopener noreferrer">
-              Preview Staff Form
-            </a>
-            <a className="btn btn-outline-primary btn-sm" href="/employee/direct-booking" target="_blank" rel="noopener noreferrer">
-              Open Staff Form
-            </a>
+          <div className="d-flex gap-2 flex-wrap align-items-center">
+            <Link
+              to="/employee/direct-booking"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary btn-sm"
+            >
+              👁 Preview Form
+            </Link>
             <button
               type="button"
               className="btn btn-outline-secondary btn-sm"
               onClick={async () => {
-                await navigator.clipboard.writeText(staffFormLink);
+                try {
+                  await navigator.clipboard.writeText(staffFormLink);
+                } catch {
+                  // Fallback for non-secure contexts
+                  const el = document.createElement("input");
+                  el.value = staffFormLink;
+                  document.body.appendChild(el);
+                  el.select();
+                  document.execCommand("copy");
+                  document.body.removeChild(el);
+                }
                 setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
+                setTimeout(() => setCopied(false), 2500);
               }}
             >
-              {copied ? "Copied" : "Copy Link"}
+              {copied ? "✅ Copied!" : "📋 Copy Link"}
             </button>
           </div>
         </div>
-        <div className="mt-3 small text-muted">
-          Shared link:
-          <div className="mt-1 fw-semibold" style={{ wordBreak: "break-all" }}>{staffFormLink}</div>
+        <div className="mt-3 p-2 rounded" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+          <div className="small text-muted mb-1">Direct link (share with staff):</div>
+          <code style={{ fontSize: 12, wordBreak: "break-all", color: "#0f172a" }}>{staffFormLink}</code>
         </div>
       </div>
 

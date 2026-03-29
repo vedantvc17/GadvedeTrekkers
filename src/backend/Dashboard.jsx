@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getAdminItems } from "../data/adminStorage";
+import InfoTooltip from "../components/InfoTooltip";
 import { getAllBookings } from "../data/bookingStorage";
 import { getTransactionStats } from "../data/transactionStorage";
 import { getAllCustomers } from "../data/customerStorage";
@@ -107,7 +108,10 @@ function Dashboard() {
 
   return (
     <div className="adm-page">
-      <h3 className="adm-page-title">Dashboard</h3>
+      <h3 className="adm-page-title">
+        Dashboard
+        <InfoTooltip text="Real-time overview of bookings, revenue, trek events, and all listings. Financial figures pull from transactions and trek payment records." />
+      </h3>
       <p className="text-muted mb-4">Overview of all your listings on the website.</p>
 
       {/* ── Motivational Quote ── */}
@@ -139,7 +143,10 @@ function Dashboard() {
       </div>
 
       {/* ── Financial Health Widgets ── */}
-      <h5 className="mt-4 mb-3 fw-semibold">💰 Financial Health</h5>
+      <h5 className="mt-4 mb-3 fw-semibold">
+        💰 Financial Health
+        <InfoTooltip text="Revenue = sum of all confirmed booking payments. Expenses = leader fees + food + transport + entry costs. GST is calculated at 5% of revenue. Net Profit = Revenue − Expenses − GST − Incentives." />
+      </h5>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12, marginBottom: 24 }}>
         {[
           { icon: "💰", label: "Revenue Collected", value: fmt(revenue), color: "#16a34a", bg: "#f0fdf4" },

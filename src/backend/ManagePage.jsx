@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAdminData } from "../hooks/useAdminData";
 import { logActivity } from "../data/activityLogStorage";
 
@@ -419,6 +419,12 @@ function DeparturePlansField({ value, onChange, cityOptions = [] }) {
                           value={pickup.location || ""}
                           onChange={(e) => updatePickup(activeCity, index, "location", e.target.value)}
                         />
+                        <input
+                          className="form-control form-control-sm"
+                          placeholder="📍 Google Maps URL (optional)"
+                          value={pickup.mapUrl || ""}
+                          onChange={(e) => updatePickup(activeCity, index, "mapUrl", e.target.value)}
+                        />
                         <button type="button" className="btn btn-outline-danger btn-sm py-0 px-2" onClick={() => removePickup(activeCity, index)}>x</button>
                       </div>
                     ))
@@ -430,7 +436,7 @@ function DeparturePlansField({ value, onChange, cityOptions = [] }) {
                   <textarea
                     className="form-control form-control-sm"
                     rows={4}
-                    placeholder={`Day|Time|Description, one per line for ${activeCity}`}
+                    placeholder={`One entry per line — format: Time|Description\nExample:\n06:00 AM|Meet at pickup point\n07:30 AM|Depart for base village\n12:00 PM|Summit`}
                     value={plans[activeCity]?.itinerary || ""}
                     onChange={(e) => updatePlan(activeCity, "itinerary", e.target.value)}
                   />
@@ -460,6 +466,7 @@ function ManagePage({
   const [editId, setEditId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
+  const formRef = useRef(null);
 
   const openCreate = () => {
     setForm(defaultForm);
@@ -471,6 +478,7 @@ function ManagePage({
     setForm({ ...defaultForm, ...item });
     setEditId(item.id);
     setShowForm(true);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
 
   const handleCancel = () => {
@@ -531,7 +539,7 @@ function ManagePage({
       </div>
 
       {showForm && (
-        <div className="adm-form-card">
+        <div className="adm-form-card" ref={formRef}>
           <h5 className="mb-4 fw-bold">{editId ? `Edit ${title}` : `Add New ${title}`}</h5>
           <form onSubmit={handleSubmit}>
             <div className="row g-3">
