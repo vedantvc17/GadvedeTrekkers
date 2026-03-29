@@ -1,4 +1,5 @@
 import { upsertCustomerActivity } from "./customerStorage";
+import { apiRequest } from "../api/backendClient";
 
 /* ─────────────────────────────────────────────────────────────
    Booking Storage Service
@@ -52,6 +53,14 @@ export function saveBookingRecord(enrichedRecord) {
     bookingStatus: enrichedRecord.bookingStatus || "CONFIRMED",
     savedAt: new Date().toISOString(),
   }, ...all]);
+  apiRequest("/api/bookings", {
+    method: "POST",
+    body: {
+    ...enrichedRecord,
+    bookingStatus: enrichedRecord.bookingStatus || "CONFIRMED",
+    savedAt: enrichedRecord.savedAt || new Date().toISOString(),
+    },
+  }).catch((error) => console.warn("Booking sync failed", error));
 }
 
 /* ── Update booking status ───────────────────────────────────
@@ -66,7 +75,14 @@ export function updateBookingStatus(bookingId, status) {
       : b
   );
   _save(updated);
-  return updated.find((b) => b.bookingId === bookingId || b.enhancedBookingId === bookingId) || null;
+  const booking = updated.find((b) => b.bookingId === bookingId || b.enhancedBookingId === bookingId) || null;
+  if (booking) {
+    apiRequest("/api/bookings", {
+      method: "POST",
+      body: booking,
+    }).catch((error) => console.warn("Booking status sync failed", error));
+  }
+  return booking;
 }
 
 /* ── look-ups ── */

@@ -1,13 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useTransactions } from "../hooks/useTransactions";
 import DownloadButton from "../components/DownloadButton";
 import { logActivity } from "../data/activityLogStorage";
 import InfoTooltip from "../components/InfoTooltip";
 import {
-  queryTransactions,
   updateTransactionStatus,
   createRefund,
   getRefundsForTransaction,
-  getTransactionStats,
 } from "../data/transactionStorage";
 
 const STATUS_OPTIONS  = ["SUCCESS", "FAILED", "REFUNDED"];
@@ -40,20 +39,23 @@ export default function ManageTransactions() {
 
   const [expandedTxn,  setExpandedTxn]  = useState(null);
 
-  // Re-renders when any filter changes
-  const [tick, setTick] = useState(0);
-  const refresh = () => setTick((t) => t + 1);
-
-  const transactions = queryTransactions({
-    status:      status      || undefined,
-    paymentMode: paymentMode || undefined,
-    fromDate:    fromDate    || undefined,
-    toDate:      toDate      || undefined,
-    search:      search      || undefined,
+  const { transactions, loading, refresh } = useTransactions({
+    search,
+    status,
+    paymentMode,
+    fromDate,
+    toDate,
     sortBy,
   });
 
-  const stats = getTransactionStats();
+  const stats = useMemo(() => ({
+    success:  transactions.filter((t) => t.transactionStatus === "SUCCESS").length,
+    failed:   transactions.filter((t) => t.transactionStatus === "FAILED").length,
+    refunded: transactions.filter((t) => t.transactionStatus === "REFUNDED").length,
+    revenue:  transactions
+      .filter((t) => t.transactionStatus === "SUCCESS")
+      .reduce((sum, t) => sum + (t.netAmount || 0), 0),
+  }), [transactions]);
 
   /* ── Refund handler ── */
   const handleRefund = (txnId) => {
@@ -107,6 +109,8 @@ export default function ManageTransactions() {
           />
         </div>
       </div>
+
+      {loading && <div className="text-muted small mb-2">Loading transactions…</div>}
 
       {/* Stats row */}
       <div className="adm-txn-stats">

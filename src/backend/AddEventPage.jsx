@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/Toast";
+import { submitListingSubmission } from "../data/listingSubmissionStorage";
 
 const EVENT_TYPES = [
   "Trekking Event", "Nature Festival", "Adventure Race", "Photography Walk",
@@ -120,15 +121,13 @@ export default function AddEventPage() {
     if (Object.keys(e).length) { setErrors(e); return; }
 
     const filled = pickupPoints.filter((p) => p.city.trim() || p.location.trim());
-    const events = JSON.parse(localStorage.getItem("gt_event_listings") || "[]");
-    events.unshift({
+    submitListingSubmission("event", {
       id: `EVT-${Date.now()}`,
       ...form,
       pickupPoints: filled,
       submittedAt: new Date().toISOString(),
       createdByAdmin: true,
     });
-    localStorage.setItem("gt_event_listings", JSON.stringify(events));
     toast.success(`Event "${form.eventName}" saved successfully!`);
     navigate("/admin/events");
   };

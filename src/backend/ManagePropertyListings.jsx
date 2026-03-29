@@ -1,6 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "../components/Toast";
 import { useConfirm } from "../components/ConfirmModal";
+import {
+  deleteListingSubmission,
+  getListingSubmissions,
+  hydrateListingSubmissions,
+  saveListingSubmissions,
+  updateListingSubmission,
+} from "../data/listingSubmissionStorage";
 
 const STATUS_COLORS = {
   PENDING:  { bg: "#fef3c7", color: "#92400e", label: "Pending Review" },
@@ -89,9 +96,7 @@ function EditModal({ listing, onClose, onSave }) {
 }
 
 export default function ManagePropertyListings() {
-  const [listings, setListings] = useState(() =>
-    JSON.parse(localStorage.getItem("gt_property_listings") || "[]")
-  );
+  const [listings, setListings] = useState(() => getListingSubmissions("property"));
   const [editing, setEditing] = useState(null);
   const toast   = useToast();
   const confirm = useConfirm();
@@ -99,13 +104,22 @@ export default function ManagePropertyListings() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [expandedId, setExpandedId] = useState(null);
 
+  useEffect(() => {
+    hydrateListingSubmissions("property")
+      .then((remote) => {
+        if (remote) setListings(remote);
+      })
+      .catch((error) => console.warn("Property listing fetch failed", error));
+  }, []);
+
   const save = (updated) => {
-    localStorage.setItem("gt_property_listings", JSON.stringify(updated));
+    saveListingSubmissions("property", updated);
     setListings(updated);
   };
 
   const handleSaveEdit = (updated) => {
-    save(listings.map((l) => (l.id === updated.id ? updated : l)));
+    updateListingSubmission("property", updated.id, updated);
+    setListings(listings.map((l) => (l.id === updated.id ? updated : l)));
     setEditing(null);
     toast.success("Property listing updated successfully.");
   };
@@ -113,12 +127,14 @@ export default function ManagePropertyListings() {
   const handleDelete = async (id) => {
     const ok = await confirm({ title: "Delete Listing?", message: "This listing will be permanently removed.", confirmText: "Delete", type: "danger" });
     if (!ok) return;
-    save(listings.filter((l) => l.id !== id));
+    deleteListingSubmission("property", id);
+    setListings(listings.filter((l) => l.id !== id));
     toast.success("Listing deleted.");
   };
 
   const setStatus = (id, status) => {
-    save(listings.map((l) => (l.id === id ? { ...l, status } : l)));
+    updateListingSubmission("property", id, { status });
+    setListings(listings.map((l) => (l.id === id ? { ...l, status } : l)));
     const labels = { APPROVED: "Approved", REJECTED: "Rejected", LIVE: "Published as Live!" };
     toast.success(`Listing status updated to ${labels[status] || status}.`);
   };

@@ -1,6 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "../components/Toast";
 import { useConfirm } from "../components/ConfirmModal";
+import {
+  deleteListingSubmission,
+  getListingSubmissions,
+  hydrateListingSubmissions,
+  saveListingSubmissions,
+  updateListingSubmission,
+} from "../data/listingSubmissionStorage";
 
 const STATUS_COLORS = {
   PENDING:  { bg: "#fef3c7", color: "#92400e", label: "Pending Review" },
@@ -89,9 +96,7 @@ function EditModal({ listing, onClose, onSave }) {
 }
 
 export default function ManageCampsiteListings() {
-  const [listings, setListings] = useState(() =>
-    JSON.parse(localStorage.getItem("gt_campsite_listings") || "[]")
-  );
+  const [listings, setListings] = useState(() => getListingSubmissions("campsite"));
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -99,13 +104,22 @@ export default function ManageCampsiteListings() {
   const toast   = useToast();
   const confirm = useConfirm();
 
+  useEffect(() => {
+    hydrateListingSubmissions("campsite")
+      .then((remote) => {
+        if (remote) setListings(remote);
+      })
+      .catch((error) => console.warn("Campsite listing fetch failed", error));
+  }, []);
+
   const save = (updated) => {
-    localStorage.setItem("gt_campsite_listings", JSON.stringify(updated));
+    saveListingSubmissions("campsite", updated);
     setListings(updated);
   };
 
   const handleSaveEdit = (updated) => {
-    save(listings.map((l) => (l.id === updated.id ? updated : l)));
+    updateListingSubmission("campsite", updated.id, updated);
+    setListings(listings.map((l) => (l.id === updated.id ? updated : l)));
     setEditing(null);
     toast.success("Campsite listing updated successfully.");
   };
@@ -113,12 +127,14 @@ export default function ManageCampsiteListings() {
   const handleDelete = async (id) => {
     const ok = await confirm({ title: "Delete Campsite Listing?", message: "This listing will be permanently removed.", confirmText: "Delete", type: "danger" });
     if (!ok) return;
-    save(listings.filter((l) => l.id !== id));
+    deleteListingSubmission("campsite", id);
+    setListings(listings.filter((l) => l.id !== id));
     toast.success("Listing deleted.");
   };
 
   const setStatus = (id, status) => {
-    save(listings.map((l) => (l.id === id ? { ...l, status } : l)));
+    updateListingSubmission("campsite", id, { status });
+    setListings(listings.map((l) => (l.id === id ? { ...l, status } : l)));
     const labels = { APPROVED: "Approved", REJECTED: "Rejected", LIVE: "Published as Live!" };
     toast.success(`Campsite status updated to ${labels[status] || status}.`);
   };

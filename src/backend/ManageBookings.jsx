@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { queryBookings, updateBookingStatus } from "../data/bookingStorage";
+import { updateBookingStatus } from "../data/bookingStorage";
+import { useBookings } from "../hooks/useBookings";
 import { createTransaction } from "../data/transactionStorage";
 import { createAlert, recordEmailAlertAttempt } from "../data/notificationStorage";
 import DownloadButton from "../components/DownloadButton";
@@ -25,20 +26,18 @@ export default function ManageBookings() {
   const [toDate,        setToDate]        = useState("");
   const [sortBy,        setSortBy]        = useState("latest");
   const [expanded,      setExpanded]      = useState(null);
-  const [tick,          setTick]          = useState(0);
-  const [actionOpen,    setActionOpen]    = useState(null);   /* bookingId of open dropdown */
+  const [actionOpen,    setActionOpen]    = useState(null);
   const [actionMsg,     setActionMsg]     = useState("");
 
-  const refresh = () => setTick((t) => t + 1);
   const confirm = useConfirm();
   const toast   = useToast();
 
-  const bookings = queryBookings({
-    paymentOption: paymentOption || undefined,
-    status:        statusFilter  || undefined,
-    fromDate:      fromDate      || undefined,
-    toDate:        toDate        || undefined,
-    search:        search        || undefined,
+  const { bookings, loading, refresh } = useBookings({
+    search,
+    status:        statusFilter,
+    paymentOption,
+    fromDate,
+    toDate,
     sortBy,
   });
 
@@ -208,6 +207,8 @@ export default function ManageBookings() {
           {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
       </div>
+
+      {loading && <div className="text-muted small mb-3">Loading bookings…</div>}
 
       {actionMsg && (
         <div className="alert alert-info py-2 mb-3" style={{ fontSize: 13 }}>

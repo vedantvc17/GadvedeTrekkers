@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { submitListingSubmission } from "../../data/listingSubmissionStorage";
 
 const FACILITIES = [
   "Tents Provided", "Sleeping Bags", "Bonfire", "Washrooms", "Running Water",
@@ -60,14 +61,12 @@ export default function ListCampsite() {
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
-    const listings = JSON.parse(localStorage.getItem("gt_campsite_listings") || "[]");
-    listings.unshift({
+    submitListingSubmission("campsite", {
       id: `CAMP-${Date.now()}`,
       ...form,
       submittedAt: new Date().toISOString(),
       status: "PENDING",
     });
-    localStorage.setItem("gt_campsite_listings", JSON.stringify(listings));
     setSubmitted(true);
   };
 

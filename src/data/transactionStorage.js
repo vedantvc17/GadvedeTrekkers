@@ -12,6 +12,8 @@
      • dateTime    – ISO timestamp alias (same value as createdAt)
 ───────────────────────────────────────────────────────────── */
 
+import { apiRequest } from "../api/backendClient";
+
 const TXN_KEY    = "gt_transactions";
 const REFUND_KEY = "gt_refunds";
 
@@ -61,6 +63,10 @@ export function createTransaction({
     dateTime:          now,              /* Part 4 required field — alias of createdAt */
   };
   _saveTxns([txn, ...getAllTransactions()]);
+  apiRequest("/api/payments/upsert", {
+    method: "POST",
+    body: txn,
+  }).catch((error) => console.warn("Transaction sync failed", error));
   return txn;
 }
 
@@ -71,7 +77,14 @@ export function updateTransactionStatus(transactionId, status) {
     t.transactionId === transactionId ? { ...t, transactionStatus: status } : t
   );
   _saveTxns(updated);
-  return updated.find((t) => t.transactionId === transactionId) || null;
+  const transaction = updated.find((t) => t.transactionId === transactionId) || null;
+  if (transaction) {
+    apiRequest("/api/payments/upsert", {
+      method: "POST",
+      body: transaction,
+    }).catch((error) => console.warn("Transaction status sync failed", error));
+  }
+  return transaction;
 }
 
 /* ── Refund ──────────────────────────────────────────────────
@@ -109,6 +122,11 @@ export function createRefund({ transactionId, amount }) {
 
   _saveRefunds([...getAllRefunds(), refund]);
   updateTransactionStatus(transactionId, "REFUNDED");
+  apiRequest("/api/payments/refunds", {
+    method: "POST",
+    admin: true,
+    body: refund,
+  }).catch((error) => console.warn("Refund sync failed", error));
   return { refund };
 }
 

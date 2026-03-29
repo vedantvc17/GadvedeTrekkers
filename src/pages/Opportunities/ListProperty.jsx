@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { submitListingSubmission } from "../../data/listingSubmissionStorage";
 
 const PROPERTY_TYPES = ["Homestay", "Villa", "Resort", "Farmhouse", "Bungalow", "Cottage", "Other"];
 
@@ -62,14 +63,12 @@ export default function ListProperty() {
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
-    const listings = JSON.parse(localStorage.getItem("gt_property_listings") || "[]");
-    listings.unshift({
+    submitListingSubmission("property", {
       id: `PROP-${Date.now()}`,
       ...form,
       submittedAt: new Date().toISOString(),
       status: "PENDING",
     });
-    localStorage.setItem("gt_property_listings", JSON.stringify(listings));
     setSubmitted(true);
   };
 

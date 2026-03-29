@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { submitListingSubmission } from "../../data/listingSubmissionStorage";
 
 const EVENT_TYPES = [
   "Trekking Event",
@@ -89,15 +90,13 @@ export default function ListEvent() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
     const filledPickups = pickupPoints.filter((p) => p.city.trim() || p.location.trim());
-    const events = JSON.parse(localStorage.getItem("gt_event_listings") || "[]");
-    events.unshift({
+    submitListingSubmission("event", {
       id: `EVT-${Date.now()}`,
       ...form,
       pickupPoints: filledPickups,
       submittedAt: new Date().toISOString(),
       status: "PENDING",
     });
-    localStorage.setItem("gt_event_listings", JSON.stringify(events));
     setSubmitted(true);
   };
 
