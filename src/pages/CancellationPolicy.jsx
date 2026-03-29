@@ -37,7 +37,7 @@ const BACKPACKING_POLICY = [
 ];
 
 const HOW_TO_CANCEL = [
-  "Send a cancellation request via WhatsApp to 8828004949 or email us at support@gadvedetrekkers.com.",
+  "Send a cancellation request via WhatsApp to 8828004949 or email us at support@gadvede.com.",
   "Mention your Booking ID, full name, registered phone number, and reason for cancellation.",
   "Our team will verify your booking and confirm the cancellation within 24–48 hours.",
   "Eligible refunds will be processed within 7–10 business days to the original payment method.",
@@ -209,9 +209,9 @@ export default function CancellationPolicy() {
               style={{ background: "#25d366", color: "#fff", borderRadius: 10, padding: "12px 24px", fontWeight: 700, fontSize: "0.9rem", textDecoration: "none" }}>
               💬 WhatsApp: 8828004949
             </a>
-            <a href="mailto:support@gadvedetrekkers.com"
+            <a href="mailto:support@gadvede.com"
               style={{ background: "rgba(255,255,255,0.15)", color: "#fff", borderRadius: 10, padding: "12px 24px", fontWeight: 700, fontSize: "0.9rem", textDecoration: "none" }}>
-              ✉️ support@gadvedetrekkers.com
+              ✉️ support@gadvede.com
             </a>
           </div>
           <p style={{ color: "#6ee7b7", fontSize: "0.8rem", marginTop: 20, marginBottom: 0 }}>

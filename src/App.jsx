@@ -3,8 +3,10 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AppRoutes from "./routes/AppRoutes";
 import WebsiteNotificationBridge from "./components/WebsiteNotificationBridge";
+import { ToastProvider } from "./components/Toast";
+import { ConfirmProvider } from "./components/ConfirmModal";
 
-function App() {
+function AppInner() {
   const { pathname } = useLocation();
   const isAdmin    = pathname.startsWith("/admin");
   const isTicket   = pathname === "/ticket";
@@ -21,6 +23,16 @@ function App() {
       </main>
       {!hideChrome && <Footer />}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ToastProvider>
+      <ConfirmProvider>
+        <AppInner />
+      </ConfirmProvider>
+    </ToastProvider>
   );
 }
 

@@ -105,11 +105,11 @@ export default function ManageMarketing() {
             </div>
             <div className="mb-3">
               <label className="form-label form-label-sm fw-semibold">Link (optional)</label>
-              <input className="form-control form-control-sm" placeholder="https://gadvedetrekkers.com/treks/…" value={msg.link} onChange={(e) => setMsg((m) => ({ ...m, link: e.target.value }))} />
+              <input className="form-control form-control-sm" placeholder="https://www.gadvede.com/treks/…" value={msg.link} onChange={(e) => setMsg((m) => ({ ...m, link: e.target.value }))} />
             </div>
             <div className="mb-4">
               <label className="form-label form-label-sm fw-semibold">Footer</label>
-              <input className="form-control form-control-sm" placeholder="e.g. Team Gadvede Trekkers | www.gadvedetrekkers.com" value={msg.footer} onChange={(e) => setMsg((m) => ({ ...m, footer: e.target.value }))} />
+              <input className="form-control form-control-sm" placeholder="e.g. Team Gadvede Trekkers | www.gadvede.com" value={msg.footer} onChange={(e) => setMsg((m) => ({ ...m, footer: e.target.value }))} />
             </div>
 
             {/* Channels */}

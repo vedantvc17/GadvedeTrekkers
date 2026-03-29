@@ -83,6 +83,9 @@ export default function ListCampsite() {
               <strong>{form.campsiteName}</strong> has been submitted for review. We'll contact
               you within 48 hours.
             </p>
+            <p style={{ color: "#475569", fontSize: 14, marginTop: 12 }}>
+              Your campsite remains visible to admin only until approval.
+            </p>
             <button
               className="btn btn-success mt-3"
               onClick={() => { setForm(EMPTY); setSubmitted(false); setErrors({}); }}
@@ -99,11 +102,11 @@ export default function ListCampsite() {
     <section className="vr-page">
       <div className="container py-5">
         <div className="vr-hero mb-5">
-          <span className="vr-kicker">Partner With Us</span>
+          <span className="vr-kicker">List With Us</span>
           <h1>List Your Campsite</h1>
           <p>
-            Have a campsite near a scenic trail or forest? Partner with Gadvede Trekkers to
-            bring adventure seekers to your doorstep.
+            Have a campsite near a scenic trail or forest? Submit your details here.
+            Our admin team reviews every campsite before it is published.
           </p>
         </div>
 

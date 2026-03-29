@@ -32,6 +32,10 @@ import ActivityLogs     from "../backend/ActivityLogs";
 import ManageDocs       from "../backend/ManageDocs";
 import ManageBookingForm from "../backend/ManageBookingForm";
 import EmailTemplates    from "../backend/EmailTemplates";
+import ManageEvents            from "../backend/ManageEvents";
+import AddEventPage            from "../backend/AddEventPage";
+import ManagePropertyListings  from "../backend/ManagePropertyListings";
+import ManageCampsiteListings  from "../backend/ManageCampsiteListings";
 
 /* ================= TREK PAGES ================= */
 import Trek           from "../pages/Treks/Trek";
@@ -177,6 +181,10 @@ function AppRoutes() {
         <Route path="logs"         element={<ActivityLogs />} />
         <Route path="docs"         element={<ManageDocs />} />
         <Route path="email-templates" element={<EmailTemplates />} />
+        <Route path="events"            element={<ManageEvents />} />
+        <Route path="events/new"        element={<AddEventPage />} />
+        <Route path="property-listings" element={<ManagePropertyListings />} />
+        <Route path="campsite-listings" element={<ManageCampsiteListings />} />
       </Route>
     </Routes>
   );

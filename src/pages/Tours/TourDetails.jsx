@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 import { toursList } from "../../data/toursData";
@@ -91,6 +91,7 @@ function buildSeedTour(id) {
 
 function TourDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const previewRaw = typeof window !== "undefined" ? sessionStorage.getItem("gt_tour_preview") : null;
   const previewItem = parseJsonValue(previewRaw, null);
   const previewSlug = previewItem?.slug || slugifyTourName(previewItem?.name || "");
@@ -256,16 +257,24 @@ function TourDetails() {
       </div>
 
       <div className="container py-5">
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 360px", gap: 24, alignItems: "start" }}>
+        <div className="tour-detail-layout">
           <div>
             <section style={sectionCardStyle}>
-              <p style={crumbStyle}>
-                <Link to="/" style={crumbLinkStyle}>Home</Link>
-                {"  >  "}
-                <Link to="/tours" style={crumbLinkStyle}>Upcoming trips</Link>
-                {"  >  "}
-                <span style={{ color: "#0f3b2b" }}>{tour.name}</span>
-              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                <button
+                  onClick={() => navigate(-1)}
+                  style={{ background: "none", border: "1px solid #d1fae5", borderRadius: 8, color: "#065f46", padding: "5px 12px", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                >
+                  ← Back
+                </button>
+                <p style={{ ...crumbStyle, margin: 0 }}>
+                  <Link to="/" style={crumbLinkStyle}>Home</Link>
+                  {"  >  "}
+                  <Link to="/tours" style={crumbLinkStyle}>Upcoming trips</Link>
+                  {"  >  "}
+                  <span style={{ color: "#0f3b2b" }}>{tour.name}</span>
+                </p>
+              </div>
               <h2 style={sectionTitleStyle}>About {tour.name}</h2>
               {overviewBlocks.map((block) => (
                 <p key={block.slice(0, 30)} style={bodyStyle}>{block}</p>
@@ -461,7 +470,7 @@ function TourDetails() {
             )}
           </div>
 
-          <aside style={{ position: "sticky", top: 88 }}>
+          <aside className="tour-detail-aside">
             <div style={{ ...sectionCardStyle, padding: 24 }}>
               <div style={{ textAlign: "center", marginBottom: 18 }}>
                 <div style={{ color: "#70867a", fontSize: ".84rem" }}>Starting From</div>

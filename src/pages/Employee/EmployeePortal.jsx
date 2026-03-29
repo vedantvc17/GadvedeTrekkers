@@ -4,6 +4,15 @@ import { getEmployeeSession, clearEmployeeSession, getCredentialsByEmployeeId, u
 import { getAllEmployees } from "../../data/employeeStorage";
 import { getEmployeeIncentiveStats, getIncentivesByEmployee, INCENTIVE_AMOUNT_PER_BOOKING } from "../../data/incentiveStorage";
 import { getAllVendors } from "../../data/vendorStorage";
+
+/* ── Vendor assigned to a trek event (contact/address only, no rates) ── */
+function getAssignedVendor(vendorName) {
+  if (!vendorName) return null;
+  try {
+    const vendors = getAllVendors();
+    return vendors.find(v => v.name?.toLowerCase() === vendorName?.toLowerCase()) || null;
+  } catch { return null; }
+}
 import { ENQUIRY_STATUS, ENQUIRY_TAGS, getEnquiries, setEnquiryStatus, setEnquiryTags } from "../../data/enquiryStorage";
 import { buildWhatsAppMessage, DEFAULT_SALES_SMS, openSmsWithMessage } from "../../utils/leadActions";
 
@@ -168,7 +177,6 @@ export default function EmployeePortal() {
   const [pwMsg,  setPwMsg]      = useState("");
   const [collectAmts,  setCollectAmts]  = useState({}); // { bookingId: amount }
   const [collectMsg,   setCollectMsg]   = useState({});  // { bookingId: msg }
-  const [vendorSearch, setVendorSearch] = useState("");
   const [expandedEvent, setExpandedEvent] = useState(null); // paymentId
   const [showPastTreks, setShowPastTreks] = useState(false);
   const [tick, setTick] = useState(0);
@@ -257,7 +265,7 @@ export default function EmployeePortal() {
     { id: "share",     icon: "🔗", label: "Share & Earn" },
     { id: "earnings",  icon: "💵", label: "My Earnings" },
     { id: "ratings",   icon: "⭐", label: "My Ratings" },
-    { id: "vendors",   icon: "🚌", label: "Vendors" },
+    { id: "emergency", icon: "🚨", label: "Emergency" },
     { id: "profile",   icon: "👤", label: "My Profile" },
   ];
 
@@ -519,6 +527,34 @@ export default function EmployeePortal() {
                       {isOpen ? "Hide Participants" : "View Participants"}
                     </button>
                   </div>
+
+                  {/* Vendor contact (assigned to this event, no rates shown) */}
+                  {isOpen && (() => {
+                    const vendor = getAssignedVendor(evt.config?.vendorName);
+                    if (!vendor) return null;
+                    return (
+                      <div style={{ padding: "12px 18px", background: "#f0fdf4", borderBottom: "1px solid #e2e8f0" }}>
+                        <div style={{ fontWeight: 700, color: "#166534", fontSize: 12, marginBottom: 8 }}>🚌 Assigned Vendor — {vendor.serviceType}</div>
+                        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontWeight: 800, fontSize: 13, color: "#0f172a" }}>{vendor.name}</div>
+                            {vendor.address && <div style={{ fontSize: 12, color: "#475569" }}>📍 {vendor.address}</div>}
+                          </div>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            {vendor.contactNumber && (
+                              <a href={`tel:${vendor.contactNumber}`} className="btn btn-outline-success btn-sm" style={{ fontSize: 11 }}>📱 {vendor.contactNumber}</a>
+                            )}
+                            {vendor.contactNumber && (
+                              <a href={`https://wa.me/91${vendor.contactNumber}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary btn-sm" style={{ fontSize: 11 }}>💬 WhatsApp</a>
+                            )}
+                            {vendor.googleMapLocation && (
+                              <a href={vendor.googleMapLocation} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary btn-sm" style={{ fontSize: 11 }}>🗺 Map</a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Participant list */}
                   {isOpen && (
@@ -845,57 +881,87 @@ export default function EmployeePortal() {
           </div>
         )}
 
-        {/* ══ VENDORS ══ */}
-        {tab === "vendors" && (() => {
-          const q = vendorSearch.toLowerCase();
-          const vendors = getAllVendors().filter(v =>
-            !q || v.name?.toLowerCase().includes(q) || v.serviceType?.toLowerCase().includes(q) || v.address?.toLowerCase().includes(q)
-          );
-          return (
-            <div>
-              <h5 style={{ fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>🚌 Vendor Directory</h5>
-              <p style={{ fontSize: 13, color: "#64748b", marginBottom: 16 }}>Contact details for transport, food, and activity vendors used on treks.</p>
-              <input
-                className="form-control form-control-sm mb-3"
-                style={{ maxWidth: 320 }}
-                placeholder="Search by name, type, location…"
-                value={vendorSearch}
-                onChange={e => setVendorSearch(e.target.value)}
-              />
-              {vendors.length === 0 ? (
-                <div style={{ textAlign: "center", padding: 40, color: "#94a3b8", background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0" }}>No vendors found.</div>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-                  {vendors.map(v => (
-                    <div key={v.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 18, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: 14, color: "#0f172a" }}>{v.name}</div>
-                          <span style={{ background: "#f0fdf4", color: "#15803d", borderRadius: 20, fontSize: 11, padding: "2px 8px", fontWeight: 600 }}>{v.serviceType}</span>
-                        </div>
-                      </div>
-                      <div style={{ fontSize: 13, color: "#475569", marginBottom: 6 }}>📍 {v.address}</div>
-                      <div style={{ fontSize: 13, color: "#475569", marginBottom: 6 }}>💰 {v.rates}</div>
-                      <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-                        <a href={`tel:${v.contactNumber}`} className="btn btn-outline-success btn-sm" style={{ fontSize: 11 }}>
-                          📱 {v.contactNumber}
-                        </a>
-                        <a href={`https://wa.me/91${v.contactNumber}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary btn-sm" style={{ fontSize: 11 }}>
-                          💬 WhatsApp
-                        </a>
-                        {v.googleMapLocation && (
-                          <a href={v.googleMapLocation} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary btn-sm" style={{ fontSize: 11 }}>
-                            🗺 Map
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+        {/* ══ EMERGENCY ══ */}
+        {tab === "emergency" && (
+          <div>
+            <h5 style={{ fontWeight: 800, color: "#dc2626", marginBottom: 4 }}>🚨 Emergency Services</h5>
+            <p style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
+              Quick access to emergency contacts during treks. Save these before heading out.
+            </p>
+
+            {/* National Emergency Numbers */}
+            <div style={{ background: "#fef2f2", border: "2px solid #fecaca", borderRadius: 14, padding: 20, marginBottom: 20 }}>
+              <div style={{ fontWeight: 800, color: "#991b1b", marginBottom: 14, fontSize: 14 }}>📞 National Emergency Numbers</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+                {[
+                  { icon: "🚓", label: "Police",              number: "100",  desc: "Law enforcement emergency" },
+                  { icon: "🚒", label: "Fire Brigade",        number: "101",  desc: "Fire & rescue services" },
+                  { icon: "🚑", label: "Ambulance",           number: "108",  desc: "Medical emergency" },
+                  { icon: "🆘", label: "National Emergency",  number: "112",  desc: "Unified emergency helpline" },
+                  { icon: "⛰️", label: "Disaster Management", number: "1070", desc: "NDRF / State DM Helpline" },
+                  { icon: "👩‍⚕️", label: "Women Helpline",      number: "1091", desc: "Women safety helpline" },
+                ].map(item => (
+                  <a key={item.number} href={`tel:${item.number}`}
+                    style={{ background: "#fff", border: "1px solid #fecaca", borderRadius: 10, padding: "12px 14px", textDecoration: "none", display: "block", transition: "box-shadow 0.15s" }}
+                    onMouseEnter={e => e.currentTarget.style.boxShadow = "0 2px 8px rgba(220,38,38,0.15)"}
+                    onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+                  >
+                    <div style={{ fontSize: 22, marginBottom: 4 }}>{item.icon}</div>
+                    <div style={{ fontWeight: 800, color: "#0f172a", fontSize: 13 }}>{item.label}</div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#dc2626", letterSpacing: 1 }}>{item.number}</div>
+                    <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{item.desc}</div>
+                  </a>
+                ))}
+              </div>
             </div>
-          );
-        })()}
+
+            {/* Mountain & Trek-Specific */}
+            <div style={{ background: "#fff7ed", border: "2px solid #fed7aa", borderRadius: 14, padding: 20, marginBottom: 20 }}>
+              <div style={{ fontWeight: 800, color: "#c2410c", marginBottom: 14, fontSize: 14 }}>⛰️ Trek & Mountain Safety</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {[
+                  { icon: "🏥", label: "Maharashtra SDRF",       number: "1070",   desc: "State Disaster Response Force — Maharashtra" },
+                  { icon: "🏕️", label: "Forest Department",      number: "1800-233-4721", desc: "Maharashtra Forest Dept toll-free" },
+                  { icon: "🚁", label: "Air Ambulance (ZIQITZA)",  number: "1860-500-1066", desc: "Emergency helicopter / air ambulance" },
+                  { icon: "🩺", label: "Nashik Civil Hospital",   number: "0253-2308888", desc: "Closest hospital for Harihar / Salher treks" },
+                  { icon: "🩺", label: "Ahmednagar District Hospital", number: "0241-2323255", desc: "Closest hospital for Bhandardara / Ratangad treks" },
+                  { icon: "🩺", label: "Kalyan District Hospital", number: "0251-2322401", desc: "Closest hospital for Murbad / Malshej area treks" },
+                ].map(item => (
+                  <div key={item.label} style={{ background: "#fff", border: "1px solid #fed7aa", borderRadius: 10, padding: "12px 14px", display: "flex", gap: 14, alignItems: "center" }}>
+                    <div style={{ fontSize: 24, flexShrink: 0 }}>{item.icon}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, color: "#0f172a", fontSize: 13 }}>{item.label}</div>
+                      <div style={{ fontSize: 11, color: "#64748b" }}>{item.desc}</div>
+                    </div>
+                    <a href={`tel:${item.number}`} className="btn btn-sm" style={{ background: "#ea580c", color: "#fff", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }}>
+                      📞 {item.number}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* First Aid Quick Guide */}
+            <div style={{ background: "#f0fdf4", border: "2px solid #bbf7d0", borderRadius: 14, padding: 20 }}>
+              <div style={{ fontWeight: 800, color: "#166534", marginBottom: 14, fontSize: 14 }}>🩹 First Aid Quick Reminders</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
+                {[
+                  { icon: "🌡️", label: "Heat Exhaustion",    steps: ["Move to shade immediately", "Hydrate with ORS / water", "Cool neck, armpits, wrists", "Call 108 if unconscious"] },
+                  { icon: "🦶", label: "Ankle Sprain",        steps: ["R.I.C.E: Rest, Ice, Compress, Elevate", "Do not apply heat", "Avoid weight-bearing", "Descend to base if severe"] },
+                  { icon: "🐍", label: "Snakebite",           steps: ["Keep victim calm and still", "Immobilise the affected limb", "Do NOT suck or cut the wound", "Rush to hospital immediately"] },
+                  { icon: "⚡", label: "Lightning Safety",    steps: ["Avoid open ridges and peaks", "Crouch low on balls of feet", "Stay away from lone trees", "Head to lower ground fast"] },
+                ].map(item => (
+                  <div key={item.label} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 10, padding: "12px 14px" }}>
+                    <div style={{ fontWeight: 700, color: "#15803d", fontSize: 13, marginBottom: 8 }}>{item.icon} {item.label}</div>
+                    <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: "#374151" }}>
+                      {item.steps.map((s, i) => <li key={i} style={{ marginBottom: 3 }}>{s}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ══ MY PROFILE ══ */}
         {tab === "profile" && (

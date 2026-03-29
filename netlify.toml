@@ -1,0 +1,75 @@
+# ─────────────────────────────────────────────
+#  Gadvede Trekkers — Netlify Deployment Config
+#  Domain: https://www.gadvede.com
+# ─────────────────────────────────────────────
+
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+
+# ── Environment variables (override in Netlify dashboard for secrets) ──
+[build.environment]
+  NODE_VERSION = "20"
+
+# ── SPA fallback: all routes → index.html (React Router handles routing) ──
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# ── Redirect bare domain → www ──
+[[redirects]]
+  from   = "https://gadvede.com/*"
+  to     = "https://www.gadvede.com/:splat"
+  status = 301
+  force  = true
+
+# ── HTTP → HTTPS ──
+[[redirects]]
+  from   = "http://www.gadvede.com/*"
+  to     = "https://www.gadvede.com/:splat"
+  status = 301
+  force  = true
+
+# ── Security & performance headers ──
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options            = "SAMEORIGIN"
+    X-Content-Type-Options     = "nosniff"
+    X-XSS-Protection           = "1; mode=block"
+    Referrer-Policy            = "strict-origin-when-cross-origin"
+    Permissions-Policy         = "camera=(), microphone=(), geolocation=(self)"
+    Strict-Transport-Security  = "max-age=31536000; includeSubDomains; preload"
+
+# ── Cache static assets aggressively ──
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+[[headers]]
+  for = "*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+[[headers]]
+  for = "*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+# ── Do NOT cache HTML (always fresh for SPA updates) ──
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"

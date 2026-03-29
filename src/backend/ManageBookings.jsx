@@ -5,6 +5,8 @@ import { createAlert, recordEmailAlertAttempt } from "../data/notificationStorag
 import DownloadButton from "../components/DownloadButton";
 import { logActivity } from "../data/activityLogStorage";
 import InfoTooltip from "../components/InfoTooltip";
+import { useConfirm } from "../components/ConfirmModal";
+import { useToast } from "../components/Toast";
 
 const PAYMENT_OPTIONS = ["", "Debit Card / Credit Card", "UPI", "Net Banking", "Partial Payment"];
 const STATUS_OPTIONS  = ["PENDING_APPROVAL", "CONFIRMED", "CANCELLED"];
@@ -28,6 +30,8 @@ export default function ManageBookings() {
   const [actionMsg,     setActionMsg]     = useState("");
 
   const refresh = () => setTick((t) => t + 1);
+  const confirm = useConfirm();
+  const toast   = useToast();
 
   const bookings = queryBookings({
     paymentOption: paymentOption || undefined,
@@ -39,8 +43,15 @@ export default function ManageBookings() {
   });
 
   /* ── Action handlers ── */
-  const handleCancelBooking = (b) => {
-    if (!window.confirm(`Cancel booking ${b.enhancedBookingId || b.bookingId} for ${b.firstName} ${b.lastName}?`)) return;
+  const handleCancelBooking = async (b) => {
+    const ok = await confirm({
+      title: "Cancel Booking?",
+      message: `This will cancel booking ${b.enhancedBookingId || b.bookingId} for ${b.firstName} ${b.lastName}. This action cannot be undone.`,
+      confirmText: "Yes, Cancel Booking",
+      cancelText: "Keep Booking",
+      type: "danger",
+    });
+    if (!ok) return;
     updateBookingStatus(b.bookingId, "CANCELLED");
     logActivity({
       action: "BOOKING_CANCELLED",
@@ -50,7 +61,7 @@ export default function ManageBookings() {
       severity: "warning",
     });
     setActionOpen(null);
-    setActionMsg(`Booking ${b.enhancedBookingId || b.bookingId} has been cancelled.`);
+    toast.warning(`Booking ${b.enhancedBookingId || b.bookingId} has been cancelled.`);
     refresh();
   };
 
@@ -78,8 +89,15 @@ export default function ManageBookings() {
     setActionMsg(`Transfer request for ${b.enhancedBookingId || b.bookingId} has been initiated. Complete the transfer in the customer profile.`);
   };
 
-  const handleApproveBooking = (b) => {
-    if (!window.confirm(`Approve booking ${b.enhancedBookingId || b.bookingId} for ${b.firstName} ${b.lastName}?`)) return;
+  const handleApproveBooking = async (b) => {
+    const ok = await confirm({
+      title: "Approve Booking?",
+      message: `Approve booking for ${b.firstName} ${b.lastName}? This will confirm the booking and send a confirmation email to the customer.`,
+      confirmText: "Yes, Approve",
+      cancelText: "Not Yet",
+      type: "success",
+    });
+    if (!ok) return;
     updateBookingStatus(b.bookingId, "CONFIRMED");
     createTransaction({
       bookingId: b.bookingId,
@@ -115,12 +133,19 @@ export default function ManageBookings() {
       pickupLocation: b.pickupLocation,
     });
     setActionOpen(null);
-    setActionMsg(`Booking ${b.enhancedBookingId || b.bookingId} confirmed. Confirmation email alert sent to ${b.email || "customer"}.`);
+    toast.success(`Booking ${b.enhancedBookingId || b.bookingId} approved! Confirmation email sent to ${b.email || "customer"}.`);
     refresh();
   };
 
-  const handleRejectBooking = (b) => {
-    if (!window.confirm(`Reject booking ${b.enhancedBookingId || b.bookingId} for ${b.firstName} ${b.lastName}?`)) return;
+  const handleRejectBooking = async (b) => {
+    const ok = await confirm({
+      title: "Reject Booking?",
+      message: `Reject and cancel the booking request from ${b.firstName} ${b.lastName}? The customer will be notified.`,
+      confirmText: "Yes, Reject",
+      cancelText: "Keep Pending",
+      type: "danger",
+    });
+    if (!ok) return;
     updateBookingStatus(b.bookingId, "CANCELLED");
     logActivity({
       action: "BOOKING_REJECTED",
@@ -130,7 +155,7 @@ export default function ManageBookings() {
       severity: "warning",
     });
     setActionOpen(null);
-    setActionMsg(`Booking ${b.enhancedBookingId || b.bookingId} has been rejected.`);
+    toast.warning(`Booking ${b.enhancedBookingId || b.bookingId} has been rejected.`);
     refresh();
   };
 

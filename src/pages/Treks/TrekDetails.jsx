@@ -1,33 +1,9 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { findTrekBySlug, slugifyTrekName } from "../../data/treks";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
-import {
-  kalsubaiOverview,
-  kalsubaiHistory,
-  kalsubaiHighlights,
-  kalsubaiEventDetails,
-  kalsubaiPricing,
-  kalsubaiWhyJoin,
-  kalsubaiItineraries,
-  kalsubaiBookingSteps,
-} from "../../data/kalsubaiDetails";
-import {
-  harishchandragadOverview,
-  harishchandragadHistory,
-  harishchandragadHighlights,
-  harishchandragadEventDetails,
-  harishchandragadPricing,
-  harishchandragadWhyJoin,
-  harishchandragadItineraries,
-  harishchandragadBookingSteps,
-  harishchandragadPlacesToVisit,
-  harishchandragadInclusions,
-  harishchandragadExclusions,
-  harishchandragadThingsToCarry,
-  harishchandragadDiscountCodes,
-} from "../../data/harishchandragadDetails";
+import { richTrekDetails } from "../../data/richTrekDetails";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -35,9 +11,6 @@ const TABS = [
   { id: "itinerary", label: "Itinerary" },
   { id: "details", label: "Details & Cost" },
 ];
-
-const KALSUBAI_ITINERARY_KEYS = ["kasara", "mumbai", "pune"];
-const HC_ITINERARY_KEYS = ["kasara", "pune"];
 
 const parseJsonValue = (value, fallback) => {
   try {
@@ -72,27 +45,20 @@ const parseDeparturePlanItineraries = (departurePlans) =>
       const lines = parseLineItems(plan?.itinerary || "");
       const events = lines.map((line) => {
         const parts = line.split("|");
-        let time, desc;
         if (parts.length >= 3) {
-          // Legacy format: label|time|description
-          time = parts[1].trim();
-          desc = parts.slice(2).join("|").trim();
-        } else if (parts.length === 2) {
-          // Simple format: time|description
-          time = parts[0].trim();
-          desc = parts[1].trim();
-        } else {
-          time = "";
-          desc = parts[0].trim();
+          return { time: parts[1].trim(), desc: parts.slice(2).join("|").trim() };
         }
-        return { time, desc };
+        if (parts.length === 2) {
+          return { time: parts[0].trim(), desc: parts[1].trim() };
+        }
+        return { time: "", desc: parts[0].trim() };
       });
       return [
         key,
         {
           label: `From ${city}`,
           sublabel: `${city} Route`,
-          icon: city === "Mumbai" || city === "Kasara" ? "🚂" : "🚌",
+          icon: city === "Kasara" ? "🚂" : "🚌",
           note: `${city} departure itinerary`,
           days: [{ title: `${city} Departure`, events }],
         },
@@ -100,43 +66,43 @@ const parseDeparturePlanItineraries = (departurePlans) =>
     })
   );
 
+const parsePlaces = (value = "") =>
+  parseLineItems(value).map((item) => {
+    const [name, desc] = item.split("|");
+    return { icon: "📍", name: (name || item).trim(), desc: (desc || "").trim() };
+  });
+
+const createWhatsappHref = (trek) =>
+  createWhatsAppInquiryUrl({
+    packageName: trek.name,
+    location: trek.location,
+    category: "Trek",
+  });
+
 function TrekDetails() {
   const { id } = useParams();
-  const previewDraft = typeof window !== "undefined" ? sessionStorage.getItem("gt_trek_preview") : null;
+  const navigate = useNavigate();
+  const previewDraft =
+    typeof window !== "undefined" ? sessionStorage.getItem("gt_trek_preview") : null;
   const previewItem = parseJsonValue(previewDraft, null);
   const previewSlug = previewItem?.name ? slugifyTrekName(previewItem.name) : "";
   const adminMatch = getAdminItems("gt_treks").find((item) => slugifyTrekName(item.name || "") === id);
-  const adminTrek = adminMatch
-    ? (() => {
-        const fallbackGallery = [adminMatch.image, adminMatch.image, adminMatch.image].filter(Boolean);
-        const gallery = parseJsonValue(adminMatch.imageGallery, fallbackGallery);
-        return {
-          ...normaliseItem(adminMatch),
-          image: gallery[0] || adminMatch.image,
-          gallery,
-        };
-      })()
-    : null;
-  const previewTrek = previewItem && previewSlug === id
-    ? (() => {
-        const fallbackGallery = [previewItem.image, previewItem.image, previewItem.image].filter(Boolean);
-        const gallery = parseJsonValue(previewItem.imageGallery, fallbackGallery);
-        return {
-          ...normaliseItem(previewItem),
-          image: gallery[0] || previewItem.image,
-          gallery,
-        };
-      })()
-    : null;
-  const trek = previewTrek || adminTrek || (id ? findTrekBySlug(id) : null);
-  const isKalsubai = trek?.name === "Kalsubai Trek";
-  const isHarishchandragad = trek?.name === "Harishchandragad Trek";
-  const isRich = isKalsubai || isHarishchandragad || !!(adminTrek || previewTrek);
 
-  const adminItineraryKeys = (adminTrek || previewTrek)
-    ? Object.keys(parseDeparturePlanItineraries(trek?.departurePlans))
-    : [];
-  const defaultItineraryKey = adminItineraryKeys[0] || "kasara";
+  const buildLocalTrek = (item) => {
+    const fallbackGallery = [item.image, item.image, item.image].filter(Boolean);
+    const gallery = parseJsonValue(item.imageGallery, fallbackGallery);
+    return { ...normaliseItem(item), image: gallery[0] || item.image, gallery };
+  };
+
+  const adminTrek = adminMatch ? buildLocalTrek(adminMatch) : null;
+  const previewTrek = previewItem && previewSlug === id ? buildLocalTrek(previewItem) : null;
+  const trek = previewTrek || adminTrek || (id ? findTrekBySlug(id) : null);
+  const staticRichTrek = trek?.name ? richTrekDetails[trek.name] || null : null;
+  const isRich = !!(staticRichTrek || adminTrek || previewTrek);
+  const adminItineraryKeys =
+    adminTrek || previewTrek ? Object.keys(parseDeparturePlanItineraries(trek?.departurePlans)) : [];
+  const staticItineraryKeys = Object.keys(staticRichTrek?.itineraries || {});
+  const defaultItineraryKey = adminItineraryKeys[0] || staticItineraryKeys[0] || "kasara";
 
   const [activeTab, setActiveTab] = useState("overview");
   const [activeItinerary, setActiveItinerary] = useState(defaultItineraryKey);
@@ -145,47 +111,39 @@ function TrekDetails() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
-
-    if (isKalsubai) {
-      document.title = `Kalsubai Trek 2025 | Highest Peak Maharashtra | Night Trek | Gadvede Trekkers`;
-      const setMeta = (name, content) => {
-        let el = document.querySelector(`meta[name="${name}"]`);
-        if (!el) { el = document.createElement("meta"); el.name = name; document.head.appendChild(el); }
-        el.content = content;
-      };
-      setMeta("description", "Book Kalsubai Trek — Maharashtra's highest peak (5400 ft). Night trek from Mumbai, Pune & Kasara. Sunrise, Milky Way, Temple darshan. Starting ₹799. Expert guides, safe batches.");
-      setMeta("keywords", "Kalsubai trek booking, Kalsubai night trek, highest peak Maharashtra, Kalsubai from Mumbai, Kalsubai from Pune, Kalsubai from Kasara, Bari village trek, Sahyadri trek 2025");
-    }
-
-    if (isHarishchandragad) {
-      document.title = `Harishchandragad Trek 2025 | Konkan Kada | Kedareshwar Cave | Gadvede Trekkers`;
-      const setMeta = (name, content) => {
-        let el = document.querySelector(`meta[name="${name}"]`);
-        if (!el) { el = document.createElement("meta"); el.name = name; document.head.appendChild(el); }
-        el.content = content;
-      };
-      setMeta("description", "Book Harishchandragad Trek from Pune 2025. Night trek to Maharashtra's iconic hill fort — Konkan Kada, Kedareshwar Cave, Harishchandreshwar Temple. ₹1,449/person. Expert guides, safe batches.");
-      setMeta("keywords", "Harishchandragad trek, Harishchandragad from Pune, Konkan Kada, Kedareshwar cave, Pachnai village trek, Harishchandragad 2025, Maharashtra fort trek");
-    }
-  }, [isKalsubai, isHarishchandragad]);
+    if (!staticRichTrek?.meta) return;
+    document.title = staticRichTrek.meta.title;
+    const setMeta = (name, content) => {
+      let el = document.querySelector(`meta[name="${name}"]`);
+      if (!el) {
+        el = document.createElement("meta");
+        el.name = name;
+        document.head.appendChild(el);
+      }
+      el.content = content;
+    };
+    setMeta("description", staticRichTrek.meta.description);
+    setMeta("keywords", staticRichTrek.meta.keywords);
+  }, [staticRichTrek]);
 
   useEffect(() => {
     setCurrentHeroSlide(0);
-  }, [trek?.name]);
+    setActiveItinerary(defaultItineraryKey);
+  }, [trek?.name, defaultItineraryKey]);
 
   useEffect(() => {
     if (!trek?.gallery?.length || trek.gallery.length < 2) return undefined;
-    const timer = window.setInterval(() => {
-      setCurrentHeroSlide((prev) => (prev + 1) % trek.gallery.length);
-    }, 3200);
+    const timer = window.setInterval(
+      () => setCurrentHeroSlide((prev) => (prev + 1) % trek.gallery.length),
+      3200
+    );
     return () => window.clearInterval(timer);
   }, [trek?.gallery]);
 
-  const formattedName = trek?.name
-    ?? (id ? id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Trek Details");
+  const formattedName =
+    trek?.name ?? (id ? id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Trek Details");
   const heroImages = trek?.gallery?.length ? trek.gallery.slice(0, 3) : [];
 
-  /* ── Basic layout for non-rich treks ── */
   if (!isRich) {
     return (
       <div className="td-page">
@@ -203,10 +161,10 @@ function TrekDetails() {
               </div>
               <div className="td-hero-overlay" />
               <div className="td-hero-content container-fluid td-shell">
+                <button onClick={() => navigate(-1)} className="td-back-btn">← Back</button>
                 <span className="td-kicker">🥾 Maharashtra Trek Experience</span>
                 <h1 className="td-heading">{formattedName}</h1>
                 <p className="td-subheading">{trek.location} · {trek.duration} · {trek.altitude}</p>
-
                 <div className="td-stats-bar">
                   {[
                     { icon: "📍", label: trek.location },
@@ -215,23 +173,18 @@ function TrekDetails() {
                     { icon: "⚡", label: trek.difficulty },
                     { icon: "⭐", label: `${trek.rating} (${trek.reviews} reviews)` },
                     { icon: "💰", label: `From ₹${trek.price}` },
-                  ].map((s) => (
-                    <div className="td-stat" key={s.label}>
-                      <span className="td-stat-icon">{s.icon}</span>
-                      <span>{s.label}</span>
+                  ].map((stat) => (
+                    <div className="td-stat" key={stat.label}>
+                      <span className="td-stat-icon">{stat.icon}</span>
+                      <span>{stat.label}</span>
                     </div>
                   ))}
                 </div>
-
                 <div className="td-hero-actions">
-                  <Link to="/book" state={{ trek }} className="btn td-book-btn">
-                    Book Now — ₹{trek.price}
-                  </Link>
-                  <button className="btn td-itinerary-btn" onClick={() => setActiveTab("gallery")}>
-                    View Photos
-                  </button>
+                  <Link to="/book" state={{ trek }} className="btn td-book-btn">Book Now — ₹{trek.price}</Link>
+                  <button className="btn td-itinerary-btn" onClick={() => setActiveTab("gallery")}>View Photos</button>
                   <a
-                    href={createWhatsAppInquiryUrl({ packageName: trek.name, location: trek.location, category: "Trek" })}
+                    href={createWhatsappHref(trek)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn td-itinerary-btn"
@@ -241,51 +194,28 @@ function TrekDetails() {
                     💬 WhatsApp
                   </a>
                 </div>
-
-                {heroImages.length > 1 && (
-                  <div className="td-hero-dots" aria-label="Trek hero image slides">
-                    {heroImages.map((_, index) => (
-                      <button
-                        key={`${trek.name}-basic-dot-${index}`}
-                        type="button"
-                        className={`td-hero-dot${index === currentHeroSlide ? " is-active" : ""}`}
-                        onClick={() => setCurrentHeroSlide(index)}
-                        aria-label={`Show image ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
-
             <div className="container-fluid td-shell py-4">
               <div className="td-card">
                 <h2 className="td-section-title">Photo Gallery</h2>
                 <div className="td-gallery-grid">
-                  {trek.gallery?.map((img, i) => (
+                  {trek.gallery?.map((img, index) => (
                     <div
                       className="td-gallery-item"
-                      key={i}
+                      key={index}
                       onClick={() => setLightboxImg(img)}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => e.key === "Enter" && setLightboxImg(img)}
                     >
-                      <img src={img} alt={`${trek.name} ${i + 1}`} className="td-gallery-img" />
+                      <img src={img} alt={`${trek.name} ${index + 1}`} className="td-gallery-img" />
                       <div className="td-gallery-zoom">🔍 View</div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-            {lightboxImg && (
-              <div className="td-lightbox" onClick={() => setLightboxImg(null)}>
-                <div className="td-lightbox-inner" onClick={(e) => e.stopPropagation()}>
-                  <img src={lightboxImg} alt="Full view" />
-                  <button className="td-lightbox-close" onClick={() => setLightboxImg(null)}>✕</button>
-                </div>
-              </div>
-            )}
           </>
         ) : (
           <div className="trek-details-basic container py-5">
@@ -296,99 +226,87 @@ function TrekDetails() {
     );
   }
 
-  /* ── Resolve active data set ── */
-  const adminDiscountCodes = trek?.discountEnabled === false ? [] : parseDiscountItems(trek?.discountCodes);
-  const adminItineraries = (adminTrek || previewTrek) ? parseDeparturePlanItineraries(trek?.departurePlans) : {};
-  const overview = isKalsubai
-    ? (adminTrek || previewTrek)
+  const adminItineraries =
+    adminTrek || previewTrek ? parseDeparturePlanItineraries(trek?.departurePlans) : {};
+  const overview =
+    adminTrek || previewTrek
       ? {
-          ...kalsubaiOverview,
-          subtitle: trek?.subtitle || kalsubaiOverview.subtitle,
-          intro: trek?.about || kalsubaiOverview.intro,
+          tagline: trek?.subtitle || "",
+          subtitle: trek?.subtitle || "",
+          intro: trek?.about || "",
+          sections: [
+            ...(trek?.history ? [{ title: "History & Significance", body: trek.history }] : []),
+            ...(trek?.mainAttractions ? [{ title: "Main Attractions", body: trek.mainAttractions }] : []),
+          ],
         }
-      : kalsubaiOverview
-    : (adminTrek || previewTrek)
+      : staticRichTrek?.overview || { tagline: "", subtitle: "", intro: "", sections: [] };
+  const history =
+    (adminTrek || previewTrek) && trek?.detailedHistory
+      ? trek.detailedHistory
+      : staticRichTrek?.history || "";
+  const highlights =
+    (adminTrek || previewTrek) && trek?.highlights
+      ? parseLineItems(trek.highlights).map((text) => ({ icon: "✨", text }))
+      : staticRichTrek?.highlights || [];
+  const eventDetails =
+    adminTrek || previewTrek
       ? {
-          ...harishchandragadOverview,
-          subtitle: trek?.subtitle || harishchandragadOverview.subtitle,
-          intro: trek?.about || harishchandragadOverview.intro,
-          history: trek?.history || harishchandragadOverview.history,
-          mainAttractions: trek?.mainAttractions || harishchandragadOverview.mainAttractions,
+          difficulty: trek?.difficulty || "",
+          endurance: trek?.enduranceLevel || trek?.difficulty || "",
+          baseVillage: trek?.baseVillage || "",
+          region: trek?.regionArea || trek?.location || "",
+          duration: trek?.duration || "",
+          climbTime: trek?.climbTime || "",
+          distance: trek?.distance || "",
+          altitude: trek?.altitude || "",
+          driveFromPune: trek?.drivePune || "",
+          driveMumbai: trek?.driveMumbai || "",
+          sanctuary: trek?.wildlifeSanctuary || "",
+          minGroup: trek?.minGroup || "",
+          bestTime: trek?.bestTime || "",
+          trailType: trek?.trailType || "",
         }
-      : harishchandragadOverview;
-  const history = (adminTrek || previewTrek) && trek?.detailedHistory
-    ? trek.detailedHistory
-    : isKalsubai ? kalsubaiHistory : harishchandragadHistory;
-  const highlights = (adminTrek || previewTrek) && trek?.highlights
-    ? parseLineItems(trek.highlights).map((text) => ({ icon: "✨", text }))
-    : isKalsubai ? kalsubaiHighlights : harishchandragadHighlights;
-  const eventDetails = (adminTrek || previewTrek)
-    ? {
-        difficulty: trek?.difficulty || "",
-        endurance: trek?.enduranceLevel || trek?.difficulty || "",
-        baseVillage: trek?.baseVillage || "",
-        region: trek?.regionArea || trek?.location || "",
-        duration: trek?.duration || "",
-        climbTime: trek?.climbTime || "",
-        distance: trek?.distance || "",
-        altitude: trek?.altitude || "",
-        driveFromPune: trek?.drivePune || "",
-        sanctuary: trek?.wildlifeSanctuary || "",
-        minGroup: "",
-      }
-    : isKalsubai ? kalsubaiEventDetails : harishchandragadEventDetails;
-  const pricing = (adminTrek || previewTrek)
-    ? Object.fromEntries(
-        Object.entries(parseJsonValue(trek?.departurePlans, {})).map(([city, plan]) => [
-          city,
-          { label: `${city} Departure`, price: Number(plan?.price) || trek?.price || 0 },
-        ])
-      )
-    : isKalsubai ? kalsubaiPricing : harishchandragadPricing;
-  const whyJoin = isKalsubai ? kalsubaiWhyJoin : harishchandragadWhyJoin;
-  const itineraries = (adminTrek || previewTrek)
-    ? adminItineraries
-    : isKalsubai ? kalsubaiItineraries : harishchandragadItineraries;
-  const bookingSteps = isKalsubai ? kalsubaiBookingSteps : harishchandragadBookingSteps;
-  const itineraryKeys = (adminTrek || previewTrek)
-    ? Object.keys(adminItineraries)
-    : isKalsubai ? KALSUBAI_ITINERARY_KEYS : HC_ITINERARY_KEYS;
-  const itinerary = itineraryKeys.length
-    ? itineraries[activeItinerary] ?? itineraries[itineraryKeys[0]]
-    : { note: "Itinerary will appear once route details are added.", days: [] };
-  const includedItems = (adminTrek || previewTrek)
-    ? parseLineItems(trek?.included).map((item) => `✅ ${item}`)
-    : isKalsubai
-      ? [
-          "✅ Expert certified trek leader",
-          "✅ Breakfast at summit",
-          "✅ Veg lunch at base village",
-          "✅ Local jeep from Kasara (train batch)",
-          "✅ First aid kit",
-          "✅ E-certificate on completion",
-          "✅ WhatsApp group coordination",
-        ]
-      : harishchandragadInclusions;
-  const excludedItems = (adminTrek || previewTrek)
-    ? parseLineItems(trek?.notIncluded).map((item) => `❌ ${item}`)
-    : isKalsubai
-      ? [
-          "❌ Train ticket (self-arranged)",
-          "❌ Personal expenses",
-        ]
-      : harishchandragadExclusions;
-  const carryItems = (adminTrek || previewTrek)
-    ? parseLineItems(trek?.thingsToCarry)
-    : harishchandragadThingsToCarry;
+      : staticRichTrek?.eventDetails || {};
+  const pricing =
+    adminTrek || previewTrek
+      ? Object.fromEntries(
+          Object.entries(parseJsonValue(trek?.departurePlans, {})).map(([city, plan]) => [
+            city,
+            { label: `${city} Departure`, price: Number(plan?.price) || trek?.price || 0 },
+          ])
+        )
+      : staticRichTrek?.pricing || {};
+  const whyJoin = staticRichTrek?.whyJoin || [];
+  const itineraries = adminTrek || previewTrek ? adminItineraries : staticRichTrek?.itineraries || {};
+  const itineraryKeys = adminTrek || previewTrek ? Object.keys(adminItineraries) : Object.keys(itineraries);
+  const itinerary =
+    itineraryKeys.length > 0
+      ? itineraries[activeItinerary] ?? itineraries[itineraryKeys[0]]
+      : { note: "Itinerary will appear once route details are added.", days: [] };
+  const bookingSteps = staticRichTrek?.bookingSteps || [];
+  const includedItems =
+    adminTrek || previewTrek
+      ? parseLineItems(trek?.included).map((item) => `✅ ${item}`)
+      : (staticRichTrek?.inclusions || []).map((item) => `✅ ${item}`);
+  const excludedItems =
+    adminTrek || previewTrek
+      ? parseLineItems(trek?.notIncluded).map((item) => `❌ ${item}`)
+      : (staticRichTrek?.exclusions || []).map((item) => `❌ ${item}`);
+  const carryItems =
+    adminTrek || previewTrek ? parseLineItems(trek?.thingsToCarry) : staticRichTrek?.thingsToCarry || [];
+  const placesToVisit =
+    adminTrek || previewTrek ? parsePlaces(trek?.placesToVisit) : staticRichTrek?.placesToVisit || [];
+  const discountCodes =
+    adminTrek || previewTrek
+      ? trek?.discountEnabled === false
+        ? []
+        : parseDiscountItems(trek?.discountCodes)
+      : staticRichTrek?.discountCodes || [];
+  const heroKicker = staticRichTrek?.heroKicker || "🏔 Maharashtra Trek Experience";
+  const heroTagline = overview.tagline || overview.subtitle;
 
-  const heroKicker = isKalsubai ? "🏔 Maharashtra's Highest Peak" : "🏔 Ancient Hill Fort — Konkan Kada";
-  const heroTagline = overview.tagline;
-
-  /* ── Rich Details Page ── */
   return (
     <div className="td-page">
-
-      {/* ── HERO ── */}
       <div className="td-hero">
         <div className="td-hero-slides">
           {heroImages.map((image, index) => (
@@ -401,10 +319,15 @@ function TrekDetails() {
         </div>
         <div className="td-hero-overlay" />
         <div className="td-hero-content container-fluid td-shell">
+          <button
+            onClick={() => navigate(-1)}
+            className="td-back-btn"
+          >
+            ← Back
+          </button>
           <span className="td-kicker">{heroKicker}</span>
           <h1 className="td-heading">{trek.name}</h1>
           <p className="td-subheading">{heroTagline}</p>
-
           <div className="td-stats-bar">
             {[
               { icon: "📍", label: trek.location },
@@ -413,23 +336,18 @@ function TrekDetails() {
               { icon: "⚡", label: trek.difficulty },
               { icon: "⭐", label: `${trek.rating} (${trek.reviews} reviews)` },
               { icon: "💰", label: `From ₹${trek.price}` },
-            ].map((s) => (
-              <div className="td-stat" key={s.label}>
-                <span className="td-stat-icon">{s.icon}</span>
-                <span>{s.label}</span>
+            ].map((stat) => (
+              <div className="td-stat" key={stat.label}>
+                <span className="td-stat-icon">{stat.icon}</span>
+                <span>{stat.label}</span>
               </div>
             ))}
           </div>
-
           <div className="td-hero-actions">
-            <Link to="/book" state={{ trek }} className="btn td-book-btn">
-              Book Now — ₹{trek.price}
-            </Link>
-            <button className="btn td-itinerary-btn" onClick={() => setActiveTab("itinerary")}>
-              View Itinerary
-            </button>
+            <Link to="/book" state={{ trek }} className="btn td-book-btn">Book Now — ₹{trek.price}</Link>
+            <button className="btn td-itinerary-btn" onClick={() => setActiveTab("itinerary")}>View Itinerary</button>
             <a
-              href={createWhatsAppInquiryUrl({ packageName: trek.name, location: trek.location, category: "Trek" })}
+              href={createWhatsappHref(trek)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn td-itinerary-btn"
@@ -439,24 +357,9 @@ function TrekDetails() {
               💬 WhatsApp
             </a>
           </div>
-
-          {heroImages.length > 1 && (
-            <div className="td-hero-dots" aria-label="Trek hero image slides">
-              {heroImages.map((_, index) => (
-                <button
-                  key={`${trek.name}-dot-${index}`}
-                  type="button"
-                  className={`td-hero-dot${index === currentHeroSlide ? " is-active" : ""}`}
-                  onClick={() => setCurrentHeroSlide(index)}
-                  aria-label={`Show image ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* ── STICKY TABS ── */}
       <div className="td-tabs-wrapper" role="tablist">
         <div className="td-tabs container-fluid td-shell">
           {TABS.map((tab) => (
@@ -473,10 +376,7 @@ function TrekDetails() {
         </div>
       </div>
 
-      {/* ── CONTENT ── */}
       <div className="container-fluid td-shell td-body">
-
-        {/* ── OVERVIEW TAB ── */}
         {activeTab === "overview" && (
           <div className="td-section">
             <div className="td-overview-grid">
@@ -484,37 +384,26 @@ function TrekDetails() {
                 <div className="td-card">
                   <h2 className="td-section-title">About {trek.name}</h2>
                   <p className="td-para">{overview.intro}</p>
-
-                  {isKalsubai && (
-                    <>
-                      <h3 className="td-subsection-title">🌌 Kalsubai Night Trek</h3>
-                      <p className="td-para">{overview.nightTrek}</p>
-                      <h3 className="td-subsection-title">🌧 Kalsubai Monsoon Trek</h3>
-                      <p className="td-para">{overview.monsoon}</p>
-                    </>
-                  )}
-
-                  {isHarishchandragad && (
-                    <>
-                      <h3 className="td-subsection-title">🏯 History & Significance</h3>
-                      <p className="td-para">{overview.history}</p>
-                      <h3 className="td-subsection-title">🗺 Main Attractions</h3>
-                      <p className="td-para">{overview.mainAttractions}</p>
-                    </>
-                  )}
+                  {overview.sections?.map((section) => (
+                    <div key={section.title}>
+                      <h3 className="td-subsection-title">{section.title}</h3>
+                      <p className="td-para">{section.body}</p>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="td-card">
-                  <h2 className="td-section-title">{isKalsubai ? "History & Legend" : "Detailed History"}</h2>
-                  <p className="td-para">{history}</p>
-                </div>
-
-                {/* Places to Visit (Harishchandragad only) */}
-                {isHarishchandragad && (
+                {history && (
                   <div className="td-card">
-                    <h2 className="td-section-title">Places to Visit on Harishchandragad</h2>
+                    <h2 className="td-section-title">{staticRichTrek?.historyTitle || "Detailed History"}</h2>
+                    <p className="td-para">{history}</p>
+                  </div>
+                )}
+
+                {placesToVisit.length > 0 && (
+                  <div className="td-card">
+                    <h2 className="td-section-title">Places to Visit</h2>
                     <div className="td-places-list">
-                      {harishchandragadPlacesToVisit.map((place) => (
+                      {placesToVisit.map((place) => (
                         <div className="td-place-item" key={place.name}>
                           <span className="td-place-icon">{place.icon}</span>
                           <div>
@@ -529,88 +418,71 @@ function TrekDetails() {
               </div>
 
               <div className="td-overview-side">
-                {/* Highlights */}
                 <div className="td-card td-highlights-card">
                   <h3 className="td-section-title">Trek Highlights</h3>
                   <ul className="td-highlights-list">
-                    {highlights.map((h) => (
-                      <li key={h.text} className="td-highlight-item">
-                        <span className="td-highlight-icon">{h.icon}</span>
-                        <span>{h.text}</span>
+                    {highlights.map((highlight) => (
+                      <li key={highlight.text} className="td-highlight-item">
+                        <span className="td-highlight-icon">{highlight.icon}</span>
+                        <span>{highlight.text}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                {/* Discount Codes (Harishchandragad only) */}
-                {(trek?.discountEnabled !== false) && isHarishchandragad && (
+                {discountCodes.length > 0 && (
                   <div className="td-card" style={{ marginTop: 16 }}>
                     <h3 className="td-section-title">Discount Offers</h3>
                     <div className="td-discount-codes">
-                      {(adminDiscountCodes.length ? adminDiscountCodes : harishchandragadDiscountCodes).map((d) => (
-                        <div className="td-discount-item" key={d.code}>
-                          <span className="td-discount-code">{d.code}</span>
-                          <span className="td-discount-desc">{d.desc}</span>
+                      {discountCodes.map((discount) => (
+                        <div className="td-discount-item" key={discount.code}>
+                          <span className="td-discount-code">{discount.code}</span>
+                          <span className="td-discount-desc">{discount.desc}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Why Join */}
-                <div className="td-why-grid" style={{ marginTop: 16 }}>
-                  {whyJoin.map((w) => (
-                    <div className="td-why-card" key={w.title}>
-                      <span className="td-why-icon">{w.icon}</span>
-                      <strong>{w.title}</strong>
-                      <p>{w.desc}</p>
-                    </div>
-                  ))}
-                </div>
+                {whyJoin.length > 0 && (
+                  <div className="td-why-grid" style={{ marginTop: 16 }}>
+                    {whyJoin.map((item) => (
+                      <div className="td-why-card" key={item.title}>
+                        <span className="td-why-icon">{item.icon}</span>
+                        <strong>{item.title}</strong>
+                        <p>{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* ── GALLERY TAB ── */}
         {activeTab === "gallery" && (
           <div className="td-section">
             <h2 className="td-section-title">Photo Gallery</h2>
             <p className="td-muted">Hover to zoom · Click to view full screen</p>
             <div className="td-gallery-grid">
-              {[...trek.gallery, ...trek.gallery].map((img, i) => (
+              {[...trek.gallery, ...trek.gallery].map((img, index) => (
                 <div
                   className="td-gallery-item"
-                  key={i}
+                  key={index}
                   onClick={() => setLightboxImg(img)}
                   role="button"
                   tabIndex={0}
-                  aria-label={`View ${trek.name} photo ${i + 1}`}
+                  aria-label={`View ${trek.name} photo ${index + 1}`}
                   onKeyDown={(e) => e.key === "Enter" && setLightboxImg(img)}
                 >
-                  <img
-                    src={img}
-                    alt={`${trek.name} - Photo ${i + 1}`}
-                    className="td-gallery-img"
-                    loading="lazy"
-                  />
+                  <img src={img} alt={`${trek.name} - Photo ${index + 1}`} className="td-gallery-img" loading="lazy" />
                   <div className="td-gallery-zoom">🔍 View</div>
                 </div>
               ))}
             </div>
-
-            {lightboxImg && (
-              <div className="td-lightbox" onClick={() => setLightboxImg(null)}>
-                <div className="td-lightbox-inner" onClick={(e) => e.stopPropagation()}>
-                  <img src={lightboxImg} alt="Full view" />
-                  <button className="td-lightbox-close" onClick={() => setLightboxImg(null)}>✕</button>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
-        {/* ── ITINERARY TAB ── */}
         {activeTab === "itinerary" && (
           <div className="td-section">
             <h2 className="td-section-title">Trek Itinerary</h2>
@@ -622,16 +494,12 @@ function TrekDetails() {
                   : "Itinerary"}
             </p>
 
-            {/* Route selector — only shown when multiple options */}
             {itineraryKeys.length > 1 && (
               <div className="td-itinerary-selector" role="radiogroup" aria-label="Select departure route">
                 {itineraryKeys.map((key) => {
-                  const it = itineraries[key];
+                  const route = itineraries[key];
                   return (
-                    <label
-                      key={key}
-                      className={`td-itinerary-option${activeItinerary === key ? " active" : ""}`}
-                    >
+                    <label key={key} className={`td-itinerary-option${activeItinerary === key ? " active" : ""}`}>
                       <input
                         type="radio"
                         name="itineraryRoute"
@@ -639,10 +507,10 @@ function TrekDetails() {
                         checked={activeItinerary === key}
                         onChange={() => setActiveItinerary(key)}
                       />
-                      <span className="td-itinerary-icon">{it.icon}</span>
+                      <span className="td-itinerary-icon">{route.icon}</span>
                       <div>
-                        <span className="td-itinerary-label">{it.label}</span>
-                        <span className="td-itinerary-sublabel">{it.sublabel}</span>
+                        <span className="td-itinerary-label">{route.label}</span>
+                        <span className="td-itinerary-sublabel">{route.sublabel}</span>
                       </div>
                     </label>
                   );
@@ -650,24 +518,18 @@ function TrekDetails() {
               </div>
             )}
 
-            {/* Note — only show when there are no timeline events */}
-            {(!itinerary.days?.length || itinerary.days.every(d => !d.events?.length)) && itinerary.note && (
-              <div className="td-itinerary-note">
-                ⚠️ {itinerary.note}
-              </div>
-            )}
+            {itinerary.note && <div className="td-itinerary-note">⚠️ {itinerary.note}</div>}
 
-            {/* Timeline */}
             <div className="td-timeline">
-              {itinerary.days.map((day, di) => (
-                <div className="td-timeline-day" key={di}>
+              {(itinerary.days || []).map((day, dayIndex) => (
+                <div className="td-timeline-day" key={dayIndex}>
                   <div className="td-timeline-day-title">{day.title}</div>
                   <div className="td-timeline-events">
-                    {day.events.map((ev, ei) => (
-                      <div className="td-timeline-event" key={ei}>
-                        <div className="td-timeline-time">{ev.time}</div>
+                    {(day.events || []).map((event, eventIndex) => (
+                      <div className="td-timeline-event" key={eventIndex}>
+                        <div className="td-timeline-time">{event.time}</div>
                         <div className="td-timeline-dot" />
-                        <div className="td-timeline-desc">{ev.desc}</div>
+                        <div className="td-timeline-desc">{event.desc}</div>
                       </div>
                     ))}
                   </div>
@@ -675,98 +537,82 @@ function TrekDetails() {
               ))}
             </div>
 
-            {/* How to book */}
-            <div className="td-card td-booking-steps-card">
-              <h3 className="td-section-title">How to Book?</h3>
-              <ol className="td-booking-steps">
-                {bookingSteps.map((step, i) => (
-                  <li key={i} className="td-booking-step">
-                    <span className="td-booking-step-num">{i + 1}</span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
-              <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <Link to="/book" state={{ trek }} className="btn td-book-btn">
-                  Book Now
-                </Link>
-                <a
-                  href={createWhatsAppInquiryUrl({ packageName: trek.name, location: trek.location, category: "Trek" })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn td-itinerary-btn"
-                  style={{ background: "#25d366", color: "#fff", borderColor: "#25d366" }}
-                >
-                  💬 WhatsApp Enquiry
-                </a>
+            {bookingSteps.length > 0 && (
+              <div className="td-card td-booking-steps-card">
+                <h3 className="td-section-title">How to Book?</h3>
+                <ol className="td-booking-steps">
+                  {bookingSteps.map((step, index) => (
+                    <li key={index} className="td-booking-step">
+                      <span className="td-booking-step-num">{index + 1}</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <Link to="/book" state={{ trek }} className="btn td-book-btn">Book Now</Link>
+                  <a
+                    href={createWhatsappHref(trek)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn td-itinerary-btn"
+                    style={{ background: "#25d366", color: "#fff", borderColor: "#25d366" }}
+                  >
+                    💬 WhatsApp Enquiry
+                  </a>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
-        {/* ── DETAILS & COST TAB ── */}
         {activeTab === "details" && (
           <div className="td-section">
             <div className="td-details-grid">
-              {/* Event Details */}
               <div className="td-card">
                 <h2 className="td-section-title">Trek Details</h2>
                 <table className="td-details-table">
                   <tbody>
-                    {Object.entries(
-                      isKalsubai
-                        ? {
-                            "Difficulty Level": eventDetails.difficulty,
-                            "Endurance Level": eventDetails.endurance,
-                            "Base Village": eventDetails.baseVillage,
-                            "Region": eventDetails.region,
-                            "Duration": eventDetails.duration,
-                            "Climb Time (one way)": eventDetails.climbTime,
-                            "Distance (one way)": eventDetails.distance,
-                            "Altitude": eventDetails.altitude,
-                            "Minimum Group": eventDetails.minGroup,
-                            "Wildlife Sanctuary": eventDetails.sanctuary,
-                          }
-                        : {
-                            "Difficulty Level": eventDetails.difficulty,
-                            "Endurance Level": eventDetails.endurance,
-                            "Base Village": eventDetails.baseVillage,
-                            "Region": eventDetails.region,
-                            "Duration": eventDetails.duration,
-                            "Climb Time (one way)": eventDetails.climbTime,
-                            "Distance (one way)": eventDetails.distance,
-                            "Altitude": eventDetails.altitude,
-                            "Drive from Pune": eventDetails.driveFromPune,
-                            "Wildlife Sanctuary": eventDetails.sanctuary,
-                          }
-                    ).filter(([, val]) => val).map(([key, val]) => (
-                      <tr key={key}>
-                        <td className="td-table-key">{key}</td>
-                        <td className="td-table-val">{val}</td>
-                      </tr>
-                    ))}
+                    {Object.entries({
+                      "Difficulty Level": eventDetails.difficulty,
+                      "Endurance Level": eventDetails.endurance,
+                      "Base Village": eventDetails.baseVillage,
+                      Region: eventDetails.region,
+                      Duration: eventDetails.duration,
+                      "Climb Time": eventDetails.climbTime,
+                      Distance: eventDetails.distance,
+                      Altitude: eventDetails.altitude,
+                      "Drive from Pune": eventDetails.driveFromPune,
+                      "Drive from Mumbai": eventDetails.driveMumbai,
+                      "Best Time": eventDetails.bestTime,
+                      "Trail Type": eventDetails.trailType,
+                      "Minimum Group": eventDetails.minGroup,
+                      "Wildlife Sanctuary": eventDetails.sanctuary,
+                    })
+                      .filter(([, value]) => value)
+                      .map(([key, value]) => (
+                        <tr key={key}>
+                          <td className="td-table-key">{key}</td>
+                          <td className="td-table-val">{value}</td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
 
-              {/* Pricing + Inclusions */}
               <div>
                 <div className="td-card">
                   <h2 className="td-section-title">Pricing</h2>
                   <div className="td-pricing-cards">
-                    {Object.values(pricing).map((p) => (
-                      <div className="td-pricing-card" key={p.label}>
-                        <div className="td-pricing-label">{p.label}</div>
-                        <div className="td-pricing-price">₹{p.price}<span>/person</span></div>
-                        <Link to="/book" state={{ trek }} className="btn td-pricing-book-btn">
-                          Book This
-                        </Link>
+                    {Object.values(pricing).map((price) => (
+                      <div className="td-pricing-card" key={price.label}>
+                        <div className="td-pricing-label">{price.label}</div>
+                        <div className="td-pricing-price">₹{price.price}<span>/person</span></div>
+                        <Link to="/book" state={{ trek }} className="btn td-pricing-book-btn">Book This</Link>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Inclusions / Exclusions */}
                 <div className="td-card" style={{ marginTop: 18 }}>
                   <h3 className="td-section-title">What's Included / Not Included</h3>
                   <ul className="td-inclusions">
@@ -776,8 +622,7 @@ function TrekDetails() {
                   </ul>
                 </div>
 
-                {/* Things to Carry (Harishchandragad only) */}
-                {(isHarishchandragad || (adminTrek || previewTrek)) && carryItems.length > 0 && (
+                {carryItems.length > 0 && (
                   <div className="td-card" style={{ marginTop: 18 }}>
                     <h3 className="td-section-title">Things to Carry</h3>
                     <ul className="td-inclusions">
@@ -793,7 +638,15 @@ function TrekDetails() {
         )}
       </div>
 
-      {/* ── STICKY BOTTOM CTA ── */}
+      {lightboxImg && (
+        <div className="td-lightbox" onClick={() => setLightboxImg(null)}>
+          <div className="td-lightbox-inner" onClick={(e) => e.stopPropagation()}>
+            <img src={lightboxImg} alt="Full view" />
+            <button className="td-lightbox-close" onClick={() => setLightboxImg(null)}>✕</button>
+          </div>
+        </div>
+      )}
+
       <div className="td-cta-bar">
         <div className="td-cta-info">
           <span className="td-cta-name">{trek.name}</span>
@@ -804,11 +657,9 @@ function TrekDetails() {
           <span className="td-cta-amount">₹{trek.price}</span>
           <span className="td-cta-orig">₹{trek.originalPrice}</span>
         </div>
-        <Link to="/book" state={{ trek }} className="btn td-cta-book-btn">
-          Book Now
-        </Link>
+        <Link to="/book" state={{ trek }} className="btn td-cta-book-btn">Book Now</Link>
         <a
-          href={createWhatsAppInquiryUrl({ packageName: trek.name, location: trek.location, category: "Trek" })}
+          href={createWhatsappHref(trek)}
           target="_blank"
           rel="noopener noreferrer"
           className="btn td-cta-book-btn"

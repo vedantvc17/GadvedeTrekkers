@@ -93,7 +93,7 @@ export default function PartnerApply() {
       <div className="container py-5">
         <div className="vr-hero mb-5">
           <span className="vr-kicker">Join Our Team</span>
-          <h1>Become a Partner</h1>
+          <h1>Join Our Team</h1>
           <p>
             Join the Gadvede Trekkers community as a trek leader, guide, photographer, or
             content creator. Share your passion for the outdoors with thousands of adventurers.
@@ -177,7 +177,7 @@ export default function PartnerApply() {
                 <textarea
                   className={`form-control ${errors.about ? "is-invalid" : ""}`}
                   rows={4}
-                  placeholder="Tell us about your experience, skills, and why you want to partner with Gadvede Trekkers..."
+                  placeholder="Tell us about your experience, skills, and why you want to join Gadvede Trekkers..."
                   value={form.about}
                   onChange={(e) => setForm((f) => ({ ...f, about: e.target.value }))}
                 />

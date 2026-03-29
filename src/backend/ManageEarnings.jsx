@@ -154,6 +154,34 @@ function RevenueFields({ form, setForm }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const calc = computeProfit(form);
 
+  /* Load employees + vendors for auto-fill */
+  const leaders = useMemo(() => {
+    try { return (getAllEmployees() || []).filter((e) => e.role === "Trek Leader" && e.status !== "inactive"); }
+    catch { return []; }
+  }, []);
+  const allVendors = useMemo(() => {
+    try { return getAllVendors() || []; }
+    catch { return []; }
+  }, []);
+
+  const handleLeaderChange = (e) => {
+    const emp = leaders.find((l) => l.fullName === e.target.value);
+    setForm((f) => ({
+      ...f,
+      trekLeaderName: e.target.value,
+      trekLeaderPay:  emp?.payPerTrek ? String(emp.payPerTrek) : f.trekLeaderPay,
+    }));
+  };
+
+  const handleVendorChange = (e) => {
+    const v = allVendors.find((v) => v.name === e.target.value);
+    setForm((f) => ({
+      ...f,
+      _selectedVendorName: e.target.value,
+      vendorCosts: v?.rateAmount ? String(v.rateAmount) : f.vendorCosts,
+    }));
+  };
+
   const numInput = (label, key, placeholder = "0") => (
     <div className="mb-2">
       <label className="form-label" style={{ fontSize: 12 }}>{label}</label>
@@ -171,8 +199,23 @@ function RevenueFields({ form, setForm }) {
           <input className="form-control form-control-sm" value={form.trekName} onChange={set("trekName")} placeholder="e.g. Rajmachi Fort" />
         </div>
         <div className="mb-2">
-          <label className="form-label" style={{ fontSize: 12 }}>Trek Leader Name</label>
-          <input className="form-control form-control-sm" value={form.trekLeaderName} onChange={set("trekLeaderName")} />
+          <label className="form-label" style={{ fontSize: 12 }}>Trek Leader</label>
+          {leaders.length > 0 ? (
+            <select className="form-select form-select-sm" value={form.trekLeaderName} onChange={handleLeaderChange}>
+              <option value="">— Select Leader —</option>
+              {leaders.map((l) => (
+                <option key={l.employeeId} value={l.fullName}>
+                  {l.fullName}{l.payPerTrek ? ` (₹${Number(l.payPerTrek).toLocaleString("en-IN")}/trek)` : ""}
+                </option>
+              ))}
+              <option value="__other__">Other (type manually)</option>
+            </select>
+          ) : (
+            <input className="form-control form-control-sm" value={form.trekLeaderName} onChange={set("trekLeaderName")} placeholder="Leader name" />
+          )}
+          {form.trekLeaderName === "__other__" && (
+            <input className="form-control form-control-sm mt-1" value={form._customLeaderName || ""} onChange={(e) => setForm((f) => ({ ...f, _customLeaderName: e.target.value, trekLeaderName: e.target.value }))} placeholder="Enter leader name" />
+          )}
         </div>
         <div className="earn-form-section">Revenue</div>
         {numInput("Total Revenue Collected (₹)", "trekRevenue")}
@@ -254,6 +297,21 @@ function RevenueFields({ form, setForm }) {
         </select>
       </div>
       {numInput("Trek Leader Pay (₹)", "trekLeaderPay")}
+
+      {/* Vendor selector with auto-fill */}
+      <div className="mb-2">
+        <label className="form-label" style={{ fontSize: 12 }}>Vendor (auto-fills rate)</label>
+        {allVendors.length > 0 ? (
+          <select className="form-select form-select-sm" value={form._selectedVendorName || ""} onChange={handleVendorChange}>
+            <option value="">— Select Vendor (optional) —</option>
+            {allVendors.map((v) => (
+              <option key={v.id} value={v.name}>
+                {v.name} · {v.serviceType}{v.rateAmount ? ` (₹${Number(v.rateAmount).toLocaleString("en-IN")})` : ""}
+              </option>
+            ))}
+          </select>
+        ) : null}
+      </div>
       {numInput("Vendor Costs (₹)", "vendorCosts")}
 
       {/* Live calculation */}

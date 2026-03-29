@@ -4542,3 +4542,248 @@ footer .row > div {
     overflow-x: auto;
   }
 }
+
+@media (max-width: 768px) {
+  .vr-page .container,
+  .trek-page-shell,
+  .td-shell {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .vr-hero {
+    margin-bottom: 20px !important;
+    text-align: left;
+  }
+
+  .vr-hero h1 {
+    font-size: clamp(1.8rem, 8vw, 2.4rem);
+    line-height: 1.15;
+  }
+
+  .vr-form-card,
+  .vr-success,
+  .adm-form-card {
+    padding: 16px !important;
+    border-radius: 14px !important;
+  }
+
+  .vr-form-card .form-control,
+  .vr-form-card .form-select,
+  .adm-form-card .form-control,
+  .adm-form-card .form-select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .adm-table {
+    min-width: 760px;
+  }
+
+  .td-stats-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .td-hero-actions,
+  .td-cta-bar {
+    flex-wrap: wrap;
+  }
+
+  .td-cta-bar .btn,
+  .td-hero-actions .btn {
+    width: 100%;
+  }
+}
+
+/* ══════════════════════════════════════════
+   BACK BUTTON — Trek / Tour hero
+══════════════════════════════════════════ */
+.td-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.35);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: background 0.2s;
+  letter-spacing: 0.2px;
+}
+.td-back-btn:hover {
+  background: rgba(255,255,255,0.28);
+}
+
+/* ══════════════════════════════════════════
+   TOUR DETAIL — Responsive Layout
+══════════════════════════════════════════ */
+.tour-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+
+.tour-detail-aside {
+  position: sticky;
+  top: 88px;
+}
+
+@media (max-width: 991px) {
+  .tour-detail-layout {
+    grid-template-columns: 1fr;
+  }
+  .tour-detail-aside {
+    position: static !important;
+    top: auto !important;
+    /* Show pricing card after main content on mobile */
+  }
+}
+
+/* ══════════════════════════════════════════
+   COMPREHENSIVE MOBILE FIXES
+══════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Tour Detail section cards */
+  .tour-detail-layout > div > section {
+    padding: 18px !important;
+    border-radius: 16px !important;
+  }
+
+  /* Itinerary day rows — allow label to wrap */
+  .tour-detail-layout .itinerary-day-row {
+    grid-template-columns: 80px 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Section title font on mobile */
+  .tour-detail-layout h2 {
+    font-size: 1.25rem !important;
+  }
+
+  /* Trek/Tour tabs scrollable on mobile */
+  .td-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap !important;
+    padding-bottom: 2px;
+  }
+  .td-tabs::-webkit-scrollbar { display: none; }
+  .td-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Trek overview — stack sidebar below on mobile */
+  .td-overview-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .td-details-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Timeline — stack on mobile */
+  .td-timeline-event {
+    grid-template-columns: 70px 14px 1fr !important;
+    gap: 6px !important;
+  }
+  .td-timeline-time {
+    font-size: 11px !important;
+  }
+
+  /* Booking layout — single column on small mobile */
+  .booking-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* CTA bar — better mobile layout */
+  .td-cta-bar {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+  .td-cta-info {
+    flex: 1 1 100%;
+  }
+  .td-cta-price {
+    flex: 1;
+  }
+  .td-cta-book-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Booking form — reduce padding */
+  .booking-form-card,
+  .booking-summary-card {
+    padding: 16px !important;
+    border-radius: 14px !important;
+  }
+
+  /* Hero stats bar — 3-col on small screens */
+  .td-stats-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    font-size: 12px !important;
+  }
+
+  /* Gallery — 2 columns on mobile */
+  .td-gallery-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Admin table — horizontal scroll */
+  .adm-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Opportunity pages — better mobile padding */
+  .vr-form-card {
+    padding: 16px !important;
+  }
+
+  /* Historic Ticket mobile */
+  .ht-outer {
+    padding: 16px 12px !important;
+  }
+  .ht-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Very small screens */
+  .tour-detail-layout > div > section {
+    padding: 14px !important;
+  }
+
+  .td-heading {
+    font-size: clamp(1.6rem, 7vw, 2.2rem) !important;
+  }
+
+  .td-tab {
+    font-size: 13px !important;
+    padding: 10px 12px !important;
+  }
+
+  /* Trek stats — 2 columns */
+  .td-stats-bar {
+    grid-template-columns: 1fr 1fr !important;
+    font-size: 11px !important;
+  }
+
+  /* Booking steps — single column */
+  .td-booking-steps {
+    grid-template-columns: 1fr !important;
+  }
+}

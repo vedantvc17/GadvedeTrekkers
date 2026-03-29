@@ -311,6 +311,63 @@ export default function Corporate() {
         </div>
       </div>
 
+      {/* ── POPULAR CORPORATE TRIPS ── */}
+      <section style={{ background: "#f0fdf4", padding: "56px 0 48px", borderBottom: "1px solid #d1fae5" }}>
+        <div className="container">
+          <div style={{ textAlign: "center", marginBottom: 10 }}>
+            <span style={{ background: "#dcfce7", color: "#166534", padding: "4px 14px", borderRadius: 999, fontSize: "0.76rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+              🔥 Handpicked Packages
+            </span>
+          </div>
+          <h2 style={{ fontWeight: 800, color: "#064e3b", textAlign: "center", fontSize: "clamp(1.4rem,3vw,1.85rem)", marginBottom: 8 }}>
+            Popular Corporate Trips
+          </h2>
+          <p style={{ textAlign: "center", color: "#374151", maxWidth: 640, margin: "0 auto 12px", lineHeight: 1.7, fontSize: "0.95rem" }}>
+            Handpicked corporate outing packages available on request.
+          </p>
+          {/* Coupon banner */}
+          <div style={{ textAlign: "center", marginBottom: 36 }}>
+            <span style={{ background: "#fff", border: "2px dashed #6ee7b7", borderRadius: 10, padding: "8px 20px", fontSize: "0.88rem", fontWeight: 700, color: "#065f46", letterSpacing: 1 }}>
+              🎟 Use coupon <span style={{ background: "#064e3b", color: "#fff", borderRadius: 6, padding: "3px 10px", marginLeft: 4 }}>EARLY75</span> for an early booking discount
+            </span>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px,1fr))", gap: 22 }}>
+            {popularTrips.map((trip) => (
+              <div key={trip.title} style={{ background: "#fff", borderRadius: 18, overflow: "hidden", boxShadow: "0 4px 20px rgba(6,78,59,0.1)", border: "1px solid #d1fae5", transition: "transform 0.2s, box-shadow 0.2s" }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 10px 32px rgba(6,78,59,0.16)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(6,78,59,0.1)"; }}
+              >
+                <div style={{ height: 180, overflow: "hidden" }}>
+                  <img src={trip.image} alt={trip.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+                <div style={{ padding: "18px 20px" }}>
+                  <h3 style={{ fontWeight: 700, color: "#064e3b", fontSize: "0.98rem", marginBottom: 8 }}>{trip.title}</h3>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                    <span style={{ background: "#f0fdf4", color: "#166534", borderRadius: 6, padding: "3px 10px", fontSize: "0.78rem", fontWeight: 600 }}>⏱ {trip.duration}</span>
+                    <span style={{ background: "#f0fdf4", color: "#166534", borderRadius: 6, padding: "3px 10px", fontSize: "0.78rem", fontWeight: 600 }}>📅 {trip.availability}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>Starting from</div>
+                      <div style={{ fontWeight: 900, color: "#064e3b", fontSize: "1.2rem" }}>₹{trip.price}<span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280" }}>/person</span></div>
+                    </div>
+                    <a
+                      href="https://wa.me/919856112727"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ background: "#25d366", color: "#fff", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "0.82rem", textDecoration: "none" }}
+                    >
+                      Enquire
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── INTRO TEXT ── */}
       <Section green>
         <div style={{ maxWidth: 820, margin: "0 auto", textAlign: "center" }}>

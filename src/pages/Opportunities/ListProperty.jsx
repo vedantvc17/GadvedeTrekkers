@@ -85,6 +85,9 @@ export default function ListProperty() {
               <strong>{form.propertyName}</strong> has been submitted for review. We'll contact
               you within 48 hours.
             </p>
+            <p style={{ color: "#475569", fontSize: 14, marginTop: 12 }}>
+              Your property is visible to admin only until it is approved.
+            </p>
             <button
               className="btn btn-success mt-3"
               onClick={() => { setForm(EMPTY); setSubmitted(false); setErrors({}); }}
@@ -101,11 +104,11 @@ export default function ListProperty() {
     <section className="vr-page">
       <div className="container py-5">
         <div className="vr-hero mb-5">
-          <span className="vr-kicker">Partner With Us</span>
+          <span className="vr-kicker">List With Us</span>
           <h1>List Your Property</h1>
           <p>
             Own a homestay, villa, resort, or farmhouse near a trekking destination? List it
-            with Gadvede Trekkers and connect with hundreds of trekkers every month.
+            with Gadvede Trekkers. Our admin team reviews each submission before it is published.
           </p>
         </div>
 

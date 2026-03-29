@@ -312,8 +312,8 @@ export default function HistoricTicket({ booking }) {
           </div>
           <div className="ht-org-contact">
             <div>📞 +91-XXXXXXXXXX</div>
-            <div>🌐 gadvedetrekkers.com</div>
-            <div>📧 info@gadvedetrekkers.com</div>
+            <div>🌐 www.gadvede.com</div>
+            <div>📧 info@gadvede.com</div>
           </div>
         </div>
 

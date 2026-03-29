@@ -160,8 +160,8 @@ function BookingConfirmationEmail({ data = SAMPLE_BOOKING }) {
             Pune, Maharashtra · gadvedetrekkers@gmail.com · +91 98561 12727
           </div>
           <div style={{ display: "flex", justifyContent: "center", gap: 20 }}>
-            {["Website", "Instagram", "WhatsApp"].map(l => (
-              <a key={l} href="#" style={{ color: "#6ee7b7", fontSize: 12, textDecoration: "none" }}>{l}</a>
+            {[["Website", "https://www.gadvede.com"], ["Instagram", "https://www.instagram.com/gadvedetrekkers"], ["WhatsApp", "https://wa.me/919856112727"]].map(([l, href]) => (
+              <a key={l} href={href} style={{ color: "#6ee7b7", fontSize: 12, textDecoration: "none" }}>{l}</a>
             ))}
           </div>
           <div style={{ color: "#475569", fontSize: 11, marginTop: 14 }}>
@@ -425,7 +425,7 @@ function EnquiryAckEmail({ data = SAMPLE_ENQUIRY }) {
         {/* Footer */}
         <div style={{ background: BRAND_DARK, padding: "24px 40px", textAlign: "center" }}>
           <div style={{ color: "#fff", fontWeight: 700, fontSize: 14, marginBottom: 6 }}>🏔 Gadvede Trekkers</div>
-          <div style={{ color: "#94a3b8", fontSize: 12 }}>Pune, Maharashtra · gadvedetrekkers@gmail.com</div>
+          <div style={{ color: "#94a3b8", fontSize: 12 }}>Pune, Maharashtra · gadvedetrekkers@gmail.com · www.gadvede.com</div>
           <div style={{ color: "#475569", fontSize: 11, marginTop: 12 }}>
             You're receiving this because you submitted an enquiry on our website.
           </div>

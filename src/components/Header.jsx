@@ -81,13 +81,16 @@ function Header() {
         <Link
           className="navbar-brand d-flex align-items-center fw-semibold fs-5 text-white"
           to="/"
+          style={{ minWidth: 0 }}
         >
           <img
             src={logo}
             alt="Gadvede Trekkers Logo"
-            style={{ height: "80px", marginRight: "12px", objectFit: "contain" }}
+            style={{ height: "clamp(52px, 11vw, 80px)", marginRight: "12px", objectFit: "contain" }}
           />
-          Gadvede Trekkers
+          <span style={{ fontSize: "clamp(1rem, 3.4vw, 1.25rem)", lineHeight: 1.1 }}>
+            Gadvede Trekkers
+          </span>
         </Link>
 
         {/* Mobile phone number – shown between logo and hamburger */}
@@ -259,7 +262,7 @@ function Header() {
               <ul className={`dropdown-menu ${openMenu === "opportunities" ? "show" : ""}`}>
                 <li>
                   <Link className="dropdown-item" to="/partner" onClick={closeMenus}>
-                    🤝 Partner With Us
+                    🤝 Join Our Team
                   </Link>
                 </li>
                 <li>

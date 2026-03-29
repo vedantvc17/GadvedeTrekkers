@@ -22,6 +22,14 @@ const blogIdeas = [
 
 export default function IndustrialVisits() {
   const [activeDestination, setActiveDestination] = useState(null);
+  const [expandedItinerary, setExpandedItinerary] = useState(new Set());
+
+  const toggleItinerary = (id) =>
+    setExpandedItinerary((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -198,21 +206,156 @@ export default function IndustrialVisits() {
                 </div>
               </div>
 
-              {/* CTA */}
+              {/* ── CTA bar — always visible ── */}
               <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
                 <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: 0 }}>
                   Customized itinerary available · Group discounts applicable · Certificate provided
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveDestination(dest)}
-                  style={{ background: "#1d4ed8", color: "#fff", padding: "10px 24px", borderRadius: 10, fontWeight: 700, fontSize: "0.85rem", textDecoration: "none", transition: "background 0.2s", border: "none" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#1e3a5f")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "#1d4ed8")}
-                >
-                  Enquire for {dest.title.split("–")[0].trim()} Package →
-                </button>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  {/* View Itinerary toggle */}
+                  <button
+                    type="button"
+                    onClick={() => toggleItinerary(dest.id)}
+                    style={{
+                      background: expandedItinerary.has(dest.id) ? "#1e3a5f" : "#fff",
+                      color: expandedItinerary.has(dest.id) ? "#fff" : "#1e3a5f",
+                      border: "2px solid #1e3a5f",
+                      padding: "10px 20px", borderRadius: 10,
+                      fontWeight: 700, fontSize: "0.85rem",
+                      cursor: "pointer", transition: "all 0.2s",
+                      display: "flex", alignItems: "center", gap: 6,
+                    }}
+                  >
+                    📋 {expandedItinerary.has(dest.id) ? "Hide Itinerary ↑" : "View Itinerary ↓"}
+                  </button>
+                  {/* Enquire button */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveDestination(dest)}
+                    style={{ background: "#1d4ed8", color: "#fff", padding: "10px 24px", borderRadius: 10, fontWeight: 700, fontSize: "0.85rem", border: "none", cursor: "pointer", transition: "background 0.2s" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#1e3a5f")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#1d4ed8")}
+                  >
+                    Enquire Now →
+                  </button>
+                </div>
               </div>
+
+              {/* ── Expandable Itinerary Panel ── */}
+              {expandedItinerary.has(dest.id) && (
+                <div style={{ marginTop: 0, borderTop: "2px solid #e0f2fe", paddingTop: 24 }}>
+
+                  {/* Package cost + includes/excludes */}
+                  {(dest.packageCost || dest.pricingSlabs || dest.includes || dest.excludes) && (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14, marginBottom: 24 }}>
+                      {dest.pricingSlabs && (
+                        <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12, padding: "16px 18px", gridColumn: "1 / -1" }}>
+                          <div style={{ fontSize: "0.82rem", color: "#166534", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>
+                            💰 Package Cost — Per Student (Based on Group Size)
+                          </div>
+                          <div style={{ overflowX: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                              <thead>
+                                <tr style={{ background: "#dcfce7" }}>
+                                  <th style={{ padding: "8px 14px", textAlign: "left", color: "#166534", fontWeight: 700, borderBottom: "2px solid #bbf7d0" }}>Group Size</th>
+                                  <th style={{ padding: "8px 14px", textAlign: "center", color: "#166534", fontWeight: 700, borderBottom: "2px solid #bbf7d0" }}>Price / Student</th>
+                                  <th style={{ padding: "8px 14px", textAlign: "left", color: "#166534", fontWeight: 700, borderBottom: "2px solid #bbf7d0" }}>Note</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {dest.pricingSlabs.map((slab, si) => (
+                                  <tr key={si} style={{ borderBottom: "1px solid #d1fae5", background: si % 2 === 0 ? "#fff" : "#f0fdf4" }}>
+                                    <td style={{ padding: "9px 14px", fontWeight: 700, color: "#0f172a" }}>👥 {slab.students} Students</td>
+                                    <td style={{ padding: "9px 14px", textAlign: "center" }}>
+                                      {slab.pricePerHead
+                                        ? <span style={{ fontSize: "1.1rem", fontWeight: 900, color: "#064e3b" }}>₹{slab.pricePerHead.toLocaleString("en-IN")}</span>
+                                        : <span style={{ color: "#6b7280", fontStyle: "italic", fontSize: "0.8rem" }}>Contact us</span>}
+                                    </td>
+                                    <td style={{ padding: "9px 14px", color: "#374151", fontSize: "0.78rem" }}>{slab.note}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div style={{ marginTop: 10, fontSize: "0.75rem", color: "#6b7280" }}>
+                            * Prices are indicative. Final quote provided after form submission based on confirmed group size, season, and customisation.
+                          </div>
+                        </div>
+                      )}
+                      {dest.packageCost && !dest.pricingSlabs && (
+                        <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12, padding: "16px 18px", textAlign: "center" }}>
+                          <div style={{ fontSize: "0.75rem", color: "#166534", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Package Cost</div>
+                          <div style={{ fontSize: "2rem", fontWeight: 900, color: "#064e3b" }}>₹{dest.packageCost.toLocaleString("en-IN")}</div>
+                          <div style={{ fontSize: "0.78rem", color: "#15803d" }}>per student</div>
+                        </div>
+                      )}
+                      {dest.includes && (
+                        <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12, padding: "14px 18px" }}>
+                          <div style={{ fontWeight: 700, color: "#166534", fontSize: "0.82rem", marginBottom: 8 }}>✅ Package Includes</div>
+                          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                            {dest.includes.map((item, i) => (
+                              <li key={i} style={{ fontSize: "0.8rem", color: "#374151", marginBottom: 5, display: "flex", gap: 6 }}>
+                                <span style={{ color: "#16a34a", fontWeight: 700 }}>✓</span>{item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {dest.excludes && (
+                        <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "14px 18px" }}>
+                          <div style={{ fontWeight: 700, color: "#92400e", fontSize: "0.82rem", marginBottom: 8 }}>❌ Not Included</div>
+                          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                            {dest.excludes.map((item, i) => (
+                              <li key={i} style={{ fontSize: "0.8rem", color: "#374151", marginBottom: 5, display: "flex", gap: 6 }}>
+                                <span style={{ color: "#dc2626" }}>✗</span>{item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Day-wise itinerary */}
+                  {dest.itinerary ? (
+                    <div>
+                      <div style={{ fontWeight: 700, color: "#1e3a5f", fontSize: "0.88rem", marginBottom: 14, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                        🗓 Day-wise Itinerary — {dest.duration}
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: 12 }}>
+                        {dest.itinerary.map((d, i) => (
+                          <div key={i} style={{ background: i % 2 === 0 ? "#f8fafc" : "#f0fdf4", border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px 16px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                              <span style={{ background: "#1e3a5f", color: "#fff", borderRadius: 6, padding: "2px 10px", fontSize: "0.72rem", fontWeight: 700, whiteSpace: "nowrap" }}>{d.day}</span>
+                              <span style={{ fontWeight: 700, color: "#1e3a5f", fontSize: "0.85rem", lineHeight: 1.3 }}>{d.title}</span>
+                            </div>
+                            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                              {d.items.map((item, j) => (
+                                <li key={j} style={{ fontSize: "0.8rem", color: "#374151", marginBottom: 4, display: "flex", gap: 6, lineHeight: 1.45 }}>
+                                  <span style={{ color: "#1d4ed8", marginTop: 2, flexShrink: 0 }}>•</span>{item}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ background: "#f1f5f9", borderRadius: 12, padding: "20px 24px", textAlign: "center", color: "#64748b" }}>
+                      <div style={{ fontSize: 28, marginBottom: 8 }}>📋</div>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>Custom Itinerary Available</div>
+                      <div style={{ fontSize: "0.85rem" }}>Contact us with your institution details and we'll prepare a tailored {dest.duration} itinerary for your group.</div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveDestination(dest)}
+                        style={{ marginTop: 12, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}
+                      >
+                        Request Custom Itinerary →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))}

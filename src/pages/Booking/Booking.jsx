@@ -547,6 +547,19 @@ function Booking() {
   return (
     <section className="booking-page">
       <div className="container py-4 py-md-5">
+        {/* Back button */}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          style={{
+            background: "none", border: "none", color: "#0a6a47",
+            fontWeight: 600, fontSize: "0.9rem", cursor: "pointer",
+            display: "inline-flex", alignItems: "center", gap: 5,
+            marginBottom: 10, padding: "4px 0",
+          }}
+        >
+          ← Back
+        </button>
         <div className="booking-hero">
           <div>
             <span className="booking-kicker">{bookingForm.heroKicker}</span>
