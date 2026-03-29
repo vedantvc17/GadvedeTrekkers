@@ -1,4 +1,7 @@
 import { useState } from "react";
+import DownloadButton from "../components/DownloadButton";
+import { logActivity } from "../data/activityLogStorage";
+import InfoTooltip from "../components/InfoTooltip";
 import {
   queryTransactions,
   updateTransactionStatus,
@@ -8,7 +11,7 @@ import {
 } from "../data/transactionStorage";
 
 const STATUS_OPTIONS  = ["SUCCESS", "FAILED", "REFUNDED"];
-const PAYMENT_MODES   = ["Partial", "UPI", "CARD", "NET BANK"];
+const PAYMENT_MODES   = ["CASH", "UPI", "CARD", "Partial", "NET BANK"];
 const SORT_OPTIONS    = [
   { label: "Latest First",    value: "latest" },
   { label: "Oldest First",    value: "oldest" },
@@ -60,6 +63,13 @@ export default function ManageTransactions() {
     if (!amt || amt <= 0) { setRefundError("Enter a valid amount."); return; }
     const result = createRefund({ transactionId: txnId, amount: amt });
     if (result.error) { setRefundError(result.error); return; }
+    logActivity({
+      action: "REFUND_PROCESSED",
+      actionLabel: `Processed refund ₹${amt}`,
+      details: `Transaction ID: ${txnId} | Refund ID: ${result.refund.refundId} | Amount: ₹${amt}`,
+      module: "Transactions",
+      severity: "warning",
+    });
     setRefundMsg(`Refund ₹${amt} processed. ID: ${result.refund.refundId}`);
     setRefundAmount("");
     setRefundTxnId(null);
@@ -69,6 +79,13 @@ export default function ManageTransactions() {
   /* ── Mark failed ── */
   const markFailed = (txnId) => {
     if (window.confirm("Mark this transaction as FAILED?")) {
+      logActivity({
+        action: "TRANSACTION_MARKED_FAILED",
+        actionLabel: `Marked transaction as FAILED`,
+        details: `Transaction ID: ${txnId}`,
+        module: "Transactions",
+        severity: "warning",
+      });
       updateTransactionStatus(txnId, "FAILED");
       refresh();
     }
@@ -77,8 +94,18 @@ export default function ManageTransactions() {
   return (
     <div className="adm-page">
       <div className="adm-page-header">
-        <h3 className="adm-page-title">💳 Transactions</h3>
-        <span className="adm-count-badge">{transactions.length} result{transactions.length !== 1 ? "s" : ""}</span>
+        <h3 className="adm-page-title">
+          💳 Transactions
+          <InfoTooltip text="Each confirmed booking generates a transaction record. Direct (manual) bookings show ₹0 tax. Filter by status, payment mode, or date to reconcile collections." />
+        </h3>
+        <div className="d-flex align-items-center gap-2">
+          <span className="adm-count-badge">{transactions.length} result{transactions.length !== 1 ? "s" : ""}</span>
+          <DownloadButton
+            getData={() => transactions.map(({ transactionId, bookingId, customerId, customerName, transactionStatus, paymentMode, grossAmount, tax, netAmount, createdAt }) => ({ transactionId, bookingId, customerId, customerName, status: transactionStatus, mode: paymentMode, gross: grossAmount, tax, net: netAmount, date: new Date(createdAt).toLocaleDateString("en-IN") }))}
+            filename="transactions"
+            title="Transactions Report — Gadvede Trekkers"
+          />
+        </div>
       </div>
 
       {/* Stats row */}
@@ -165,6 +192,9 @@ export default function ManageTransactions() {
                     <td style={{ fontFamily: "monospace", fontSize: 11 }}>{t.bookingId}</td>
                     <td>
                       <div style={{ fontSize: 13 }}>{t.customerName}</div>
+                      {t.customerId && (
+                        <div style={{ fontSize: 10, color: "#94a3b8", fontFamily: "monospace" }}>{t.customerId}</div>
+                      )}
                     </td>
                     <td>
                       <span className="badge bg-secondary" style={{ fontSize: 11 }}>{t.paymentMode}</span>

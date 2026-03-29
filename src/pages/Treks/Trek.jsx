@@ -2,15 +2,32 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { uniqueTreks, slugifyTrekName } from "../../data/treks";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
+import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
+
+const parseGallery = (value, fallback) => {
+  try {
+    const parsed = JSON.parse(value || "[]").filter(Boolean);
+    return parsed.length ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 /* Merge hardcoded treks with admin-created treks from localStorage */
 const adminTreks = getAdminItems("gt_treks")
   .filter((t) => t.active !== false)
-  .map((t) => ({
-    ...normaliseItem(t),
-    gallery: [t.image, t.image, t.image],
-    seasonalTag: "New Listing",
-  }));
+  .sort((a, b) => Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999))
+  .map((t) => {
+    const fallbackGallery = [t.image, t.image, t.image].filter(Boolean);
+    const gallery = parseGallery(t.imageGallery, fallbackGallery);
+    return {
+      ...normaliseItem(t),
+      image: gallery[0] || t.image,
+      gallery,
+      seasonalTag: "New Listing",
+      _sortOrder: Number(t.sortOrder ?? 999),
+    };
+  });
 const allTreks = [...uniqueTreks, ...adminTreks];
 
 const DIFFICULTY_FILTERS = ["All", "Easy", "Medium", "Hard"];
@@ -32,6 +49,7 @@ function Trek() {
   const [showAllTreks, setShowAllTreks] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
   const [activeSort, setActiveSort] = useState("recommended");
+  const [searchQuery, setSearchQuery] = useState("");
   const initialVisibleTreks = 10;
 
   /* ── SEO ─────────────────────────────────────── */
@@ -71,7 +89,7 @@ function Trek() {
       canonical.rel = "canonical";
       document.head.appendChild(canonical);
     }
-    canonical.href = window.location.origin + "/treks";
+    canonical.href = "https://www.gadvede.com/treks";
 
     /* JSON-LD structured data */
     const existingLd = document.querySelector("#trek-jsonld");
@@ -85,7 +103,7 @@ function Trek() {
       name: "Best Treks in Maharashtra 2025",
       description:
         "Top-rated trekking experiences in Maharashtra including Kalsubai, Harihar, Harishchandragad and more, organized by Gadvede Trekkers.",
-      url: window.location.origin + "/treks",
+      url: "https://www.gadvede.com/treks",
       numberOfItems: allTreks.length,
       itemListElement: allTreks.map((trek, i) => ({
         "@type": "ListItem",
@@ -136,16 +154,27 @@ function Trek() {
   }, []);
 
   /* ── Filtered + sorted treks ─────────────────── */
+  const isSearchActive = searchQuery.trim().length >= 3;
   const filteredTreks = useMemo(() => {
     let result = [...allTreks];
     if (activeFilter !== "All") {
       result = result.filter((t) => t.difficulty === activeFilter);
     }
+    if (isSearchActive) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter((t) =>
+        t.name?.toLowerCase().includes(q) ||
+        t.location?.toLowerCase().includes(q) ||
+        t.difficulty?.toLowerCase().includes(q) ||
+        t.duration?.toLowerCase().includes(q)
+      );
+    }
     if (activeSort === "price-asc") result.sort((a, b) => a.price - b.price);
     else if (activeSort === "price-desc") result.sort((a, b) => b.price - a.price);
     else if (activeSort === "rating") result.sort((a, b) => b.rating - a.rating);
+    else result.sort((a, b) => Number(a._sortOrder ?? 999) - Number(b._sortOrder ?? 999));
     return result;
-  }, [activeFilter, activeSort]);
+  }, [activeFilter, activeSort, searchQuery]);
 
   const visibleTreks = showAllTreks
     ? filteredTreks
@@ -153,6 +182,11 @@ function Trek() {
 
   const handleFilterChange = (filter) => {
     setActiveFilter(filter);
+    setShowAllTreks(false);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
     setShowAllTreks(false);
   };
 
@@ -225,6 +259,44 @@ function Trek() {
           </div>
         </header>
 
+        {/* ── SEARCH BAR ────────────────────────────── */}
+        <div style={{ padding: "0 0 8px" }}>
+          <div style={{ position: "relative", maxWidth: 440 }}>
+            <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: "#94a3b8", pointerEvents: "none" }}>🔍</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search treks — enter at least 3 letters…"
+              aria-label="Search treks"
+              style={{
+                width: "100%",
+                padding: "10px 14px 10px 42px",
+                border: "1.5px solid",
+                borderColor: isSearchActive ? "#16a34a" : "#e2e8f0",
+                borderRadius: 10,
+                fontSize: 14,
+                outline: "none",
+                background: "#fff",
+                boxShadow: isSearchActive ? "0 0 0 3px rgba(22,163,74,0.12)" : "none",
+                transition: "border-color 0.2s, box-shadow 0.2s",
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchQuery(""); setShowAllTreks(false); }}
+                style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18, lineHeight: 1 }}
+                aria-label="Clear search"
+              >×</button>
+            )}
+          </div>
+          {searchQuery.length > 0 && searchQuery.length < 3 && (
+            <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4, paddingLeft: 2 }}>
+              Type {3 - searchQuery.length} more letter{3 - searchQuery.length !== 1 ? "s" : ""} to search…
+            </div>
+          )}
+        </div>
+
         {/* ── FILTER + SORT BAR ────────────────────── */}
         <div className="trek-filter-bar" role="navigation" aria-label="Filter treks">
           <div className="trek-filter-tabs">
@@ -267,10 +339,25 @@ function Trek() {
 
         {/* ── RESULTS META ─────────────────────────── */}
         <p className="trek-results-meta" aria-live="polite">
-          Showing <strong>{visibleTreks.length}</strong> of{" "}
-          <strong>{filteredTreks.length}</strong>{" "}
-          {activeFilter !== "All" ? `${activeFilter} ` : ""}treks
+          {isSearchActive
+            ? <>Search: <strong>"{searchQuery}"</strong> — <strong>{filteredTreks.length}</strong> result{filteredTreks.length !== 1 ? "s" : ""} found</>
+            : <>Showing <strong>{visibleTreks.length}</strong> of{" "}
+              <strong>{filteredTreks.length}</strong>{" "}
+              {activeFilter !== "All" ? `${activeFilter} ` : ""}treks</>
+          }
         </p>
+
+        {/* ── NO RESULTS ───────────────────────────── */}
+        {filteredTreks.length === 0 && (
+          <div style={{ textAlign: "center", padding: "48px 24px", background: "#fff", borderRadius: 14, border: "1px solid #e2e8f0", margin: "16px 0" }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: "#0f172a", marginBottom: 6 }}>No treks found for "{searchQuery}"</div>
+            <div style={{ color: "#64748b", fontSize: 14, marginBottom: 16 }}>Try a different name, location, or difficulty</div>
+            <button onClick={() => { setSearchQuery(""); setActiveFilter("All"); }} style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, padding: "8px 22px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+              Clear Search
+            </button>
+          </div>
+        )}
 
         {/* ── TREK GRID ────────────────────────────── */}
         <div className="trek-grid" role="list" aria-label="Available treks">
@@ -407,6 +494,18 @@ function Trek() {
                     >
                       View Details
                     </Link>
+                    <a
+                      href={createWhatsAppInquiryUrl({
+                        packageName: trek.name,
+                        location: trek.location,
+                        category: "Trek",
+                      })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn trek-secondary-btn"
+                    >
+                      WhatsApp
+                    </a>
                   </div>
                 </div>
               </article>

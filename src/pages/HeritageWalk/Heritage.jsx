@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
+import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 
 function Heritage() {
   const location = useLocation();
@@ -221,7 +222,7 @@ function Heritage() {
                     </div>
 
                     {/* Buttons */}
-                    <div className="d-flex gap-2">
+                    <div className="d-flex gap-2 flex-wrap">
                       <button className="btn btn-success w-50">
                         Book Now
                       </button>
@@ -234,6 +235,18 @@ function Heritage() {
                       >
                         View Details
                       </Link>
+                      <a
+                        href={createWhatsAppInquiryUrl({
+                          packageName: item.name,
+                          location: item.location,
+                          category: "Heritage Walk",
+                        })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-outline-success w-100"
+                      >
+                        WhatsApp
+                      </a>
                     </div>
 
                   </div>

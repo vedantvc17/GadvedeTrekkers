@@ -52,7 +52,7 @@ function Footer() {
           <div className="col-md-2 mb-4">
             <h5 className="fw-bold mb-3">Opportunities</h5>
             <ul className="list-unstyled">
-              <li><Link className="footer-link" to="/careers">Careers</Link></li>
+              <li><Link className="footer-link" to="/partner">Join Our Team</Link></li>
               <li><Link className="footer-link" to="/list-property">List Your Property</Link></li>
               <li><Link className="footer-link" to="/list-campsite">List Your Campsite</Link></li>
               <li><Link className="footer-link" to="/list-event">List Your Event</Link></li>
@@ -67,7 +67,7 @@ function Footer() {
               <li><Link className="footer-link" to="/contact">Contact</Link></li>
               <li><Link className="footer-link" to="/faq">FAQ</Link></li>
               <li><span className="footer-link" style={{ cursor: "default" }}>Privacy Policy</span></li>
-              <li><span className="footer-link" style={{ cursor: "default" }}>Cancellation Policy</span></li>
+              <li><Link className="footer-link" to="/cancellation-policy">Cancellation Policy</Link></li>
               <li><span className="footer-link" style={{ cursor: "default" }}>Terms & Conditions</span></li>
             </ul>
           </div>

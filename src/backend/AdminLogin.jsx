@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "gadvede@123";
+const USERS = [
+  { username: "admin",           password: "gadvede@123",    name: "Admin",           role: "Super Admin" },
+  { username: "pratik.ubhe",     password: "Pratik@gadvede", name: "Pratik Ubhe",     role: "Management" },
+  { username: "rohit.panhalkar", password: "Rohit@gadvede",  name: "Rohit Panhalkar", role: "Management" },
+  { username: "akshay.kangude",  password: "Akshay@gadvede", name: "Akshay Kangude",  role: "Management" },
+];
 
 function AdminLogin() {
   const [form, setForm] = useState({ username: "", password: "" });
@@ -12,8 +16,10 @@ function AdminLogin() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (form.username === ADMIN_USER && form.password === ADMIN_PASS) {
+    const user = USERS.find(u => u.username === form.username && u.password === form.password);
+    if (user) {
       sessionStorage.setItem("gt_admin", "true");
+      sessionStorage.setItem("gt_user", JSON.stringify({ name: user.name, role: user.role, username: user.username }));
       navigate("/admin/dashboard");
     } else {
       setError("Invalid username or password.");
@@ -75,7 +81,7 @@ function AdminLogin() {
         </form>
 
         <p className="al-hint mt-3">
-          Default: <code>admin</code> / <code>gadvede@123</code>
+          Contact admin for your login credentials.
         </p>
       </div>
     </div>

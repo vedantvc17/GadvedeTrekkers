@@ -1,0 +1,627 @@
+{
+  "info": {
+    "name": "Gadvede Trekkers — Full System API",
+    "_postman_id": "gt-trek-system-v1",
+    "description": "Complete API collection for Gadvede Trekkers management system.\nCovers: Customers · Bookings · Transactions · Events · Vendors · VendorCosts · Employees · Assignments · Availability · Expenses · Reimbursements · Earnings · Dashboard\n\n**Base URL variable:** Set {{base_url}} = http://localhost:3000/api\n**Auth:** Set {{token}} after login",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",    "value": "http://localhost:3000/api", "type": "string" },
+    { "key": "token",       "value": "",  "type": "string" },
+    { "key": "customer_id", "value": "",  "type": "string" },
+    { "key": "booking_id",  "value": "",  "type": "string" },
+    { "key": "event_id",    "value": "",  "type": "string" },
+    { "key": "vendor_id",   "value": "",  "type": "string" },
+    { "key": "employee_id", "value": "",  "type": "string" },
+    { "key": "expense_id",  "value": "",  "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 200) { pm.collectionVariables.set('token', pm.response.json().token); }"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@gadvedetrekkers.com\",\n  \"password\": \"admin123\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth","login"] },
+            "description": "Authenticate and receive JWT token. Token is auto-saved to {{token}} variable."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{token}}\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/refresh", "host": ["{{base_url}}"], "path": ["auth","refresh"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "👤 Customers",
+      "item": [
+        {
+          "name": "Create Customer",
+          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('customer_id', pm.response.json().data.id); }"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Vedant Gadvede\",\n  \"phone\": \"9876543210\",\n  \"email\": \"vedant@example.com\",\n  \"address\": \"Pune, Maharashtra\",\n  \"date_of_birth\": \"1998-05-15\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/customers", "host": ["{{base_url}}"], "path": ["customers"] },
+            "description": "Register a new customer. Phone must be unique."
+          }
+        },
+        {
+          "name": "Get All Customers",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/customers?page=1&limit=20&search=", "host": ["{{base_url}}"], "path": ["customers"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"20"},{"key":"search","value":""}] },
+            "description": "List customers with pagination + optional name/phone/email search."
+          }
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/customers/{{customer_id}}", "host": ["{{base_url}}"], "path": ["customers","{{customer_id}}"] }
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"new@example.com\",\n  \"address\": \"Mumbai, Maharashtra\"\n}" },
+            "url": { "raw": "{{base_url}}/customers/{{customer_id}}", "host": ["{{base_url}}"], "path": ["customers","{{customer_id}}"] }
+          }
+        },
+        {
+          "name": "Get Customer Bookings",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/customers/{{customer_id}}/bookings", "host": ["{{base_url}}"], "path": ["customers","{{customer_id}}","bookings"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🏕️ Events",
+      "item": [
+        {
+          "name": "Create Event",
+          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('event_id', pm.response.json().data.id); }"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rajgad Fort Trek\",\n  \"type\": \"trek\",\n  \"location\": \"Rajgad, Pune\",\n  \"description\": \"Weekend trek to historic Rajgad fort\",\n  \"start_date\": \"2026-04-06\",\n  \"end_date\": \"2026-04-06\",\n  \"price_per_person\": 999,\n  \"max_capacity\": 30\n}"
+            },
+            "url": { "raw": "{{base_url}}/events", "host": ["{{base_url}}"], "path": ["events"] }
+          }
+        },
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/events?type=trek&status=active&from_date=2026-04-01", "host": ["{{base_url}}"], "path": ["events"], "query": [{"key":"type","value":"trek"},{"key":"status","value":"active"},{"key":"from_date","value":"2026-04-01"}] }
+          }
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/events/{{event_id}}", "host": ["{{base_url}}"], "path": ["events","{{event_id}}"] }
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"price_per_person\": 1099,\n  \"max_capacity\": 35\n}" },
+            "url": { "raw": "{{base_url}}/events/{{event_id}}", "host": ["{{base_url}}"], "path": ["events","{{event_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/events/{{event_id}}", "host": ["{{base_url}}"], "path": ["events","{{event_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📋 Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('booking_id', pm.response.json().data.id); }"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"{{customer_id}}\",\n  \"event_id\": \"{{event_id}}\",\n  \"booking_type\": \"own\",\n  \"revenue_type\": \"trek\",\n  \"tickets\": 2,\n  \"total_amount\": 1998,\n  \"paid_amount\": 999,\n  \"pickup_location\": \"Swargate Bus Stop, Pune\",\n  \"pickup_time\": \"05:30\",\n  \"travel_date\": \"2026-04-06\",\n  \"notes\": \"Customer requested vegetarian food\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/bookings", "host": ["{{base_url}}"], "path": ["bookings"] },
+            "description": "Create a new booking. booking_ref is auto-generated (GT-YYYY-XXXXXX)."
+          }
+        },
+        {
+          "name": "Get All Bookings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/bookings?page=1&limit=20&status=confirmed&revenue_type=trek&from_date=2026-04-01&to_date=2026-04-30",
+              "host": ["{{base_url}}"],
+              "path": ["bookings"],
+              "query": [
+                {"key":"page","value":"1"},{"key":"limit","value":"20"},
+                {"key":"status","value":"confirmed"},{"key":"revenue_type","value":"trek"},
+                {"key":"from_date","value":"2026-04-01"},{"key":"to_date","value":"2026-04-30"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Booking by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/bookings/{{booking_id}}", "host": ["{{base_url}}"], "path": ["bookings","{{booking_id}}"] }
+          }
+        },
+        {
+          "name": "Update Booking Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"confirmed\"\n}" },
+            "url": { "raw": "{{base_url}}/bookings/{{booking_id}}/status", "host": ["{{base_url}}"], "path": ["bookings","{{booking_id}}","status"] }
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"cancelled\",\n  \"reason\": \"Customer request\"\n}" },
+            "url": { "raw": "{{base_url}}/bookings/{{booking_id}}/status", "host": ["{{base_url}}"], "path": ["bookings","{{booking_id}}","status"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "💳 Transactions",
+      "item": [
+        {
+          "name": "Add Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_id\": \"{{booking_id}}\",\n  \"amount\": 999,\n  \"payment_method\": \"upi\",\n  \"gateway_ref\": \"UPI_REF_12345\",\n  \"notes\": \"Remaining balance payment\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/transactions", "host": ["{{base_url}}"], "path": ["transactions"] },
+            "description": "Record a payment for a booking. Automatically updates booking.paid_amount."
+          }
+        },
+        {
+          "name": "Get Transactions by Booking",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/transactions?booking_id={{booking_id}}", "host": ["{{base_url}}"], "path": ["transactions"], "query": [{"key":"booking_id","value":"{{booking_id}}"}] }
+          }
+        },
+        {
+          "name": "Get All Transactions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/transactions?page=1&limit=20&status=success&method=upi", "host": ["{{base_url}}"], "path": ["transactions"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"20"},{"key":"status","value":"success"},{"key":"method","value":"upi"}] }
+          }
+        },
+        {
+          "name": "Issue Refund",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"booking_id\": \"{{booking_id}}\",\n  \"amount\": 500,\n  \"reason\": \"Partial cancellation\"\n}" },
+            "url": { "raw": "{{base_url}}/transactions/refund", "host": ["{{base_url}}"], "path": ["transactions","refund"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🧾 Vendors",
+      "item": [
+        {
+          "name": "Add Vendor",
+          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('vendor_id', pm.response.json().data.id); }"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Shree Bus Services\",\n  \"service_type\": \"bus\",\n  \"contact_person\": \"Mangesh Kadam\",\n  \"phone\": \"9811111111\",\n  \"email\": \"shreebus@example.com\",\n  \"location\": \"Pune\",\n  \"notes\": \"Reliable for Pune–Sahyadri routes\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/vendors", "host": ["{{base_url}}"], "path": ["vendors"] }
+          }
+        },
+        {
+          "name": "Get All Vendors",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/vendors?service_type=bus&status=active", "host": ["{{base_url}}"], "path": ["vendors"], "query": [{"key":"service_type","value":"bus"},{"key":"status","value":"active"}] }
+          }
+        },
+        {
+          "name": "Update Vendor",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"rating\": 4.5,\n  \"notes\": \"Excellent service on Rajgad trek\"\n}" },
+            "url": { "raw": "{{base_url}}/vendors/{{vendor_id}}", "host": ["{{base_url}}"], "path": ["vendors","{{vendor_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "💸 Vendor Costs",
+      "item": [
+        {
+          "name": "Add Vendor Cost",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"vendor_id\": \"{{vendor_id}}\",\n  \"cost\": 8500,\n  \"description\": \"Bus hire — Pune to Rajgad base village\",\n  \"invoice_ref\": \"INV-2026-001\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/vendor-costs", "host": ["{{base_url}}"], "path": ["vendor-costs"] }
+          }
+        },
+        {
+          "name": "Get Costs by Event",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/vendor-costs?event_id={{event_id}}", "host": ["{{base_url}}"], "path": ["vendor-costs"], "query": [{"key":"event_id","value":"{{event_id}}"}] }
+          }
+        },
+        {
+          "name": "Mark Vendor Cost Paid",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"paid\": true,\n  \"invoice_ref\": \"INV-2026-001\"\n}" },
+            "url": { "raw": "{{base_url}}/vendor-costs/:id", "host": ["{{base_url}}"], "path": ["vendor-costs",":id"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "👨‍💼 Employees",
+      "item": [
+        {
+          "name": "Create Employee",
+          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('employee_id', pm.response.json().data.id); }"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rahul Patil\",\n  \"email\": \"rahul@gadvedetrekkers.com\",\n  \"phone\": \"9876543210\",\n  \"address\": \"Pune, Maharashtra\",\n  \"role\": \"trek_leader\",\n  \"profile\": {\n    \"experience_years\": 5,\n    \"expertise\": \"Trek Leader\",\n    \"skills\": [\"First Aid\", \"Navigation\", \"Rock Climbing\"],\n    \"certifications\": [{\"name\": \"WFR\", \"details\": \"Wilderness First Responder 2024\"}]\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/employees", "host": ["{{base_url}}"], "path": ["employees"] },
+            "description": "Create employee + profile in one call. emp_ref is auto-generated."
+          }
+        },
+        {
+          "name": "Get All Employees",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/employees?role=trek_leader&status=active", "host": ["{{base_url}}"], "path": ["employees"], "query": [{"key":"role","value":"trek_leader"},{"key":"status","value":"active"}] }
+          }
+        },
+        {
+          "name": "Get Employee by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/employees/{{employee_id}}", "host": ["{{base_url}}"], "path": ["employees","{{employee_id}}"] }
+          }
+        },
+        {
+          "name": "Update Employee Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"inactive\"\n}" },
+            "url": { "raw": "{{base_url}}/employees/{{employee_id}}/status", "host": ["{{base_url}}"], "path": ["employees","{{employee_id}}","status"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📅 Assignments",
+      "item": [
+        {
+          "name": "Assign Employee to Event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"event_id\": \"{{event_id}}\",\n  \"role_on_event\": \"Trek Leader\",\n  \"notes\": \"Primary leader for this batch\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/assignments", "host": ["{{base_url}}"], "path": ["assignments"] }
+          }
+        },
+        {
+          "name": "Get Assignments by Event",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/assignments?event_id={{event_id}}", "host": ["{{base_url}}"], "path": ["assignments"], "query": [{"key":"event_id","value":"{{event_id}}"}] }
+          }
+        },
+        {
+          "name": "Get Assignments by Employee",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/assignments?employee_id={{employee_id}}", "host": ["{{base_url}}"], "path": ["assignments"], "query": [{"key":"employee_id","value":"{{employee_id}}"}] }
+          }
+        },
+        {
+          "name": "Remove Assignment",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/assignments/:id", "host": ["{{base_url}}"], "path": ["assignments",":id"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📆 Availability",
+      "item": [
+        {
+          "name": "Mark Availability",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"date\": \"2026-04-05\",\n  \"status\": \"on_leave\",\n  \"notes\": \"Personal leave\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/availability", "host": ["{{base_url}}"], "path": ["availability"] }
+          }
+        },
+        {
+          "name": "Bulk Mark Availability",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"dates\": [\"2026-04-05\",\"2026-04-06\",\"2026-04-12\"],\n  \"status\": \"on_leave\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/availability/bulk", "host": ["{{base_url}}"], "path": ["availability","bulk"] }
+          }
+        },
+        {
+          "name": "Get Availability by Date",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/availability?date=2026-04-06", "host": ["{{base_url}}"], "path": ["availability"], "query": [{"key":"date","value":"2026-04-06"}] }
+          }
+        },
+        {
+          "name": "Get Employee Availability",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/availability?employee_id={{employee_id}}&from=2026-04-01&to=2026-04-30", "host": ["{{base_url}}"], "path": ["availability"], "query": [{"key":"employee_id","value":"{{employee_id}}"},{"key":"from","value":"2026-04-01"},{"key":"to","value":"2026-04-30"}] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "💸 Expenses",
+      "item": [
+        {
+          "name": "Submit Expense",
+          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('expense_id', pm.response.json().data.id); }"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"event_id\": \"{{event_id}}\",\n  \"type\": \"travel\",\n  \"amount\": 1200,\n  \"description\": \"Bus fare Pune to Rajgad base village\",\n  \"bill_url\": \"https://storage.example.com/bills/bill-001.jpg\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/expenses", "host": ["{{base_url}}"], "path": ["expenses"] }
+          }
+        },
+        {
+          "name": "Get Expenses by Employee",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/expenses?employee_id={{employee_id}}&status=submitted", "host": ["{{base_url}}"], "path": ["expenses"], "query": [{"key":"employee_id","value":"{{employee_id}}"},{"key":"status","value":"submitted"}] }
+          }
+        },
+        {
+          "name": "Get All Expenses",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/expenses?page=1&limit=20&status=under_review", "host": ["{{base_url}}"], "path": ["expenses"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"20"},{"key":"status","value":"under_review"}] }
+          }
+        },
+        {
+          "name": "Mark Under Review",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"under_review\"\n}" },
+            "url": { "raw": "{{base_url}}/expenses/{{expense_id}}/status", "host": ["{{base_url}}"], "path": ["expenses","{{expense_id}}","status"] }
+          }
+        },
+        {
+          "name": "Approve Expense",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"approved\",\n  \"review_note\": \"Verified with bill\"\n}" },
+            "url": { "raw": "{{base_url}}/expenses/{{expense_id}}/status", "host": ["{{base_url}}"], "path": ["expenses","{{expense_id}}","status"] },
+            "description": "Approving expense auto-creates a reimbursement record (status: pending) via DB trigger."
+          }
+        },
+        {
+          "name": "Reject Expense",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"rejected\",\n  \"review_note\": \"Receipt not uploaded. Please resubmit.\"\n}" },
+            "url": { "raw": "{{base_url}}/expenses/{{expense_id}}/status", "host": ["{{base_url}}"], "path": ["expenses","{{expense_id}}","status"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "💵 Reimbursements",
+      "item": [
+        {
+          "name": "Get All Reimbursements",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/reimbursements?status=pending", "host": ["{{base_url}}"], "path": ["reimbursements"], "query": [{"key":"status","value":"pending"}] }
+          }
+        },
+        {
+          "name": "Mark as Paid",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"paid\",\n  \"payment_ref\": \"NEFT_2026_001\",\n  \"payment_date\": \"2026-04-10T14:30:00Z\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/reimbursements/:id/pay", "host": ["{{base_url}}"], "path": ["reimbursements",":id","pay"] }
+          }
+        },
+        {
+          "name": "Get Reimbursements by Employee",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/reimbursements?employee_id={{employee_id}}", "host": ["{{base_url}}"], "path": ["reimbursements"], "query": [{"key":"employee_id","value":"{{employee_id}}"}] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📊 Earnings",
+      "item": [
+        {
+          "name": "Get Earnings Dashboard",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/earnings", "host": ["{{base_url}}"], "path": ["earnings"] },
+            "description": "Returns: total_revenue, vendor_cost, employee_cost, net_profit across all events."
+          }
+        },
+        {
+          "name": "Get Earnings by Revenue Type",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/earnings?type=trek", "host": ["{{base_url}}"], "path": ["earnings"], "query": [{"key":"type","value":"trek"}] }
+          }
+        },
+        {
+          "name": "Get Monthly Earnings",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/earnings?date_range=monthly&year=2026", "host": ["{{base_url}}"], "path": ["earnings"], "query": [{"key":"date_range","value":"monthly"},{"key":"year","value":"2026"}] }
+          }
+        },
+        {
+          "name": "Get Earnings by Event",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/earnings?event_id={{event_id}}", "host": ["{{base_url}}"], "path": ["earnings"], "query": [{"key":"event_id","value":"{{event_id}}"}] }
+          }
+        },
+        {
+          "name": "Recompute Event Earnings",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/earnings/recompute/{{event_id}}", "host": ["{{base_url}}"], "path": ["earnings","recompute","{{event_id}}"] },
+            "description": "Triggers a fresh calculation of revenue - vendor_cost - employee_cost for this event and updates the earnings table."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🏠 Dashboard",
+      "item": [
+        {
+          "name": "Summary Dashboard",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/dashboard/summary", "host": ["{{base_url}}"], "path": ["dashboard","summary"] },
+            "description": "Returns: total_bookings, total_revenue, net_profit, active_employees, pending_expenses, upcoming_events"
+          }
+        },
+        {
+          "name": "Revenue Trend (Monthly)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/dashboard/revenue-trend?year=2026", "host": ["{{base_url}}"], "path": ["dashboard","revenue-trend"], "query": [{"key":"year","value":"2026"}] }
+          }
+        },
+        {
+          "name": "Trek Popularity",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/dashboard/trek-popularity?limit=10", "host": ["{{base_url}}"], "path": ["dashboard","trek-popularity"], "query": [{"key":"limit","value":"10"}] }
+          }
+        },
+        {
+          "name": "Leader Performance Rankings",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/dashboard/leader-rankings", "host": ["{{base_url}}"], "path": ["dashboard","leader-rankings"] }
+          }
+        },
+        {
+          "name": "Expense Overview",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/dashboard/expense-overview", "host": ["{{base_url}}"], "path": ["dashboard","expense-overview"] }
+          }
+        }
+      ]
+    }
+
+  ]
+}

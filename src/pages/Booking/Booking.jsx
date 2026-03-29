@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { findTrekBySlug, slugifyTrekName } from "../../data/treks";
-import { findOrCreateCustomer } from "../../data/customerStorage";
+import { findOrCreateCustomer, upsertCustomerActivity } from "../../data/customerStorage";
 import { generateBookingId, saveBookingRecord } from "../../data/bookingStorage";
 import { createTransaction } from "../../data/transactionStorage";
+import { createIncentive } from "../../data/incentiveStorage";
+import { getAllCredentials } from "../../data/employeePortalStorage";
+import { getTrekDates, getWhatsAppLinkForDate } from "../../data/trekDatesStorage";
+import { getBookingFormConfig } from "../../data/bookingFormStorage";
+import { syncEnquiriesWithBookings } from "../../data/enquiryStorage";
+import { createAlert, recordEmailAlertAttempt } from "../../data/notificationStorage";
+import InfoTooltip from "../../components/InfoTooltip";
+import { getEventDepartureConfig } from "../../utils/eventDepartureConfig";
 
 const paymentOptions = [
   "Debit Card / Credit Card",
@@ -15,10 +23,44 @@ const paymentOptions = [
 const departureOptions = ["Pune", "Mumbai", "Kasara", "Base Village"];
 
 const pickupOptions = {
-  Pune: ["Shivajinagar", "Wakad", "Nigdi", "Katraj"],
-  Mumbai: ["Dadar", "Thane", "Borivali", "Ghatkopar"],
-  Kasara: ["Kasara Station", "Kasara Bus Stop"],
-  "Base Village": ["Direct At Base Village", "Bari Village Meeting Point"],
+  Pune: [
+    "McDonald's, Deccan",
+    "New Shivaji Nagar (Mari Aai Gate / Wakadewadi)",
+    "Nashik Phata (Kasarwadi Police Station)",
+    "Wakad Bridge / Rajyog Hotel",
+    "Hinjewadi Chowk",
+    "Pirangut Chowk (Hinjewadi Phase 3)",
+    "Inorbit Mall, Viman Nagar",
+    "Chandni Chowk",
+  ],
+  Mumbai: [
+    "CSMT",
+    "Byculla",
+    "Dadar",
+    "Kurla",
+    "Ghatkopar",
+    "Thane",
+    "Dombivali",
+    "Kalyan",
+    "Borivali National Park Gate",
+    "Virwani Bus Stop, Goregaon",
+    "Gundavali Bus Stop, Andheri East",
+    "Kalanagar Bus Stop, Bandra",
+    "Everard Nagar Bus Stop, Sion",
+    "Diamond Garden, Chembur",
+    "Vashi Plaza",
+    "McDonald's, Kalamboli",
+  ],
+  Kasara: [
+    "Kasara Railway Station (Ticket Counter)",
+    "Kasara Bus Stop",
+  ],
+  "Base Village": [
+    "Direct At Base Village",
+    "Nirgudpada Village",
+    "Bhira Base Village",
+    "Kotamwadi Junction",
+  ],
 };
 
 const departureSurcharges = {
@@ -28,14 +70,27 @@ const departureSurcharges = {
   "Base Village": 0,
 };
 
-const defaultTraveler = {
-  firstName: "",
-  lastName: "",
-  mobileNumber: "",
-  email: "",
-  departureOrigin: "Base Village",
-  pickupLocation: pickupOptions["Base Village"][0],
+const buildTraveler = (departureList, pickupMap) => {
+  const defaultDeparture = departureList[0] || "Base Village";
+  return {
+    firstName: "",
+    lastName: "",
+    mobileNumber: "",
+    email: "",
+    departureOrigin: defaultDeparture,
+    pickupLocation:
+      pickupMap[defaultDeparture]?.[0] ||
+      pickupMap["Base Village"]?.[0] ||
+      "Direct At Base Village",
+  };
 };
+
+function parseLines(value) {
+  return String(value || "")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 function downloadTextFile(filename, content) {
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -62,10 +117,80 @@ function Booking() {
   const location = useLocation();
   const navigate = useNavigate();
   const formRef = useRef(null);
-
   const selectedTrek =
     location.state?.trek ??
     (location.state?.trekSlug ? findTrekBySlug(location.state.trekSlug) : null);
+  const bookingForm = useMemo(() => getBookingFormConfig(), []);
+  const bookingPaymentOptions = useMemo(
+    () => parseLines(bookingForm.paymentOptions).length ? parseLines(bookingForm.paymentOptions) : paymentOptions,
+    [bookingForm.paymentOptions]
+  );
+  const bookingDepartureOptions = useMemo(
+    () => parseLines(bookingForm.departureOptions).length ? parseLines(bookingForm.departureOptions) : departureOptions,
+    [bookingForm.departureOptions]
+  );
+  const bookingPickupOptions = useMemo(() => {
+    try {
+      const parsed = JSON.parse(bookingForm.pickupOptions || "{}");
+      return Object.keys(parsed).length ? parsed : pickupOptions;
+    } catch {
+      return pickupOptions;
+    }
+  }, [bookingForm.pickupOptions]);
+  const trekDepartureConfig = useMemo(
+    () =>
+      getEventDepartureConfig({
+        category: "Trek",
+        eventName: selectedTrek?.name,
+        fallbackDepartureOptions: bookingDepartureOptions,
+        fallbackPickupMap: bookingPickupOptions,
+      }),
+    [bookingDepartureOptions, bookingPickupOptions, selectedTrek?.name]
+  );
+  const activeDepartureOptions = trekDepartureConfig.departureOptions.length
+    ? trekDepartureConfig.departureOptions
+    : bookingDepartureOptions;
+  const activePickupOptions = trekDepartureConfig.pickupMap;
+
+  /* ── Capture referral code from URL ?ref= param ── */
+  const urlRefCode = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("ref") || "";
+  }, [location.search]);
+
+  /* ── Manual referral code input state ── */
+  const [manualRefCode, setManualRefCode] = useState(urlRefCode);
+  const [refStatus, setRefStatus] = useState(
+    urlRefCode
+      ? (() => {
+          const creds = getAllCredentials();
+          const emp = creds.find(c => c.referralCode === urlRefCode && c.onboardingStatus === "APPROVED");
+          return emp ? { valid: true, name: emp.fullName } : { valid: false, name: "" };
+        })()
+      : { valid: null, name: "" }
+  );
+
+  const handleRefCodeChange = (e) => {
+    const val = e.target.value.toUpperCase().trim();
+    setManualRefCode(val);
+    if (!val) { setRefStatus({ valid: null, name: "" }); return; }
+    const creds = getAllCredentials();
+    const emp = creds.find(c => c.referralCode === val && c.onboardingStatus === "APPROVED");
+    setRefStatus(emp ? { valid: true, name: emp.fullName } : { valid: false, name: "" });
+  };
+
+  /* Final effective referral code */
+  const refCode = manualRefCode && refStatus.valid ? manualRefCode : urlRefCode;
+
+  /* ── Load available dates from admin for this trek ── */
+  const trekSlug = selectedTrek ? slugifyTrekName(selectedTrek.name) : "";
+  const availableDates = useMemo(() => getTrekDates(trekSlug), [trekSlug]);
+
+  /* ── When a date is picked, auto-populate the WhatsApp group link ── */
+  const handleDateSelect = (date) => {
+    const link = getWhatsAppLinkForDate(trekSlug, date);
+    setFormData(prev => ({ ...prev, travelDate: date, whatsappGroupLink: link }));
+  };
 
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [consent, setConsent] = useState({
@@ -75,23 +200,54 @@ function Booking() {
   });
   const [formData, setFormData] = useState({
     tickets: 1,
-    departureOrigin: "Base Village",
+    departureOrigin: activeDepartureOptions[0] || "Base Village",
     firstName: "",
     lastName: "",
     email: "",
     contactNumber: "",
     sameWhatsapp: false,
     whatsappNumber: "",
-    dob: "",
-    pickupLocation: pickupOptions["Base Village"][0],
+    travelDate: "",
+    whatsappGroupLink: "",
+    pickupLocation:
+      activePickupOptions[activeDepartureOptions[0] || "Base Village"]?.[0] ||
+      bookingPickupOptions["Base Village"]?.[0] ||
+      pickupOptions["Base Village"][0],
     emergencyContact: "",
-    paymentOption: paymentOptions[0],
+    paymentOption: bookingPaymentOptions[0] || paymentOptions[0],
   });
   const [additionalTravelers, setAdditionalTravelers] = useState([]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
+
+  useEffect(() => {
+    const nextDeparture =
+      activeDepartureOptions.includes(formData.departureOrigin)
+        ? formData.departureOrigin
+        : activeDepartureOptions[0] || "Base Village";
+    const nextPickup =
+      activePickupOptions[nextDeparture]?.includes(formData.pickupLocation)
+        ? formData.pickupLocation
+        : activePickupOptions[nextDeparture]?.[0] || "";
+
+    if (
+      nextDeparture !== formData.departureOrigin ||
+      nextPickup !== formData.pickupLocation
+    ) {
+      setFormData((current) => ({
+        ...current,
+        departureOrigin: nextDeparture,
+        pickupLocation: nextPickup,
+      }));
+    }
+  }, [
+    activeDepartureOptions,
+    activePickupOptions,
+    formData.departureOrigin,
+    formData.pickupLocation,
+  ]);
 
   useEffect(() => {
     const extraTravelerCount = Math.max(0, Number(formData.tickets) - 1);
@@ -106,14 +262,40 @@ function Booking() {
           ...current,
           ...Array.from(
             { length: extraTravelerCount - current.length },
-            () => ({ ...defaultTraveler })
+            () => buildTraveler(activeDepartureOptions, activePickupOptions)
           ),
         ];
       }
 
       return current.slice(0, extraTravelerCount);
     });
-  }, [formData.tickets]);
+  }, [activePickupOptions, formData.tickets]);
+
+  useEffect(() => {
+    setAdditionalTravelers((current) =>
+      current.map((traveler) => {
+        const nextDeparture = activeDepartureOptions.includes(traveler.departureOrigin)
+          ? traveler.departureOrigin
+          : activeDepartureOptions[0] || "Base Village";
+        const nextPickup = activePickupOptions[nextDeparture]?.includes(traveler.pickupLocation)
+          ? traveler.pickupLocation
+          : activePickupOptions[nextDeparture]?.[0] || "";
+
+        if (
+          nextDeparture === traveler.departureOrigin &&
+          nextPickup === traveler.pickupLocation
+        ) {
+          return traveler;
+        }
+
+        return {
+          ...traveler,
+          departureOrigin: nextDeparture,
+          pickupLocation: nextPickup,
+        };
+      })
+    );
+  }, [activeDepartureOptions, activePickupOptions]);
 
   const ticketCount = Number(formData.tickets) || 1;
   const travelerPricing = [
@@ -145,11 +327,15 @@ function Booking() {
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
+    if (name === "travelDate") {
+      handleDateSelect(value);
+      return;
+    }
     setFormData((current) => ({
       ...current,
       [name]: type === "checkbox" ? checked : value,
       ...(name === "departureOrigin"
-        ? { pickupLocation: pickupOptions[value][0] }
+        ? { pickupLocation: activePickupOptions[value]?.[0] || "" }
         : {}),
       ...(name === "sameWhatsapp" && checked ? { whatsappNumber: "" } : {}),
     }));
@@ -163,7 +349,7 @@ function Booking() {
               ...traveler,
               [field]: value,
               ...(field === "departureOrigin"
-                ? { pickupLocation: pickupOptions[value][0] }
+                ? { pickupLocation: activePickupOptions[value]?.[0] || "" }
                 : {}),
             }
           : traveler
@@ -240,7 +426,8 @@ function Booking() {
       departureOrigin: formData.departureOrigin,
       contactNumber: formData.contactNumber,
       whatsappNumber: formData.sameWhatsapp ? formData.contactNumber : formData.whatsappNumber,
-      dob: formData.dob,
+      travelDate: formData.travelDate,
+      whatsappGroupLink: formData.whatsappGroupLink,
       pickupLocation: formData.pickupLocation,
       emergencyContact: formData.emergencyContact,
       paymentOption: formData.paymentOption,
@@ -254,6 +441,7 @@ function Booking() {
       additionalTravelers,
       travelerPricing,
       consent,
+      referralCode: refCode || "",
     };
 
     localStorage.setItem("latestBooking", JSON.stringify(bookingRecord));
@@ -271,16 +459,66 @@ function Booking() {
       email: formData.email,
     });
     const _enhancedId = generateBookingId();
-    saveBookingRecord({ ...bookingRecord, enhancedBookingId: _enhancedId, customerId: _customer.id });
+    saveBookingRecord({ ...bookingRecord, enhancedBookingId: _enhancedId, customerId: _customer.id, referralCode: refCode || "" });
+    upsertCustomerActivity({
+      name: `${formData.firstName} ${formData.lastName}`,
+      phone: formData.contactNumber,
+      email: formData.email,
+      booking: {
+        ...bookingRecord,
+        bookingId,
+        enhancedBookingId: _enhancedId,
+        customerId: _customer.id,
+      },
+    });
+    syncEnquiriesWithBookings();
     createTransaction({
-      bookingId:    bookingId,
-      customerName: _customer.name,
-      paymentMode:  _paymentModeMap[formData.paymentOption] || "UPI",
-      grossAmount:  payableNow,
-      tax:          taxAmount,
-      netAmount:    baseAmount,
+      bookingId:         bookingId,
+      customerId:        _customer.id,
+      customerName:      _customer.name,
+      paymentMode:       _paymentModeMap[formData.paymentOption] || "UPI",
+      grossAmount:       payableNow,
+      tax:               taxAmount,
+      netAmount:         baseAmount,
       transactionStatus: "SUCCESS",
     });
+
+    createAlert({
+      type: "BOOKING",
+      title: "New Ticket Sold",
+      message: `${formData.firstName} ${formData.lastName} booked ${selectedTrek.name}`,
+      meta: {
+        bookingId,
+        customerId: _customer.id,
+        eventName: selectedTrek.name,
+        payableNow,
+      },
+    });
+
+    recordEmailAlertAttempt({
+      kind: "Booking",
+      bookingId,
+      customerName: `${formData.firstName} ${formData.lastName}`,
+      eventName: selectedTrek.name,
+      amount: payableNow,
+    });
+
+    /* ── Referral incentive — ₹100 to employee if ?ref= was present ── */
+    if (refCode) {
+      const creds = getAllCredentials();
+      const empCred = creds.find(c => c.referralCode === refCode && c.onboardingStatus === "APPROVED");
+      if (empCred) {
+        createIncentive({
+          employeeId:   empCred.employeeId,
+          employeeName: empCred.fullName,
+          referralCode: refCode,
+          bookingId,
+          trekName:     selectedTrek?.name || "",
+          customerName: `${formData.firstName} ${formData.lastName}`,
+          trekDate:     selectedTrek?.nextDate || "",
+        });
+      }
+    }
     /* ── end additive block ── */
 
     navigate("/booking/success", {
@@ -309,12 +547,25 @@ function Booking() {
   return (
     <section className="booking-page">
       <div className="container py-4 py-md-5">
+        {/* Back button */}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          style={{
+            background: "none", border: "none", color: "#0a6a47",
+            fontWeight: 600, fontSize: "0.9rem", cursor: "pointer",
+            display: "inline-flex", alignItems: "center", gap: 5,
+            marginBottom: 10, padding: "4px 0",
+          }}
+        >
+          ← Back
+        </button>
         <div className="booking-hero">
           <div>
-            <span className="booking-kicker">Secure Trek Booking</span>
-            <h1>Payment And Traveler Details</h1>
+            <span className="booking-kicker">{bookingForm.heroKicker}</span>
+            <h1>{bookingForm.heroTitle}</h1>
             <p>
-              Your trek is locked to the selected destination. Add each traveler and choose where they want to join from.
+              {bookingForm.heroSubtitle}
             </p>
           </div>
 
@@ -328,8 +579,8 @@ function Booking() {
         <form ref={formRef} className="booking-layout">
           <div className="booking-form-card">
             <div className="booking-section-heading">
-              <h2>Lead Traveler Details</h2>
-              <p>The selected trek is fixed based on the trek the customer clicked.</p>
+              <h2>{bookingForm.leadSectionTitle}</h2>
+              <p>{bookingForm.leadSectionSubtitle}</p>
             </div>
 
             <div className="booking-grid">
@@ -339,25 +590,37 @@ function Booking() {
               </label>
 
               <div className="booking-field booking-field-full">
-                <span>Joining Destination</span>
+                <span>
+                  Joining Destination
+                  <InfoTooltip text="Choose where the traveler will join from. Fare and pickup options update based on this selection." />
+                </span>
                 <div className="booking-radio-grid">
-                  {departureOptions.map((option) => (
-                    <label className="booking-option-card" key={option}>
-                      <input
-                        type="radio"
-                        name="departureOrigin"
-                        value={option}
-                        checked={formData.departureOrigin === option}
-                        onChange={handleChange}
-                      />
-                      <span>{option}</span>
+                  {activeDepartureOptions.length === 1 ? (
+                    <label className="booking-field booking-field-full">
+                      <input type="text" value={activeDepartureOptions[0]} readOnly />
                     </label>
-                  ))}
+                  ) : (
+                    activeDepartureOptions.map((option) => (
+                      <label className="booking-option-card" key={option}>
+                        <input
+                          type="radio"
+                          name="departureOrigin"
+                          value={option}
+                          checked={formData.departureOrigin === option}
+                          onChange={handleChange}
+                        />
+                        <span>{option}</span>
+                      </label>
+                    ))
+                  )}
                 </div>
               </div>
 
               <label className="booking-field">
-                <span>Number of Tickets</span>
+                <span>
+                  Number of Tickets
+                  <InfoTooltip text="Each extra ticket opens another traveler section so you can capture everyone’s details in the same booking." />
+                </span>
                 <input
                   type="number"
                   min="1"
@@ -369,16 +632,47 @@ function Booking() {
                 />
               </label>
 
-              <label className="booking-field">
-                <span>Date of Birth</span>
-                <input
-                  type="date"
-                  name="dob"
-                  value={formData.dob}
-                  onChange={handleChange}
-                  required
-                />
-              </label>
+              {/* ── Travel Date ── */}
+              {availableDates.length > 0 ? (
+                <div className="booking-field">
+                  <span>
+                    Travel Date
+                    <InfoTooltip text="Choose one of the configured batch dates. The matching WhatsApp group link is auto-mapped for that batch." />
+                  </span>
+                  <div className="booking-radio-grid">
+                    {availableDates.map(d => {
+                      const displayDate = new Date(d.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+                      return (
+                        <label className="booking-option-card" key={d.id}>
+                          <input
+                            type="radio"
+                            name="travelDate"
+                            value={d.date}
+                            checked={formData.travelDate === d.date}
+                            onChange={() => handleDateSelect(d.date)}
+                            required
+                          />
+                          <span>{displayDate}{d.label ? ` · ${d.label}` : ""}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <label className="booking-field">
+                  <span>
+                    Travel Date
+                    <InfoTooltip text="If no admin batch dates are configured yet, select the date manually here." />
+                  </span>
+                  <input
+                    type="date"
+                    name="travelDate"
+                    value={formData.travelDate}
+                    onChange={handleChange}
+                    required
+                  />
+                </label>
+              )}
 
               <label className="booking-field">
                 <span>First Name</span>
@@ -435,6 +729,39 @@ function Booking() {
                 />
               </label>
 
+              {/* ── Referral Code (optional) ── */}
+              <div className="booking-field booking-field-full">
+                <span>
+                  Referral Code <span style={{ fontWeight: 400, color: "#94a3b8", fontSize: 12 }}>(optional)</span>
+                  <InfoTooltip text="Enter this only if the customer came from an employee referral. Valid codes auto-credit the employee incentive." />
+                </span>
+                <input
+                  type="text"
+                  placeholder="e.g. REF-RP001"
+                  value={manualRefCode}
+                  onChange={handleRefCodeChange}
+                  style={{
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    border: refStatus.valid === true
+                      ? "1.5px solid #16a34a"
+                      : refStatus.valid === false
+                      ? "1.5px solid #dc2626"
+                      : undefined,
+                  }}
+                />
+                {refStatus.valid === true && (
+                  <span style={{ fontSize: 12, color: "#16a34a", marginTop: 4, display: "block" }}>
+                    ✅ Valid code — referral credited to <strong>{refStatus.name}</strong>
+                  </span>
+                )}
+                {refStatus.valid === false && manualRefCode && (
+                  <span style={{ fontSize: 12, color: "#dc2626", marginTop: 4, display: "block" }}>
+                    ❌ Invalid referral code. Please check and try again.
+                  </span>
+                )}
+              </div>
+
               <label className="booking-field booking-field-full booking-checkbox">
                 <input
                   type="checkbox"
@@ -460,14 +787,17 @@ function Booking() {
               )}
 
               <label className="booking-field booking-field-full">
-                <span>Pickup Location</span>
+                <span>
+                  Pickup Location
+                  <InfoTooltip text="Only pickup points for the selected joining destination are shown here." />
+                </span>
                 <select
                   name="pickupLocation"
                   value={formData.pickupLocation}
                   onChange={handleChange}
                   required
                 >
-                  {pickupOptions[formData.departureOrigin].map((pickup) => (
+                  {(activePickupOptions[formData.departureOrigin] || []).map((pickup) => (
                     <option value={pickup} key={pickup}>
                       {pickup}
                     </option>
@@ -494,20 +824,26 @@ function Booking() {
                         <div className="booking-field booking-field-full">
                           <span>Joining Destination</span>
                           <div className="booking-radio-grid">
-                            {departureOptions.map((option) => (
-                              <label className="booking-option-card" key={`${option}-${index}`}>
-                                <input
-                                  type="radio"
-                                  name={`traveler-departure-${index}`}
-                                  value={option}
-                                  checked={traveler.departureOrigin === option}
-                                  onChange={(event) =>
-                                    handleTravelerChange(index, "departureOrigin", event.target.value)
-                                  }
-                                />
-                                <span>{option}</span>
+                            {activeDepartureOptions.length === 1 ? (
+                              <label className="booking-field booking-field-full">
+                                <input type="text" value={activeDepartureOptions[0]} readOnly />
                               </label>
-                            ))}
+                            ) : (
+                              activeDepartureOptions.map((option) => (
+                                <label className="booking-option-card" key={`${option}-${index}`}>
+                                  <input
+                                    type="radio"
+                                    name={`traveler-departure-${index}`}
+                                    value={option}
+                                    checked={traveler.departureOrigin === option}
+                                    onChange={(event) =>
+                                      handleTravelerChange(index, "departureOrigin", event.target.value)
+                                    }
+                                  />
+                                  <span>{option}</span>
+                                </label>
+                              ))
+                            )}
                           </div>
                         </div>
 
@@ -568,7 +904,7 @@ function Booking() {
                             }
                             required
                           >
-                            {pickupOptions[traveler.departureOrigin].map((pickup) => (
+                            {(activePickupOptions[traveler.departureOrigin] || []).map((pickup) => (
                               <option value={pickup} key={`${pickup}-${index}`}>
                                 {pickup}
                               </option>
@@ -585,8 +921,8 @@ function Booking() {
 
           <aside className="booking-summary-card">
             <div className="booking-section-heading">
-              <h2>Payment Summary</h2>
-              <p>5% tax is applied on every booking.</p>
+              <h2>{bookingForm.summaryTitle}</h2>
+              <p>{bookingForm.summarySubtitle}</p>
             </div>
 
             <div className="booking-summary-block">
@@ -603,7 +939,10 @@ function Booking() {
                 <strong>₹{baseAmount}</strong>
               </div>
               <div className="booking-summary-row">
-                <span>Tax (5%)</span>
+                <span>
+                  Tax (5%)
+                  <InfoTooltip text="Website bookings automatically include 5% tax on the base amount." />
+                </span>
                 <strong>₹{taxAmount}</strong>
               </div>
               <div className="booking-summary-row booking-summary-total">
@@ -625,8 +964,11 @@ function Booking() {
             </div>
 
             <div className="booking-payment-options">
-              <span className="booking-subtitle">Payment Option</span>
-              {paymentOptions.map((option) => (
+              <span className="booking-subtitle">
+                Payment Option
+                <InfoTooltip text="Full payment collects the entire amount now. Partial payment collects a smaller amount now and leaves the balance for later." />
+              </span>
+              {bookingPaymentOptions.map((option) => (
                 <label className="booking-radio" key={option}>
                   <input
                     type="radio"
@@ -670,11 +1012,11 @@ function Booking() {
             </div>
 
             <p className="booking-email-note">
-              Ticket email delivery still needs backend email integration. The front-end booking and ticket flow is ready, but actual email sending is not configured yet.
+              {bookingForm.emailNote}
             </p>
 
             <Link to="/treks" className="booking-back-link">
-              Back To Treks
+              {bookingForm.backLinkLabel}
             </Link>
           </aside>
         </form>
@@ -699,7 +1041,7 @@ function Booking() {
                   checked={consent.rulesAccepted}
                   onChange={handleConsentChange}
                 />
-                <span>I have read and accepted the trek rules, safety instructions, and reporting time.</span>
+                <span>{bookingForm.consentRules}</span>
               </label>
 
               <label className="booking-checkbox booking-consent-item">
@@ -709,7 +1051,7 @@ function Booking() {
                   checked={consent.fitnessAccepted}
                   onChange={handleConsentChange}
                 />
-                <span>I confirm that I and my group members are medically fit for this trek activity.</span>
+                <span>{bookingForm.consentFitness}</span>
               </label>
 
               <label className="booking-checkbox booking-consent-item">
@@ -719,7 +1061,7 @@ function Booking() {
                   checked={consent.cancellationAccepted}
                   onChange={handleConsentChange}
                 />
-                <span>I understand the cancellation policy, tax applicability, and partial payment conditions.</span>
+                <span>{bookingForm.consentCancellation}</span>
               </label>
             </div>
 

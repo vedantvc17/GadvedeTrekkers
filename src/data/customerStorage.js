@@ -15,30 +15,150 @@ function _save(customers) {
   localStorage.setItem(KEY, JSON.stringify(customers));
 }
 
+function normalisePhone(value = "") {
+  return String(value).replace(/\D/g, "").slice(-10);
+}
+
+function normaliseEmail(value = "") {
+  return String(value).trim().toLowerCase();
+}
+
 /* ── find or create ──────────────────────────────────────────
    Returns existing customer if phone or email matches,
    otherwise creates a new one. Never duplicates.
 ─────────────────────────────────────────────────────────── */
 export function findOrCreateCustomer({ name, phone, email = "" }) {
   const all = getAllCustomers();
+  const phoneKey = normalisePhone(phone);
+  const emailKey = normaliseEmail(email);
 
   // 1) match by phone
-  let found = phone ? all.find((c) => c.phone === phone) : null;
+  let found = phoneKey ? all.find((c) => normalisePhone(c.phone) === phoneKey) : null;
   // 2) fallback: match by email
-  if (!found && email) found = all.find((c) => c.email && c.email === email);
+  if (!found && emailKey) found = all.find((c) => c.email && normaliseEmail(c.email) === emailKey);
 
-  if (found) return found;
+  if (found) {
+    const updated = {
+      ...found,
+      name: found.name || name || "Unknown",
+      phone: found.phone || phoneKey || "",
+      email: found.email || emailKey || "",
+    };
+    if (JSON.stringify(updated) !== JSON.stringify(found)) {
+      _save(all.map((customer) => (customer.id === found.id ? updated : customer)));
+    }
+    return updated;
+  }
 
   const customer = {
     id: `CUST-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
     name: name || "Unknown",
-    phone: phone || "",
-    email: email || "",
+    phone: phoneKey || "",
+    email: emailKey || "",
     createdAt: new Date().toISOString(),
+    enquiries: [],
+    bookings: [],
+    tags: [],
+    enquiryCount: 0,
+    bookingCount: 0,
   };
 
   _save([customer, ...all]);
   return customer;
+}
+
+function dedupeById(items = [], idKey = "id") {
+  const map = new Map();
+  items.forEach((item) => {
+    const key = item?.[idKey];
+    if (!key) return;
+    map.set(key, item);
+  });
+  return Array.from(map.values());
+}
+
+export function updateCustomerRecord(id, updates) {
+  const customers = getAllCustomers();
+  let nextCustomer = null;
+  const next = customers.map((customer) => {
+    if (customer.id !== id) return customer;
+    nextCustomer = { ...customer, ...updates };
+    return nextCustomer;
+  });
+  if (nextCustomer) _save(next);
+  return nextCustomer;
+}
+
+export function upsertCustomerActivity({
+  name,
+  phone,
+  email = "",
+  enquiry,
+  booking,
+}) {
+  const customer = findOrCreateCustomer({ name, phone, email });
+  const customers = getAllCustomers();
+
+  const next = customers.map((item) => {
+    if (item.id !== customer.id) return item;
+
+    const nextCustomer = {
+      ...item,
+      name: name || item.name,
+      email: email || item.email,
+      lastContactAt: new Date().toISOString(),
+      enquiries: Array.isArray(item.enquiries) ? [...item.enquiries] : [],
+      bookings: Array.isArray(item.bookings) ? [...item.bookings] : [],
+      tags: Array.isArray(item.tags) ? [...item.tags] : [],
+    };
+
+    if (enquiry) {
+      nextCustomer.enquiries = dedupeById(
+        [
+          ...nextCustomer.enquiries,
+          {
+            id: enquiry.id,
+            eventName: enquiry.eventName || enquiry.tour || "",
+            category: enquiry.category || "",
+            status: enquiry.status || "NEW",
+            tags: enquiry.tags || [],
+            createdAt: enquiry.createdAt || new Date().toISOString(),
+          },
+        ],
+        "id"
+      );
+      nextCustomer.enquiryCount = nextCustomer.enquiries.length;
+      nextCustomer.latestEnquiryStatus = enquiry.status || nextCustomer.latestEnquiryStatus || "NEW";
+      nextCustomer.latestEnquiryEvent = enquiry.eventName || enquiry.tour || nextCustomer.latestEnquiryEvent || "";
+      nextCustomer.tags = Array.from(
+        new Set([...(nextCustomer.tags || []), ...((enquiry.tags || []).filter(Boolean))])
+      );
+    }
+
+    if (booking) {
+      nextCustomer.bookings = dedupeById(
+        [
+          ...nextCustomer.bookings,
+          {
+            id: booking.bookingId || booking.enhancedBookingId,
+            eventName: booking.eventName || booking.trekName || booking.tourName || "",
+            status: booking.bookingStatus || "CONFIRMED",
+            travelDate: booking.travelDate || booking.nextDate || "",
+            createdAt: booking.savedAt || new Date().toISOString(),
+          },
+        ],
+        "id"
+      );
+      nextCustomer.bookingCount = nextCustomer.bookings.length;
+      nextCustomer.latestBookedEvent = booking.eventName || booking.trekName || booking.tourName || "";
+      nextCustomer.latestBookingStatus = booking.bookingStatus || "CONFIRMED";
+    }
+
+    return nextCustomer;
+  });
+
+  _save(next);
+  return next.find((item) => item.id === customer.id) || customer;
 }
 
 /* ── look-ups ── */
@@ -47,7 +167,8 @@ export function getCustomerById(id) {
 }
 
 export function getCustomerByPhone(phone) {
-  return getAllCustomers().find((c) => c.phone === phone) || null;
+  const phoneKey = normalisePhone(phone);
+  return getAllCustomers().find((c) => normalisePhone(c.phone) === phoneKey) || null;
 }
 
 /* ── search ── */
@@ -102,7 +223,18 @@ const SEED_CUSTOMERS = [
 (function seedIfEmpty() {
   try {
     if (getAllCustomers().length === 0) {
-      _save(SEED_CUSTOMERS);
+      _save(
+        SEED_CUSTOMERS.map((customer) => ({
+          ...customer,
+          phone: normalisePhone(customer.phone),
+          email: normaliseEmail(customer.email),
+          enquiries: [],
+          bookings: [],
+          tags: [],
+          enquiryCount: 0,
+          bookingCount: 0,
+        }))
+      );
     }
   } catch { /* ignore */ }
 })();

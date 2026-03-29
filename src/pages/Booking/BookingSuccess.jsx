@@ -1,49 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-
-function downloadTextFile(filename, content) {
-  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
+import HistoricTicket from "../../components/HistoricTicket";
 
 function BookingSuccess() {
   const location = useLocation();
   const storedBooking = localStorage.getItem("latestBooking");
   const booking =
     location.state?.booking ?? (storedBooking ? JSON.parse(storedBooking) : null);
-
-  const downloadTicket = () => {
-    if (!booking) {
-      return;
-    }
-
-    const ticket = [
-      "Gadvede Trekkers Booking Ticket",
-      "===============================",
-      `Booking ID: ${booking.bookingId}`,
-      `Customer: ${booking.firstName} ${booking.lastName}`,
-      `Trek: ${booking.trekName}`,
-      `Location: ${booking.trekLocation}`,
-      `Trek Date: ${booking.nextDate}`,
-      `Tickets: ${booking.tickets}`,
-      `Pickup Location: ${booking.pickupLocation}`,
-      `Contact Number: ${booking.contactNumber}`,
-      `WhatsApp Number: ${booking.whatsappNumber}`,
-      `Emergency Contact: ${booking.emergencyContact}`,
-      `Payment Option: ${booking.paymentOption}`,
-      `Total Paid Now: INR ${booking.payableNow}`,
-      `Remaining Amount: INR ${booking.remainingAmount}`,
-      `Booked On: ${booking.bookingDate}`,
-    ].join("\n");
-
-    downloadTextFile(`${booking.bookingId}-ticket.txt`, ticket);
-  };
 
   if (!booking) {
     return (
@@ -86,7 +48,7 @@ function BookingSuccess() {
               </div>
               <div className="booking-success-row">
                 <span>Trek Date</span>
-                <strong>{booking.nextDate}</strong>
+                <strong>{booking.travelDate || booking.nextDate}</strong>
               </div>
               <div className="booking-success-row">
                 <span>Tickets</span>
@@ -136,8 +98,30 @@ function BookingSuccess() {
                 <span>Remaining Amount</span>
                 <strong>₹{booking.remainingAmount}</strong>
               </div>
+              {booking.whatsappGroupLink && (
+                <div className="booking-success-row">
+                  <span>WhatsApp Group</span>
+                  <strong>Available</strong>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* ── Referral Code Applied Banner ── */}
+          {booking.referralCode && (
+            <div style={{
+              background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10,
+              padding: "12px 18px", marginTop: 16, display: "flex", alignItems: "center", gap: 10,
+            }}>
+              <span style={{ fontSize: 22 }}>🎁</span>
+              <div>
+                <div style={{ fontWeight: 700, color: "#166534", fontSize: 14 }}>Referral Code Applied!</div>
+                <div style={{ color: "#15803d", fontSize: 13 }}>
+                  Code <strong>{booking.referralCode}</strong> was successfully applied to this booking.
+                </div>
+              </div>
+            </div>
+          )}
 
           {booking.additionalTravelers?.length > 0 && (
             <div className="booking-success-panel booking-success-extra">
@@ -154,18 +138,107 @@ function BookingSuccess() {
           )}
 
           <div className="booking-success-actions">
-            <button className="btn booking-primary-btn" onClick={downloadTicket}>
-              Download Ticket
-            </button>
+            <a
+              href={`/ticket?bookingId=${encodeURIComponent(booking.enhancedBookingId || booking.bookingId)}`}
+              className="btn booking-primary-btn"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              🎟 View &amp; Download Ticket
+            </a>
             <Link to="/treks" className="btn booking-outline-btn">
               Explore More Treks
             </Link>
           </div>
 
-          <p className="booking-email-note">
-            Email ticket delivery is prepared in the flow, but actual email sending still needs a backend email service or provider credentials.
-          </p>
+          {/* ── Confirmation notice ── */}
+          <div className="booking-confirmation-notice">
+            <div className="booking-confirmation-icon">✅</div>
+            <div>
+              <p className="booking-confirmation-heading">Booking Confirmed!</p>
+              {booking.email ? (
+                <p className="booking-confirmation-sub">
+                  A confirmation email with your ticket has been sent to <strong>{booking.email}</strong>.
+                  <br />
+                  <span style={{ fontSize: 12, color: "#64748b" }}>
+                    (Email delivery requires a backend mail service — ticket download available above.)
+                  </span>
+                </p>
+              ) : (
+                <p className="booking-confirmation-sub">
+                  Your booking is confirmed. Download your ticket using the button above.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* ── WhatsApp Group Link ── */}
+          {booking.whatsappGroupLink && (
+            <div style={{
+              background: "linear-gradient(135deg, #dcfce7, #bbf7d0)",
+              border: "1px solid #86efac",
+              borderRadius: 12,
+              padding: "18px 22px",
+              marginTop: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              flexWrap: "wrap",
+            }}>
+              <span style={{ fontSize: 32 }}>📱</span>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontWeight: 800, color: "#166534", fontSize: "1rem", marginBottom: 4 }}>Join Your Trek WhatsApp Group</div>
+                <div style={{ fontSize: "0.85rem", color: "#15803d" }}>
+                  Trek leader details, meetup point updates, and event info will be shared here. Join now to stay connected!
+                </div>
+              </div>
+              <a href={booking.whatsappGroupLink} target="_blank" rel="noopener noreferrer"
+                style={{ background: "#25d366", color: "#fff", borderRadius: 10, padding: "12px 24px", fontWeight: 800, fontSize: "0.95rem", textDecoration: "none", whiteSpace: "nowrap" }}>
+                💬 Join WhatsApp Group
+              </a>
+            </div>
+          )}
+
+          {/* ── What's Next ── */}
+          <div className="booking-next-steps">
+            <h3>What's Next?</h3>
+            <div className="booking-steps-grid">
+              <div className="booking-step">
+                <span className="booking-step-num">1</span>
+                <div>
+                  <strong>Save your ticket</strong>
+                  <p>Download and screenshot your booking confirmation.</p>
+                </div>
+              </div>
+              <div className="booking-step">
+                <span className="booking-step-num">2</span>
+                <div>
+                  <strong>Reach pickup on time</strong>
+                  <p>Be at <strong>{booking.pickupLocation}</strong> 15 mins before departure.</p>
+                </div>
+              </div>
+              <div className="booking-step">
+                <span className="booking-step-num">3</span>
+                <div>
+                  <strong>Pack essentials</strong>
+                  <p>Water, snacks, ID proof, warm clothes & trek shoes.</p>
+                </div>
+              </div>
+              <div className="booking-step">
+                <span className="booking-step-num">4</span>
+                <div>
+                  <strong>Share feedback</strong>
+                  <p>After your trek, share your experience to help other adventurers.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* ── Historic Ticket ── */}
+      <div className="container pb-5">
+        <HistoricTicket booking={booking} />
       </div>
     </section>
   );
