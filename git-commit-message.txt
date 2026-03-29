@@ -1,1 +1,0 @@
-Move Supabase writes behind backend APIs
