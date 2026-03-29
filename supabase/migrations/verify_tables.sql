@@ -120,3 +120,78 @@ join information_schema.check_constraints cc
 where tc.table_schema = 'public'
   and tc.constraint_type = 'CHECK'
 order by tc.table_name, tc.constraint_name;
+
+
+-- 9. Verify API-critical columns exist
+select table_name, column_name
+from information_schema.columns
+where table_schema = 'public'
+  and (
+    (table_name = 'products' and column_name in (
+      'product_type','base_village','difficulty','endurance_level','history',
+      'main_attractions','detailed_history','highlights','places_to_visit',
+      'included_items','excluded_items','things_to_carry','discount_codes','extra_content'
+    ))
+    or
+    (table_name = 'product_batches' and column_name in (
+      'batch_label','whatsapp_group_link','seats_available','status'
+    ))
+    or
+    (table_name = 'product_departure_plans' and column_name in (
+      'product_id','batch_id','departure_origin','price','pickup_points','itinerary_text'
+    ))
+    or
+    (table_name = 'bookings' and column_name in (
+      'booking_code','booking_source','status','payment_status','travel_date','ticket_quantity'
+    ))
+    or
+    (table_name = 'payments' and column_name in (
+      'payment_reference','transaction_status','gateway_response'
+    ))
+    or
+    (table_name = 'enquiries' and column_name in (
+      'status','tags','assigned_sales_name','archived_at','booked_booking_id'
+    ))
+  )
+order by table_name, column_name;
+
+
+-- 10. API table contract summary
+select 'products' as table_name, count(*) filter (where column_name in (
+  'product_type','base_village','difficulty','endurance_level','history',
+  'main_attractions','detailed_history','highlights','places_to_visit',
+  'included_items','excluded_items','things_to_carry','discount_codes','extra_content'
+)) as matched_columns
+from information_schema.columns
+where table_schema = 'public' and table_name = 'products'
+union all
+select 'product_batches', count(*) filter (where column_name in (
+  'batch_label','whatsapp_group_link','seats_available','status'
+))
+from information_schema.columns
+where table_schema = 'public' and table_name = 'product_batches'
+union all
+select 'product_departure_plans', count(*) filter (where column_name in (
+  'product_id','batch_id','departure_origin','price','pickup_points','itinerary_text'
+))
+from information_schema.columns
+where table_schema = 'public' and table_name = 'product_departure_plans'
+union all
+select 'bookings', count(*) filter (where column_name in (
+  'booking_code','booking_source','status','payment_status','travel_date','ticket_quantity'
+))
+from information_schema.columns
+where table_schema = 'public' and table_name = 'bookings'
+union all
+select 'payments', count(*) filter (where column_name in (
+  'payment_reference','transaction_status','gateway_response'
+))
+from information_schema.columns
+where table_schema = 'public' and table_name = 'payments'
+union all
+select 'enquiries', count(*) filter (where column_name in (
+  'status','tags','assigned_sales_name','archived_at','booked_booking_id'
+))
+from information_schema.columns
+where table_schema = 'public' and table_name = 'enquiries'
+order by 1;

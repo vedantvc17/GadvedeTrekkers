@@ -2,7 +2,41 @@
   "permissions": {
     "allow": [
       "mcp__Claude_Preview__preview_start",
-      "Bash(\"C:/nvm4w/nodejs/node.exe\" \"C:/nvm4w/nodejs/node_modules/npm/bin/npm-cli.js\" run build)"
+      "Bash(\"C:/nvm4w/nodejs/node.exe\" \"C:/nvm4w/nodejs/node_modules/npm/bin/npm-cli.js\" run build)",
+      "Bash(npm run:*)",
+      "Bash(nvm list:*)",
+      "Bash(nvm use:*)",
+      "Bash(where node:*)",
+      "Bash(npx --yes @babel/parser --version)",
+      "Bash(node -e \":*)",
+      "Bash(start cmd:*)",
+      "WebSearch",
+      "WebFetch(domain:unsplash.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:bijiraju.github.io)",
+      "WebFetch(domain:nitin1rajput.github.io)",
+      "WebFetch(domain:raj2852.github.io)",
+      "WebFetch(domain:source.unsplash.com)",
+      "WebFetch(domain:api.unsplash.com)",
+      "WebFetch(domain:heritagewalk.pmc.gov.in)",
+      "Bash(find /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers -type f -name *areer* -o -name *ooter* -o -name *AppRoute*)",
+      "Bash(find /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers -type f \\\\\\(-name *.jsx -o -name *.js \\\\\\))",
+      "Bash(xargs grep:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:www.gadvede.com)",
+      "WebFetch(domain:gadvede.com)",
+      "Bash(npx skills:*)",
+      "Bash(node --input-type=module --eval \"import\\(''''./src/app.js''''\\).then\\(\\(\\) => console.log\\(''''✅ Backend app.js loads OK''''\\)\\).catch\\(e => console.error\\(''''❌'''', e.message\\)\\)\")",
+      "Bash(node --env-file=.env --input-type=module --eval \"import\\(''''./src/app.js''''\\).then\\(\\(\\) => console.log\\(''''✅ Backend app.js loads OK''''\\)\\).catch\\(e => console.error\\(''''❌'''', e.message\\)\\)\")",
+      "Bash(node --env-file=.env --input-type=module --eval \"import\\(''./src/app.js''\\).then\\(\\(\\) => console.log\\(''✅ Backend OK''\\)\\).catch\\(e => console.error\\(''❌'', e.message\\)\\)\")",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Read(//c/Users/Codengine/.claude/**)",
+      "Read(//c/Users/Codengine/.claude/projects/**)",
+      "Bash(find /c/Users/Codengine/.claude -name *.json -not -path */projects/*)",
+      "Bash(find /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers/backend/src -type f \\\\\\(-name *.js -o -name *.jsx -o -name *.ts -o -name *.tsx \\\\\\))"
     ]
-  }
+  },
+  "disableAllHooks": true
 }

@@ -2,13 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dev",
+      "name": "Vite Dev Server",
       "runtimeExecutable": "C:/nvm4w/nodejs/node.exe",
       "runtimeArgs": ["C:/nvm4w/nodejs/node_modules/npm/bin/npm-cli.js", "run", "dev"],
       "port": 5173
     },
     {
-      "name": "preview",
+      "name": "Vite Preview (Production Build)",
       "runtimeExecutable": "C:/nvm4w/nodejs/node.exe",
       "runtimeArgs": ["C:/nvm4w/nodejs/node_modules/npm/bin/npm-cli.js", "run", "preview"],
       "port": 4173
