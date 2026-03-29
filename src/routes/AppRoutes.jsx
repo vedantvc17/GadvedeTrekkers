@@ -31,6 +31,7 @@ import ManageEnquiries  from "../backend/ManageEnquiries";
 import ActivityLogs     from "../backend/ActivityLogs";
 import ManageDocs       from "../backend/ManageDocs";
 import ManageBookingForm from "../backend/ManageBookingForm";
+import EmailTemplates    from "../backend/EmailTemplates";
 
 /* ================= TREK PAGES ================= */
 import Trek           from "../pages/Treks/Trek";
@@ -69,6 +70,10 @@ import Villas from "../pages/Villas/Villas";
 
 /* ================= OPPORTUNITIES / FEEDBACK / TICKET ================= */
 import VendorRegister from "../pages/Opportunities/VendorRegister";
+import PartnerApply   from "../pages/Opportunities/PartnerApply";
+import ListProperty   from "../pages/Opportunities/ListProperty";
+import ListCampsite   from "../pages/Opportunities/ListCampsite";
+import ListEvent      from "../pages/Opportunities/ListEvent";
 import FeedbackForm   from "../pages/Feedback/FeedbackForm";
 import TicketPage     from "../pages/Ticket/TicketPage";
 import WeekendTrips from "../components/WeekendTrips";
@@ -117,6 +122,10 @@ function AppRoutes() {
 
       {/* ================= OPPORTUNITIES ================= */}
       <Route path="/vendor-register" element={<VendorRegister />} />
+      <Route path="/partner"         element={<PartnerApply />} />
+      <Route path="/list-property"   element={<ListProperty />} />
+      <Route path="/list-campsite"   element={<ListCampsite />} />
+      <Route path="/list-event"      element={<ListEvent />} />
 
       {/* ================= FEEDBACK (public) ================= */}
       <Route path="/feedback" element={<FeedbackForm />} />
@@ -167,6 +176,7 @@ function AppRoutes() {
         <Route path="onboarding"   element={<EmployeeOnboarding />} />
         <Route path="logs"         element={<ActivityLogs />} />
         <Route path="docs"         element={<ManageDocs />} />
+        <Route path="email-templates" element={<EmailTemplates />} />
       </Route>
     </Routes>
   );

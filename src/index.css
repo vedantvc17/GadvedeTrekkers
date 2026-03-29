@@ -1802,6 +1802,9 @@ footer .row > div {
   font-size: 1.45rem;
   font-weight: 800;
 }
+.booking-hero-card p {
+  color: #153128;
+}
 
 /* --- Layout --- */
 .booking-layout {
@@ -3626,6 +3629,7 @@ footer .row > div {
 }
 .adm-booking-status--confirmed { background: #dcfce7; color: #15803d; }
 .adm-booking-status--cancelled { background: #fee2e2; color: #b91c1c; }
+.adm-booking-status--pending   { background: #fef3c7; color: #92400e; }
 
 /* ── Action dropdown (Bookings page) ── */
 .adm-action-wrap {
@@ -3659,6 +3663,8 @@ footer .row > div {
 .adm-action-item:hover { background: #f1f5f9; }
 .adm-action-item--danger { color: #dc2626; }
 .adm-action-item--danger:hover { background: #fee2e2; }
+.adm-action-item--success { color: #15803d; font-weight: 600; }
+.adm-action-item--success:hover { background: #dcfce7; }
 
 /* ── Empty state ── */
 .adm-empty {

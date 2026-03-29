@@ -52,7 +52,7 @@ function Footer() {
           <div className="col-md-2 mb-4">
             <h5 className="fw-bold mb-3">Opportunities</h5>
             <ul className="list-unstyled">
-              <li><Link className="footer-link" to="/careers">Careers</Link></li>
+              <li><Link className="footer-link" to="/partner">Partner With Us</Link></li>
               <li><Link className="footer-link" to="/list-property">List Your Property</Link></li>
               <li><Link className="footer-link" to="/list-campsite">List Your Campsite</Link></li>
               <li><Link className="footer-link" to="/list-event">List Your Event</Link></li>

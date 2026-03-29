@@ -258,8 +258,8 @@ function Header() {
               </span>
               <ul className={`dropdown-menu ${openMenu === "opportunities" ? "show" : ""}`}>
                 <li>
-                  <Link className="dropdown-item" to="/careers" onClick={closeMenus}>
-                    💼 Careers
+                  <Link className="dropdown-item" to="/partner" onClick={closeMenus}>
+                    🤝 Partner With Us
                   </Link>
                 </li>
                 <li>

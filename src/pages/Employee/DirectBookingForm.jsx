@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import InfoTooltip from "../../components/InfoTooltip";
-import { getEmployeeSession } from "../../data/employeePortalStorage";
-import { getCurrentAdminUser } from "../../data/permissionStorage";
 import { getBookingFormConfig } from "../../data/bookingFormStorage";
 import { findOrCreateCustomer, upsertCustomerActivity } from "../../data/customerStorage";
 import { generateBookingId, saveBookingRecord } from "../../data/bookingStorage";
-import { createTransaction } from "../../data/transactionStorage";
 import { createAlert, recordEmailAlertAttempt } from "../../data/notificationStorage";
 import { syncEnquiriesWithBookings } from "../../data/enquiryStorage";
 import { getEventDepartureConfig } from "../../utils/eventDepartureConfig";
@@ -78,12 +75,6 @@ function buildTraveler(departureList, pickupMap) {
 }
 
 export default function DirectBookingForm() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const employee = getEmployeeSession();
-  const isAdmin = !!sessionStorage.getItem("gt_admin");
-  const adminUser = getCurrentAdminUser();
-  const staffName = employee?.fullName || adminUser?.name || "Staff";
   const bookingForm = useMemo(() => getBookingFormConfig(), []);
 
   const paymentMethods = useMemo(
@@ -94,17 +85,9 @@ export default function DirectBookingForm() {
     () => parseLines(bookingForm.departureOptions),
     [bookingForm.departureOptions]
   );
-  const sourceOptions = useMemo(
-    () => parseLines(bookingForm.manualSourceOptions),
-    [bookingForm.manualSourceOptions]
-  );
   const categoryOptions = useMemo(
     () => parseLines(bookingForm.manualCategoryOptions),
     [bookingForm.manualCategoryOptions]
-  );
-  const statusOptions = useMemo(
-    () => parseLines(bookingForm.manualStatusOptions),
-    [bookingForm.manualStatusOptions]
   );
   const pickupOptions = useMemo(
     () => parsePickupOptions(bookingForm.pickupOptions),
@@ -118,7 +101,6 @@ export default function DirectBookingForm() {
   const [formData, setFormData] = useState({
     eventCategory: categoryOptions[0] || "Trek",
     eventName: "",
-    source: sourceOptions[0] || "Employee Portal",
     tickets: 1,
     departureOrigin: departureOptions[0] || "Base Village",
     firstName: "",
@@ -133,11 +115,11 @@ export default function DirectBookingForm() {
     paymentOption: paymentMethods[0] || "UPI",
     totalPackageAmount: "",
     amountPaidNow: "",
-    bookingStatus: statusOptions[0] || "CONFIRMED",
     paymentReference: "",
     notes: "",
   });
   const [additionalTravelers, setAdditionalTravelers] = useState([]);
+  const [paymentScreenshot, setPaymentScreenshot] = useState(null);
   const [success, setSuccess] = useState(null);
   const selectedEventConfig = useMemo(
     () =>
@@ -153,12 +135,6 @@ export default function DirectBookingForm() {
     ? selectedEventConfig.departureOptions
     : departureOptions;
   const activePickupOptions = selectedEventConfig.pickupMap;
-
-  useEffect(() => {
-    if (!employee && !isAdmin) {
-      navigate(`/employee-login?next=${encodeURIComponent(`${location.pathname}${location.search}`)}`);
-    }
-  }, [employee, isAdmin, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     const nextDeparture = activeDepartureOptions.includes(formData.departureOrigin)
@@ -259,6 +235,14 @@ export default function DirectBookingForm() {
     }));
   };
 
+  const handleScreenshotChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => setPaymentScreenshot(e.target.result);
+    reader.readAsDataURL(file);
+  };
+
   const handleTravelerChange = (index, field, value) => {
     setAdditionalTravelers((current) =>
       current.map((traveler, travelerIndex) =>
@@ -314,12 +298,12 @@ export default function DirectBookingForm() {
       remainingAmount,
       bookingDate: new Date().toLocaleString("en-IN"),
       additionalTravelers,
-      bookingStatus: formData.bookingStatus,
-      bookingSource: formData.source,
+      bookingStatus: "PENDING_APPROVAL",
+      bookingSource: "Customer Self-Service",
+      paymentScreenshot: paymentScreenshot || null,
       manualBooking: true,
       collectedOffline: true,
       taxExempt: true,
-      createdByStaff: staffName,
     };
 
     saveBookingRecord(bookingRecord);
@@ -333,31 +317,20 @@ export default function DirectBookingForm() {
 
     syncEnquiriesWithBookings();
 
-    createTransaction({
-      bookingId,
-      customerId: customer.id,
-      customerName: `${formData.firstName} ${formData.lastName}`,
-      paymentMode: formData.paymentOption,
-      grossAmount: amountPaidNow,
-      tax: 0,
-      netAmount: amountPaidNow,
-      transactionStatus: "SUCCESS",
-    });
-
     createAlert({
       type: "BOOKING",
-      title: "Direct Booking Saved",
-      message: `${formData.firstName} ${formData.lastName} booked ${formData.eventName} via ${formData.source}`,
+      title: "New Booking Request",
+      message: `${formData.firstName} ${formData.lastName} submitted a booking request for ${formData.eventName}. Awaiting admin approval.`,
       meta: {
         bookingId,
         customerId: customer.id,
         eventName: formData.eventName,
-        source: formData.source,
+        source: "Customer Self-Service",
       },
     });
 
     recordEmailAlertAttempt({
-      kind: "Direct Booking",
+      kind: "Booking Request",
       bookingId,
       customerName: `${formData.firstName} ${formData.lastName}`,
       eventName: formData.eventName,
@@ -373,7 +346,6 @@ export default function DirectBookingForm() {
     setFormData({
       eventCategory: categoryOptions[0] || "Trek",
       eventName: "",
-      source: sourceOptions[0] || "Employee Portal",
       tickets: 1,
       departureOrigin: departureOptions[0] || "Base Village",
       firstName: "",
@@ -388,55 +360,49 @@ export default function DirectBookingForm() {
       paymentOption: paymentMethods[0] || "UPI",
       totalPackageAmount: "",
       amountPaidNow: "",
-      bookingStatus: statusOptions[0] || "CONFIRMED",
       paymentReference: "",
       notes: "",
     });
+    setPaymentScreenshot(null);
     setAdditionalTravelers([]);
   };
-
-  if (!employee && !isAdmin) return null;
 
   return (
     <section className="booking-page">
       <div className="container py-4 py-md-5">
         <div className="booking-hero">
           <div>
-            <span className="booking-kicker">Staff Booking Desk</span>
-            <h1>{bookingForm.manualFormTitle}</h1>
-            <p>{bookingForm.manualFormSubtitle}</p>
+            <span className="booking-kicker">Secure Trek Booking</span>
+            <h1>Booking Request Form</h1>
+            <p>Fill in your details and upload your payment screenshot. Our team will review and confirm your booking within 24 hours.</p>
           </div>
           <div className="booking-hero-card">
-            <div className="booking-hero-label">Logged In As</div>
-            <h2>{staffName}</h2>
-            <p>{employee ? "Employee Portal" : "Admin Access"}</p>
+            <div className="booking-hero-label">How it works</div>
+            <h2>3 Easy Steps</h2>
+            <p>Fill form → Upload payment → Get confirmed</p>
           </div>
         </div>
 
         {success && (
           <div className="alert alert-success py-3 mb-4">
-            ✅ Direct booking saved for <strong>{success.customerName}</strong> under{" "}
-            <strong>{success.eventName}</strong>. Booking ID:{" "}
-            <strong>{success.enhancedBookingId}</strong>
+            ✅ Your booking request has been submitted! Our team will review and confirm within 24 hours.
+            {" "}Booking Reference: <strong>{success.enhancedBookingId}</strong> —{" "}
+            <strong>{success.customerName}</strong> for <strong>{success.eventName}</strong>.
           </div>
         )}
 
         <form className="booking-layout" onSubmit={handleSubmit}>
           <div className="booking-form-card">
             <div className="booking-section-heading">
-              <h2>Customer & Booking Details</h2>
+              <h2>Your Booking Details</h2>
               <p>
-                Capture the same customer data here when payment is collected directly through
-                UPI, cash, or bank transfer without using website checkout.
+                Select your trek, travel date, and fill in your details. After submitting, our team will review and confirm your spot.
               </p>
             </div>
 
             <div className="booking-grid">
               <label className="booking-field">
-                <span>
-                  Event Category
-                  <InfoTooltip text="Managed from Admin → Booking Desk so staff can keep categories up to date." />
-                </span>
+                <span>Event Category</span>
                 <select name="eventCategory" value={formData.eventCategory} onChange={handleChange} required>
                   {categoryOptions.map((option) => (
                     <option value={option} key={option}>{option}</option>
@@ -445,28 +411,13 @@ export default function DirectBookingForm() {
               </label>
 
               <label className="booking-field">
-                <span>
-                  Event Name
-                  <InfoTooltip text="This dropdown combines live website listings and any custom event names added from the backend." />
-                </span>
+                <span>Event Name</span>
                 <select name="eventName" value={formData.eventName} onChange={handleChange} required>
                   <option value="">Select event</option>
                   {filteredEvents.map((item) => (
                     <option value={item.name} key={`${item.category}-${item.name}`}>
                       {item.name}
                     </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="booking-field">
-                <span>
-                  Lead Source
-                  <InfoTooltip text="Useful for reporting. These source options are editable in Admin → Booking Desk." />
-                </span>
-                <select name="source" value={formData.source} onChange={handleChange} required>
-                  {sourceOptions.map((option) => (
-                    <option value={option} key={option}>{option}</option>
                   ))}
                 </select>
               </label>
@@ -581,22 +532,35 @@ export default function DirectBookingForm() {
                 </select>
               </label>
 
-              <label className="booking-field">
-                <span>Booking Status</span>
-                <select name="bookingStatus" value={formData.bookingStatus} onChange={handleChange} required>
-                  {statusOptions.map((option) => (
-                    <option value={option} key={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
-
               <label className="booking-field booking-field-full">
                 <span>Payment Reference / UPI ID</span>
                 <input type="text" name="paymentReference" value={formData.paymentReference} onChange={handleChange} placeholder="UTR / UPI ref / cash note" />
               </label>
 
               <label className="booking-field booking-field-full">
-                <span>Internal Notes</span>
+                <span>Payment Screenshot</span>
+                <input type="file" accept="image/*" onChange={handleScreenshotChange} className="form-control" />
+                {paymentScreenshot && (
+                  <div style={{ marginTop: 8 }}>
+                    <img
+                      src={paymentScreenshot}
+                      alt="Payment proof"
+                      style={{ maxHeight: 160, maxWidth: "100%", borderRadius: 6, border: "1px solid #e2e8f0" }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-link btn-sm p-0 ms-2"
+                      style={{ color: "#ef4444", fontSize: 12 }}
+                      onClick={() => setPaymentScreenshot(null)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </label>
+
+              <label className="booking-field booking-field-full">
+                <span>Notes / Special Requests</span>
                 <textarea rows="3" name="notes" value={formData.notes} onChange={handleChange} placeholder="Any note for operations, pickup, approval, or special handling" />
               </label>
             </div>
@@ -675,8 +639,8 @@ export default function DirectBookingForm() {
 
           <aside className="booking-summary-card">
             <div className="booking-section-heading">
-              <h2>Manual Payment Summary</h2>
-              <p>{bookingForm.manualFormNote}</p>
+              <h2>Payment Summary</h2>
+              <p>Review your booking details before submitting. Our team will confirm once payment is verified.</p>
             </div>
 
             <div className="booking-summary-block">
@@ -706,15 +670,15 @@ export default function DirectBookingForm() {
             </div>
 
             <div className="booking-payment-note">
-              Saved as a direct manual booking entry. Customer, booking, transaction, and alerts all update together.
+              Your request will be reviewed by our team. Booking is confirmed only after admin approval — you will be notified on WhatsApp or email.
             </div>
 
             <div className="booking-summary-actions">
               <button type="submit" className="btn booking-primary-btn">
-                Save Direct Booking
+                Submit Booking Request
               </button>
-              <Link to="/employee" className="btn booking-outline-btn">
-                Back To Portal
+              <Link to="/" className="btn booking-outline-btn">
+                Back To Home
               </Link>
             </div>
           </aside>

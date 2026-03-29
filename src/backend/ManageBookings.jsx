@@ -1,10 +1,12 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { queryBookings, updateBookingStatus } from "../data/bookingStorage";
+import { createTransaction } from "../data/transactionStorage";
 import DownloadButton from "../components/DownloadButton";
 import { logActivity } from "../data/activityLogStorage";
+import InfoTooltip from "../components/InfoTooltip";
 
 const PAYMENT_OPTIONS = ["", "Debit Card / Credit Card", "UPI", "Net Banking", "Partial Payment"];
-const STATUS_OPTIONS  = ["CONFIRMED", "CANCELLED"];
+const STATUS_OPTIONS  = ["PENDING_APPROVAL", "CONFIRMED", "CANCELLED"];
 const SORT_OPTIONS    = [
   { label: "Latest First",    value: "latest" },
   { label: "Oldest First",    value: "oldest" },
@@ -75,18 +77,62 @@ export default function ManageBookings() {
     setActionMsg(`Transfer request for ${b.enhancedBookingId || b.bookingId} has been initiated. Complete the transfer in the customer profile.`);
   };
 
+  const handleApproveBooking = (b) => {
+    if (!window.confirm(`Approve booking ${b.enhancedBookingId || b.bookingId} for ${b.firstName} ${b.lastName}?`)) return;
+    updateBookingStatus(b.bookingId, "CONFIRMED");
+    createTransaction({
+      bookingId: b.bookingId,
+      customerId: b.customerId,
+      customerName: `${b.firstName} ${b.lastName}`,
+      paymentMode: b.paymentOption,
+      grossAmount: b.payableNow || 0,
+      tax: 0,
+      netAmount: b.payableNow || 0,
+      transactionStatus: "SUCCESS",
+    });
+    logActivity({
+      action: "BOOKING_APPROVED",
+      actionLabel: `Approved booking for ${b.firstName} ${b.lastName}`,
+      details: `Booking ID: ${b.enhancedBookingId || b.bookingId} | Trek: ${b.trekName || "—"} | Amount: ₹${b.payableNow || "—"}`,
+      module: "Bookings",
+      severity: "success",
+    });
+    setActionOpen(null);
+    setActionMsg(`Booking ${b.enhancedBookingId || b.bookingId} has been approved and confirmed.`);
+    refresh();
+  };
+
+  const handleRejectBooking = (b) => {
+    if (!window.confirm(`Reject booking ${b.enhancedBookingId || b.bookingId} for ${b.firstName} ${b.lastName}?`)) return;
+    updateBookingStatus(b.bookingId, "CANCELLED");
+    logActivity({
+      action: "BOOKING_REJECTED",
+      actionLabel: `Rejected booking for ${b.firstName} ${b.lastName}`,
+      details: `Booking ID: ${b.enhancedBookingId || b.bookingId} | Trek: ${b.trekName || "—"}`,
+      module: "Bookings",
+      severity: "warning",
+    });
+    setActionOpen(null);
+    setActionMsg(`Booking ${b.enhancedBookingId || b.bookingId} has been rejected.`);
+    refresh();
+  };
+
   const toggleAction = (bookingId) =>
     setActionOpen((prev) => (prev === bookingId ? null : bookingId));
 
-  const bookingStatusBadge = (status) =>
-    status === "CANCELLED"
-      ? "adm-booking-status adm-booking-status--cancelled"
-      : "adm-booking-status adm-booking-status--confirmed";
+  const bookingStatusBadge = (status) => {
+    if (status === "CANCELLED") return "adm-booking-status adm-booking-status--cancelled";
+    if (status === "PENDING_APPROVAL") return "adm-booking-status adm-booking-status--pending";
+    return "adm-booking-status adm-booking-status--confirmed";
+  };
 
   return (
     <div className="adm-page" onClick={() => setActionOpen(null)}>
       <div className="adm-page-header">
-        <h3 className="adm-page-title">📋 Bookings</h3>
+        <h3 className="adm-page-title">
+          📋 Bookings
+          <InfoTooltip text="All bookings from the website checkout and direct (manual) staff entries. Use filters to drill into specific payment types, statuses, or date ranges." />
+        </h3>
         <div className="d-flex align-items-center gap-2">
           <span className="adm-count-badge">{bookings.length} result{bookings.length !== 1 ? "s" : ""}</span>
           <DownloadButton
@@ -152,8 +198,8 @@ export default function ManageBookings() {
             </thead>
             <tbody>
               {bookings.map((b) => (
-                <>
-                  <tr key={b.bookingId}>
+                <React.Fragment key={b.bookingId}>
+                  <tr>
                     <td style={{ fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>
                       <div>{b.enhancedBookingId || b.bookingId}</div>
                       {b.enhancedBookingId && (
@@ -201,7 +247,23 @@ export default function ManageBookings() {
 
                         {actionOpen === b.bookingId && (
                           <div className="adm-action-dropdown">
-                            {(b.bookingStatus || "CONFIRMED") !== "CANCELLED" && (
+                            {(b.bookingStatus === "PENDING_APPROVAL") && (
+                              <>
+                                <button
+                                  className="adm-action-item adm-action-item--success"
+                                  onClick={() => handleApproveBooking(b)}
+                                >
+                                  ✓ Approve Booking
+                                </button>
+                                <button
+                                  className="adm-action-item adm-action-item--danger"
+                                  onClick={() => handleRejectBooking(b)}
+                                >
+                                  ✕ Reject Booking
+                                </button>
+                              </>
+                            )}
+                            {(b.bookingStatus === "CONFIRMED") && (
                               <button
                                 className="adm-action-item adm-action-item--danger"
                                 onClick={() => handleCancelBooking(b)}
@@ -276,6 +338,19 @@ export default function ManageBookings() {
                             </div>
                           )}
 
+                          {b.paymentScreenshot && (
+                            <div className="mt-3">
+                              <strong style={{ fontSize: 13 }}>Payment Screenshot</strong>
+                              <div className="mt-2">
+                                <img
+                                  src={b.paymentScreenshot}
+                                  alt="Payment proof"
+                                  style={{ maxHeight: 200, maxWidth: "100%", borderRadius: 6, border: "1px solid #e2e8f0" }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
                           {b.additionalTravelers?.length > 0 && (
                             <div className="mt-3">
                               <strong style={{ fontSize: 13 }}>Additional Travelers</strong>
@@ -292,7 +367,7 @@ export default function ManageBookings() {
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
