@@ -66,12 +66,27 @@ app.get("/api/health/db", async (req, res) => {
 app.get("/api/health/db/tables", async (req, res) => {
   const tableChecks = await Promise.all([
     supabasePublic.from("products").select("id", { count: "exact", head: true }),
+    supabasePublic.from("product_batches").select("id", { count: "exact", head: true }),
+    supabasePublic.from("product_departure_plans").select("id", { count: "exact", head: true }),
     supabaseAdmin.from("bookings").select("id", { count: "exact", head: true }),
     supabaseAdmin.from("customers").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("payments").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("payment_refunds").select("id", { count: "exact", head: true }),
     supabaseAdmin.from("listing_submissions").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("enquiries").select("id", { count: "exact", head: true }),
   ]);
 
-  const [productsCheck, bookingsCheck, customersCheck, listingsCheck] = tableChecks;
+  const [
+    productsCheck,
+    productBatchesCheck,
+    departurePlansCheck,
+    bookingsCheck,
+    customersCheck,
+    paymentsCheck,
+    refundsCheck,
+    listingsCheck,
+    enquiriesCheck,
+  ] = tableChecks;
 
   const payload = {
     products: {
@@ -79,6 +94,18 @@ app.get("/api/health/db/tables", async (req, res) => {
       count: productsCheck.count ?? 0,
       access: "public",
       error: productsCheck.error?.message || null,
+    },
+    product_batches: {
+      ok: !productBatchesCheck.error,
+      count: productBatchesCheck.count ?? 0,
+      access: "public",
+      error: productBatchesCheck.error?.message || null,
+    },
+    product_departure_plans: {
+      ok: !departurePlansCheck.error,
+      count: departurePlansCheck.count ?? 0,
+      access: "public",
+      error: departurePlansCheck.error?.message || null,
     },
     bookings: {
       ok: !bookingsCheck.error,
@@ -92,11 +119,29 @@ app.get("/api/health/db/tables", async (req, res) => {
       access: "admin",
       error: customersCheck.error?.message || null,
     },
+    payments: {
+      ok: !paymentsCheck.error,
+      count: paymentsCheck.count ?? 0,
+      access: "admin",
+      error: paymentsCheck.error?.message || null,
+    },
+    payment_refunds: {
+      ok: !refundsCheck.error,
+      count: refundsCheck.count ?? 0,
+      access: "admin",
+      error: refundsCheck.error?.message || null,
+    },
     listing_submissions: {
       ok: !listingsCheck.error,
       count: listingsCheck.count ?? 0,
       access: "admin",
       error: listingsCheck.error?.message || null,
+    },
+    enquiries: {
+      ok: !enquiriesCheck.error,
+      count: enquiriesCheck.count ?? 0,
+      access: "admin",
+      error: enquiriesCheck.error?.message || null,
     },
   };
 

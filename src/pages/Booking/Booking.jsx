@@ -182,9 +182,12 @@ function Booking() {
   /* Final effective referral code */
   const refCode = manualRefCode && refStatus.valid ? manualRefCode : urlRefCode;
 
-  /* ── Load available dates from admin for this trek ── */
+  /* ── Load available dates from admin for this trek (future only) ── */
   const trekSlug = selectedTrek ? slugifyTrekName(selectedTrek.name) : "";
-  const availableDates = useMemo(() => getTrekDates(trekSlug), [trekSlug]);
+  const availableDates = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return getTrekDates(trekSlug).filter((d) => d.date >= today);
+  }, [trekSlug]);
 
   /* ── When a date is picked, auto-populate the WhatsApp group link ── */
   const handleDateSelect = (date) => {

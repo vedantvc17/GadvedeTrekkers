@@ -366,7 +366,7 @@ function prepareTrekForm(form) {
 }
 
 function handleTrekPersist(item) {
-  const slug = item.slug || item.name;
+  const slug = slugifyTrekName(item.name || item.slug || "");
   const trekDateBatches = parseJson(item.trekDateBatches, []);
   replaceTrekDates(slug, item.name, trekDateBatches);
 }
