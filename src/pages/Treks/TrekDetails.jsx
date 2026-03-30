@@ -4,6 +4,7 @@ import { findTrekBySlug, slugifyTrekName } from "../../data/treks";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 import { richTrekDetails } from "../../data/richTrekDetails";
+import { getTrekDates } from "../../data/trekDatesStorage";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -104,6 +105,11 @@ function TrekDetails() {
   const staticItineraryKeys = Object.keys(staticRichTrek?.itineraries || {});
   const defaultItineraryKey = adminItineraryKeys[0] || staticItineraryKeys[0] || "kasara";
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const upcomingDates = trek
+    ? getTrekDates(slugifyTrekName(trek.name)).filter((d) => d.date >= todayStr)
+    : [];
+
   const [activeTab, setActiveTab] = useState("overview");
   const [activeItinerary, setActiveItinerary] = useState(defaultItineraryKey);
   const [lightboxImg, setLightboxImg] = useState(null);
@@ -196,6 +202,33 @@ function TrekDetails() {
                 </div>
               </div>
             </div>
+            {upcomingDates.length > 0 && (
+              <div className="container-fluid td-shell py-4">
+                <div className="td-card td-dates-card">
+                  <h3 className="td-section-title">📅 Upcoming Departures</h3>
+                  <div className="td-dates-list">
+                    {upcomingDates.map((d) => {
+                      const displayDate = new Date(`${d.date}T00:00:00`).toLocaleDateString("en-IN", {
+                        weekday: "short",
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      });
+                      return (
+                        <div key={d.id} className="td-date-row">
+                          <div className="td-date-info">
+                            <span className="td-date-text">{displayDate}</span>
+                            {d.label && <span className="td-date-badge">{d.label}</span>}
+                          </div>
+                          <Link to="/book" state={{ trek }} className="td-date-book-btn">Book</Link>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="container-fluid td-shell py-4">
               <div className="td-card">
                 <h2 className="td-section-title">Photo Gallery</h2>
@@ -418,6 +451,31 @@ function TrekDetails() {
               </div>
 
               <div className="td-overview-side">
+                {upcomingDates.length > 0 && (
+                  <div className="td-card td-dates-card">
+                    <h3 className="td-section-title">📅 Upcoming Departures</h3>
+                    <div className="td-dates-list">
+                      {upcomingDates.map((d) => {
+                        const displayDate = new Date(`${d.date}T00:00:00`).toLocaleDateString("en-IN", {
+                          weekday: "short",
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        });
+                        return (
+                          <div key={d.id} className="td-date-row">
+                            <div className="td-date-info">
+                              <span className="td-date-text">{displayDate}</span>
+                              {d.label && <span className="td-date-badge">{d.label}</span>}
+                            </div>
+                            <Link to="/book" state={{ trek }} className="td-date-book-btn">Book</Link>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="td-card td-highlights-card">
                   <h3 className="td-section-title">Trek Highlights</h3>
                   <ul className="td-highlights-list">
