@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@400;500;600;700;800&family=Oswald:wght@600;700&family=Montserrat:wght@500;600;700&display=swap");
 
 /* ================= RESET ================= */
 * {
@@ -1644,6 +1644,269 @@ footer .row > div {
   .trek-card-title {
     font-size: 1.05rem;
   }
+}
+
+/* ================= HOME — NEW SECTIONS ================= */
+
+/* Stats trust bar */
+.ht-stats-bar {
+  background: #fff;
+  border-bottom: 1px solid #e8f5e9;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  position: relative;
+  z-index: 10;
+}
+.ht-stats-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 20px 0;
+}
+.ht-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 40px;
+}
+.ht-stat-number {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #16a34a;
+  line-height: 1.1;
+}
+.ht-stat-label {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin-top: 3px;
+  text-align: center;
+}
+.ht-stat-divider {
+  width: 1px;
+  height: 40px;
+  background: #d1fae5;
+}
+@media (max-width: 576px) {
+  .ht-stat-item { padding: 8px 18px; }
+  .ht-stat-number { font-size: 1.4rem; }
+  .ht-stat-divider { display: none; }
+}
+
+/* Section headings shared */
+.ht-section-eyebrow {
+  display: block;
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.ht-section-title {
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+.ht-section-sub {
+  color: #6b7280;
+  font-size: 0.97rem;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+/* How It Works */
+.ht-how-section { background: #f8fffe; }
+.ht-step-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 36px 28px;
+  border: 1px solid #e8f5e9;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+  height: 100%;
+  position: relative;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.ht-step-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(22,163,74,0.12);
+}
+.ht-step-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #d1fae5;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.ht-step-icon {
+  width: 52px;
+  height: 52px;
+  background: #f0fdf4;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: #16a34a;
+}
+.ht-step-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 10px;
+}
+.ht-step-desc {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.65;
+  margin: 0;
+}
+.ht-step-connector {
+  display: none;
+}
+@media (min-width: 768px) {
+  .ht-step-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 60px;
+    color: #d1fae5;
+    font-size: 2rem;
+  }
+}
+
+/* Testimonials */
+.ht-testimonials-section {
+  background: linear-gradient(160deg, #f0fdf4 0%, #fff 60%);
+}
+.ht-testimonial-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+  border: 1px solid #e8f5e9;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.ht-testimonial-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.1);
+}
+.ht-testimonial-stars {
+  color: #f59e0b;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+}
+.ht-testimonial-text {
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.75;
+  flex: 1;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+.ht-testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ht-testimonial-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.ht-testimonial-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #111827;
+}
+.ht-testimonial-trek {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+/* CTA Banner */
+.ht-cta-banner {
+  background: linear-gradient(135deg, #0a3d1f 0%, #16a34a 100%);
+  padding: 72px 24px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+.ht-cta-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4z' fill='%23ffffff' fill-opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+.ht-cta-banner-title {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 14px;
+  position: relative;
+  line-height: 1.2;
+}
+.ht-cta-banner-sub {
+  color: rgba(255,255,255,0.85);
+  font-size: 1rem;
+  max-width: 520px;
+  margin: 0 auto 36px;
+  line-height: 1.7;
+  position: relative;
+}
+.ht-cta-banner-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f97316;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 15px 34px;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(249,115,22,0.45);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+.ht-cta-banner-btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(249,115,22,0.6);
+  color: #fff;
+}
+.ht-cta-banner-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid rgba(255,255,255,0.7);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 13px 30px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+  position: relative;
+}
+.ht-cta-banner-btn-secondary:hover {
+  background: #fff;
+  color: #16a34a;
 }
 
 /* ================= BOOKING PAGE ================= */

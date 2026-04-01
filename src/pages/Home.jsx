@@ -866,6 +866,33 @@ function Home() {
         </button>
       </div>
 
+      {/* ================= STATS TRUST BAR ================= */}
+      <div className="ht-stats-bar">
+        <div className="container">
+          <div className="ht-stats-inner">
+            <div className="ht-stat-item">
+              <span className="ht-stat-number">500+</span>
+              <span className="ht-stat-label">Treks Completed</span>
+            </div>
+            <div className="ht-stat-divider" />
+            <div className="ht-stat-item">
+              <span className="ht-stat-number">10,000+</span>
+              <span className="ht-stat-label">Happy Trekkers</span>
+            </div>
+            <div className="ht-stat-divider" />
+            <div className="ht-stat-item">
+              <span className="ht-stat-number">4.8★</span>
+              <span className="ht-stat-label">Average Rating</span>
+            </div>
+            <div className="ht-stat-divider" />
+            <div className="ht-stat-item">
+              <span className="ht-stat-number">50+</span>
+              <span className="ht-stat-label">Destinations</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ================= TREKS & CAMPING (Premium Section) ================= */}
       <section
         className="py-5"
@@ -994,6 +1021,55 @@ function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= HOW IT WORKS ================= */}
+      <section className="ht-how-section py-5">
+        <div className="container">
+          <div className="text-center mb-5">
+            <span className="ht-section-eyebrow">Simple Process</span>
+            <h2 className="ht-section-title">How It Works</h2>
+            <p className="ht-section-sub">Book your next adventure in 3 simple steps</p>
+          </div>
+          <div className="row g-4 align-items-stretch justify-content-center">
+            <div className="col-12 col-md-4">
+              <div className="ht-step-card">
+                <div className="ht-step-number">01</div>
+                <div className="ht-step-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                </div>
+                <h4 className="ht-step-title">Pick Your Trek</h4>
+                <p className="ht-step-desc">Browse 50+ trek destinations across Maharashtra. Filter by difficulty, duration, and your departure city.</p>
+              </div>
+            </div>
+            <div className="col-12 col-md-4">
+              <div className="ht-step-card">
+                <div className="ht-step-number">02</div>
+                <div className="ht-step-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <h4 className="ht-step-title">Book Your Slot</h4>
+                <p className="ht-step-desc">Select your preferred date, fill in the details, and pay securely online. Confirmation arrives in minutes.</p>
+              </div>
+            </div>
+            <div className="col-12 col-md-4">
+              <div className="ht-step-card">
+                <div className="ht-step-number">03</div>
+                <div className="ht-step-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                </div>
+                <h4 className="ht-step-title">Trek with Us</h4>
+                <p className="ht-step-desc">Show up at the meetup point, meet your group and expert guides, and set off on an unforgettable adventure.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1133,6 +1209,79 @@ function Home() {
       {enquiryDest && (
         <EnquiryModal dest={enquiryDest} category="Industrial Visit" onClose={() => setEnquiryDest(null)} />
       )}
+
+      {/* ================= TESTIMONIALS ================= */}
+      <section className="ht-testimonials-section py-5">
+        <div className="container">
+          <div className="text-center mb-5">
+            <span className="ht-section-eyebrow">What Trekkers Say</span>
+            <h2 className="ht-section-title">Real Stories, Real Adventures</h2>
+            <p className="ht-section-sub">Join thousands of trekkers who've explored Maharashtra with us.</p>
+          </div>
+          <div className="row g-4">
+            {[
+              {
+                text: "Harihar Fort was a life-changing experience! The guides were amazing and the views from the top were absolutely breathtaking. Gadvede made everything seamless — from pickup to the summit.",
+                name: "Priya M.",
+                trek: "Harihar Trek",
+                initials: "PM",
+              },
+              {
+                text: "First time trekking and I chose Gadvede Trekkers. Best decision ever! The team made sure everyone was safe and having fun all the way. Already planning my next one.",
+                name: "Rohan K.",
+                trek: "Rajmachi Trek",
+                initials: "RK",
+              },
+              {
+                text: "Everything was perfectly organized. The campfire, the food, the sunrise hike at Bhandardara — all perfect. The guides are knowledgeable and truly passionate about the outdoors.",
+                name: "Sneha P.",
+                trek: "Bhandardara Camping",
+                initials: "SP",
+              },
+            ].map((t, i) => (
+              <div className="col-12 col-md-4" key={i}>
+                <div className="ht-testimonial-card">
+                  <div className="ht-testimonial-stars">★★★★★</div>
+                  <p className="ht-testimonial-text">"{t.text}"</p>
+                  <div className="ht-testimonial-author">
+                    <div className="ht-testimonial-avatar">{t.initials}</div>
+                    <div>
+                      <div className="ht-testimonial-name">{t.name}</div>
+                      <div className="ht-testimonial-trek">{t.trek}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= CTA BANNER ================= */}
+      <section className="ht-cta-banner">
+        <div className="container">
+          <h2 className="ht-cta-banner-title">Ready for Your Next Adventure?</h2>
+          <p className="ht-cta-banner-sub">
+            Join 10,000+ trekkers who&apos;ve explored Maharashtra with us. Affordable, safe, and unforgettable.
+          </p>
+          <div className="d-flex justify-content-center gap-3 flex-wrap">
+            <Link to="/treks" className="ht-cta-banner-btn-primary">
+              Explore All Treks →
+            </Link>
+            <a
+              href="https://wa.me/919856112727"
+              className="ht-cta-banner-btn-secondary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326z"/>
+              </svg>
+              Chat on WhatsApp
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* ================= LOCAL SEO SECTION ================= */}
       <section
