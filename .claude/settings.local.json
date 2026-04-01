@@ -52,7 +52,11 @@
       "Bash(git clone:*)",
       "Bash(npx uipro-cli:*)",
       "Bash(python skills/ui-ux-pro-max/scripts/search.py \"adventure travel trekking outdoor nature tour booking\" --design-system -p \"Gadvede Trekkers\" -f markdown)",
-      "Bash(py --version)"
+      "Bash(py --version)",
+      "Bash(gh pr:*)",
+      "Bash(/tmp/trek_data_exploration_summary.md:*)",
+      "Read(//tmp/**)",
+      "Bash(grep -r \"const.*Treks = \\\\[\" /c/Users/Codengine/GadvedeTrekkers/src/pages/Treks/*.jsx)"
     ]
   },
   "disableAllHooks": true
