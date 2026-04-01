@@ -35,7 +35,24 @@
       "Read(//c/Users/Codengine/.claude/**)",
       "Read(//c/Users/Codengine/.claude/projects/**)",
       "Bash(find /c/Users/Codengine/.claude -name *.json -not -path */projects/*)",
-      "Bash(find /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers/backend/src -type f \\\\\\(-name *.js -o -name *.jsx -o -name *.ts -o -name *.tsx \\\\\\))"
+      "Bash(find /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers/backend/src -type f \\\\\\(-name *.js -o -name *.jsx -o -name *.ts -o -name *.tsx \\\\\\))",
+      "Bash(find /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers/src -type f -name *ook* -o -name *ook*)",
+      "Bash(find /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers/backend/src -type f -name *routes* -o -name *controller*)",
+      "Bash(find /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers/src/components -type f -name *.jsx -o -name *.js)",
+      "Bash(grep -r \"travelDate\\\\|trekDate\\\\|departure.*date\\\\|date.*picker\" /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers/src --include=*.jsx --include=*.js -l)",
+      "Bash(grep -r \"available.*date\\\\|date.*list\\\\|getTrekDates\" /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers/src/pages/Booking --include=*.jsx -A 3 -B 1)",
+      "Bash(git push:*)",
+      "Bash(winget install:*)",
+      "Bash(choco install:*)",
+      "Bash(gh auth:*)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\")",
+      "Bash(git remote:*)",
+      "Bash(claude skill:*)",
+      "Bash(claude.exe skill:*)",
+      "Bash(git clone:*)",
+      "Bash(npx uipro-cli:*)",
+      "Bash(python skills/ui-ux-pro-max/scripts/search.py \"adventure travel trekking outdoor nature tour booking\" --design-system -p \"Gadvede Trekkers\" -f markdown)",
+      "Bash(py --version)"
     ]
   },
   "disableAllHooks": true
