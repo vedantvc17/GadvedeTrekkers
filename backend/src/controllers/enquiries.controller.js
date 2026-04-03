@@ -62,6 +62,25 @@ function toFrontend(r) {
   };
 }
 
+function createLeadBackfillEnquiry(lead = {}) {
+  return {
+    id: `ENQ-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+    name: lead.customerName || "Unknown",
+    phone: lead.customerPhone || "",
+    email: lead.customerEmail || "",
+    eventName: lead.packageName || lead.eventName || "",
+    category: lead.category || "",
+    location: lead.location || "",
+    pageUrl: lead.pageUrl || "",
+    message: lead.message || "",
+    preferredDate: lead.preferredDate || "",
+    groupSize: String(lead.pax || lead.groupSize || ""),
+    status: "NEW_LEAD",
+    tags: [],
+    createdAt: lead.timestamp || new Date().toISOString(),
+  };
+}
+
 /* ── GET /api/enquiries ── */
 export async function listEnquiries(req, res) {
   const {
@@ -102,6 +121,20 @@ export async function listEnquiries(req, res) {
 export async function upsertEnquiry(req, res) {
   const enquiry = req.body || {};
   if (!enquiry.id) return res.status(400).json({ success: false, error: "Enquiry id is required" });
+
+  const { data, error } = await supabaseAdmin
+    .from("enquiries")
+    .upsert(toRow(enquiry), { onConflict: "id" })
+    .select("*")
+    .single();
+
+  if (error) return res.status(500).json({ success: false, error: error.message });
+  return res.status(201).json({ success: true, data: toFrontend(data) });
+}
+
+/* ── POST /api/leads (legacy alias) ── */
+export async function captureLead(req, res) {
+  const enquiry = createLeadBackfillEnquiry(req.body || {});
 
   const { data, error } = await supabaseAdmin
     .from("enquiries")

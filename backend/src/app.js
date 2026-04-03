@@ -6,6 +6,7 @@ import bookingsRoutes   from "./routes/bookings.routes.js";
 import customersRoutes  from "./routes/customers.routes.js";
 import paymentsRoutes   from "./routes/payments.routes.js";
 import enquiriesRoutes  from "./routes/enquiries.routes.js";
+import leadsRoutes      from "./routes/leads.routes.js";
 import supabasePublic   from "./config/supabasePublicClient.js";
 import supabaseAdmin    from "./config/supabaseAdminClient.js";
 
@@ -30,6 +31,7 @@ app.use("/api/bookings",   bookingsRoutes);
 app.use("/api/customers",  customersRoutes);
 app.use("/api/payments",   paymentsRoutes);
 app.use("/api/enquiries",  enquiriesRoutes);
+app.use("/api/leads",      leadsRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ success: true, status: "ok" });
