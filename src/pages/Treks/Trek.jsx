@@ -35,6 +35,23 @@ const allTreks = _storedTreks.length > 0
 
 const DIFFICULTY_FILTERS = ["All", "Easy", "Medium", "Hard"];
 
+/**
+ * Returns true if a date string (e.g. "25 Sept 2025") is in the past.
+ * Falls back to false on parse failures so old dates are never silently hidden.
+ */
+function isDateExpired(dateStr) {
+  if (!dateStr) return false;
+  try {
+    // "25 Sept 2025" → normalise to "25 Sep 2025" (some browsers need this)
+    const normalised = String(dateStr).replace(/sept/i, "Sep");
+    const d = new Date(normalised);
+    if (isNaN(d.getTime())) return false; // unparseable → show as-is
+    return d < new Date();
+  } catch {
+    return false;
+  }
+}
+
 const SORT_OPTIONS = [
   { label: "Recommended", value: "recommended" },
   { label: "Price: Low to High", value: "price-asc" },
@@ -169,7 +186,11 @@ function Trek() {
         t.name?.toLowerCase().includes(q) ||
         t.location?.toLowerCase().includes(q) ||
         t.difficulty?.toLowerCase().includes(q) ||
-        t.duration?.toLowerCase().includes(q)
+        t.duration?.toLowerCase().includes(q) ||
+        t.region?.toLowerCase().includes(q) ||
+        t.state?.toLowerCase().includes(q) ||
+        t.seasonalTag?.toLowerCase().includes(q) ||
+        t.tags?.toLowerCase().includes(q)
       );
     }
     if (activeSort === "price-asc") result.sort((a, b) => a.price - b.price);
@@ -350,18 +371,6 @@ function Trek() {
           }
         </p>
 
-        {/* ── NO RESULTS ───────────────────────────── */}
-        {filteredTreks.length === 0 && (
-          <div style={{ textAlign: "center", padding: "48px 24px", background: "#fff", borderRadius: 14, border: "1px solid #e2e8f0", margin: "16px 0" }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
-            <div style={{ fontWeight: 700, fontSize: 16, color: "#0f172a", marginBottom: 6 }}>No treks found for "{searchQuery}"</div>
-            <div style={{ color: "#64748b", fontSize: 14, marginBottom: 16 }}>Try a different name, location, or difficulty</div>
-            <button onClick={() => { setSearchQuery(""); setActiveFilter("All"); }} style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, padding: "8px 22px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-              Clear Search
-            </button>
-          </div>
-        )}
-
         {/* ── TREK GRID ────────────────────────────── */}
         <div className="trek-grid" role="list" aria-label="Available treks">
           {visibleTreks.map((trek, index) => {
@@ -483,8 +492,19 @@ function Trek() {
                   </div>
 
                   <div className="trek-next-date">
-                    <span className="trek-next-label">📅 Next</span>
-                    <span>{trek.nextDate}</span>
+                    {isDateExpired(trek.nextDate) ? (
+                      <>
+                        <span className="trek-next-label">📅</span>
+                        <span style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "0.85em" }}>
+                          Contact for next dates
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="trek-next-label">📅 Next</span>
+                        <span>{trek.nextDate}</span>
+                      </>
+                    )}
                   </div>
 
                   <div className="trek-card-actions">
@@ -518,14 +538,78 @@ function Trek() {
 
         {/* ── NO RESULTS ───────────────────────────── */}
         {filteredTreks.length === 0 && (
-          <div className="trek-no-results">
-            <p>No {activeFilter} treks found. Try a different filter.</p>
-            <button
-              className="btn trek-primary-btn"
-              onClick={() => setActiveFilter("All")}
-            >
-              Show All Treks
-            </button>
+          <div style={{
+            textAlign: "center",
+            padding: "48px 24px",
+            background: "#fff",
+            borderRadius: 16,
+            border: "1px solid #e2e8f0",
+            margin: "16px 0",
+            boxShadow: "0 4px 18px rgba(0,0,0,0.05)",
+          }}>
+            <div style={{ fontSize: 52, marginBottom: 14 }}>🏔️</div>
+            {isSearchActive ? (
+              <>
+                <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#0f172a", marginBottom: 8 }}>
+                  No treks found for "{searchQuery}"
+                </div>
+                <div style={{ color: "#64748b", fontSize: "0.92rem", lineHeight: 1.6, marginBottom: 6, maxWidth: 420, margin: "0 auto 20px" }}>
+                  Currently, this trek is not listed. We may add it in the future.
+                  <br />
+                  If you'd like a customised trek to this destination, please contact us.
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#0f172a", marginBottom: 8 }}>
+                  No {activeFilter !== "All" ? activeFilter : ""} treks found
+                </div>
+                <div style={{ color: "#64748b", fontSize: "0.92rem", marginBottom: 20 }}>
+                  Try a different difficulty level or clear your filters.
+                </div>
+              </>
+            )}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginTop: 8 }}>
+              {isSearchActive && (
+                <a
+                  href={`https://wa.me/919856112727?text=${encodeURIComponent(`Hi! I'm looking for a customised trek to "${searchQuery}". Can you help?`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    background: "#16a34a", color: "#fff", border: "none",
+                    borderRadius: 10, padding: "10px 22px",
+                    fontWeight: 700, fontSize: "0.9rem", textDecoration: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  🎒 Request Custom Trek
+                </a>
+              )}
+              <a
+                href="/contact"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  background: "transparent", color: "#16a34a",
+                  border: "1.5px solid #16a34a",
+                  borderRadius: 10, padding: "10px 22px",
+                  fontWeight: 700, fontSize: "0.9rem", textDecoration: "none",
+                  cursor: "pointer",
+                }}
+              >
+                📞 Contact Us
+              </a>
+              <button
+                onClick={() => { setSearchQuery(""); setActiveFilter("All"); }}
+                style={{
+                  background: "#f1f5f9", color: "#334155", border: "none",
+                  borderRadius: 10, padding: "10px 22px",
+                  fontWeight: 700, fontSize: "0.9rem", cursor: "pointer",
+                }}
+              >
+                ✕ Clear Filters
+              </button>
+            </div>
           </div>
         )}
 

@@ -650,7 +650,7 @@ function Booking() {
 
               {/* ── Travel Date ── */}
               {availableDates.length > 0 ? (
-                <label className="booking-field">
+                <label className="booking-field booking-field-full">
                   <span>
                     Travel Date
                     <InfoTooltip text="Choose one of the configured batch dates. The matching WhatsApp group link is auto-mapped for that batch." />
@@ -660,6 +660,7 @@ function Booking() {
                     value={formData.travelDate}
                     onChange={handleChange}
                     required
+                    style={{ fontSize: "1rem" }}
                   >
                     <option value="" disabled>
                       Select travel date
@@ -681,17 +682,19 @@ function Booking() {
                   </select>
                 </label>
               ) : (
-                <label className="booking-field">
+                <label className="booking-field booking-field-full">
                   <span>
                     Travel Date
-                    <InfoTooltip text="If no admin batch dates are configured yet, select the date manually here." />
+                    <InfoTooltip text="Only future dates are allowed. Select your preferred trek date." />
                   </span>
                   <input
                     type="date"
                     name="travelDate"
                     value={formData.travelDate}
                     onChange={handleChange}
+                    min={new Date().toISOString().slice(0, 10)}
                     required
+                    style={{ fontSize: "1rem" }}
                   />
                 </label>
               )}
@@ -1042,6 +1045,24 @@ function Booking() {
             </Link>
           </aside>
         </form>
+      </div>
+
+      {/* ── Sticky mobile CTA bar (hidden on desktop where sidebar is already sticky) ── */}
+      <div className="booking-mobile-cta" aria-hidden="false">
+        <div className="booking-mobile-cta-inner">
+          <div className="booking-mobile-cta-amount">
+            <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block", lineHeight: 1.2 }}>Total payable</span>
+            <strong style={{ fontSize: "1.15rem", color: "#0f172a" }}>₹{payableNow}</strong>
+          </div>
+          <button
+            type="button"
+            className="btn booking-primary-btn"
+            onClick={openConsentModal}
+            style={{ flex: 1, maxWidth: 200 }}
+          >
+            Complete Payment →
+          </button>
+        </div>
       </div>
 
       {showConsentModal && (
