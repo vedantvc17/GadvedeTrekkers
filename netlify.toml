@@ -32,6 +32,9 @@
   force  = true
 
 # ── Security & performance headers ──
+# Cache-Control here is intentionally no-cache so that SPA routes (/tours, /treks, etc.)
+# always fetch the latest index.html from Netlify. The /assets/* rule below overrides
+# this for hashed JS/CSS bundles (which should be cached forever).
 [[headers]]
   for = "/*"
   [headers.values]
@@ -41,6 +44,8 @@
     Referrer-Policy            = "strict-origin-when-cross-origin"
     Permissions-Policy         = "camera=(), microphone=(), geolocation=(self)"
     Strict-Transport-Security  = "max-age=31536000; includeSubDomains; preload"
+    Cache-Control              = "no-cache, no-store, must-revalidate"
+    Pragma                     = "no-cache"
 
 # ── Cache static assets aggressively ──
 [[headers]]
@@ -64,12 +69,22 @@
     Cache-Control = "public, max-age=2592000"
 
 # ── Do NOT cache HTML (always fresh for SPA updates) ──
+# Covers the root, explicit index.html, and all SPA sub-routes (e.g. /tours, /treks)
+# so that mobile browsers always fetch the latest bundle references.
 [[headers]]
   for = "/"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma        = "no-cache"
 
 [[headers]]
   for = "/index.html"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma        = "no-cache"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma        = "no-cache"
