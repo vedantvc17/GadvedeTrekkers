@@ -52,24 +52,35 @@ function Tours() {
   const location = useLocation();
   const selectedRegion = location.state?.region || null;
 
-  const tourData = JSON.parse(JSON.stringify(defaultToursData));
+  // Admin-first: if gt_tours has any data, use ONLY active admin tours.
+  // Static defaultToursData is used as fallback only when admin storage is empty.
+  // This ensures Live/Off toggles in the admin panel are respected on the frontend.
+  const _adminTours = getAdminItems("gt_tours");
 
-  getAdminItems("gt_tours")
-    .filter((tour) => tour.active !== false)
-    .sort((a, b) => Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999))
-    .forEach((tour) => {
-      const item = normaliseItem(tour);
-      const gallery = parseJsonValue(item.imageGallery, [item.image]).filter(Boolean);
-      if (!tourData[item.region]) tourData[item.region] = [];
-      tourData[item.region].push({ ...item, image: gallery[0] || item.image });
+  let displayTourData;
+
+  if (_adminTours.length > 0) {
+    // Build purely from admin — only active tours, sorted by sortOrder
+    const tourData = {};
+    _adminTours
+      .filter((tour) => tour.active !== false)
+      .sort((a, b) => Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999))
+      .forEach((tour) => {
+        const item = normaliseItem(tour);
+        const gallery = parseJsonValue(item.imageGallery, [item.image]).filter(Boolean);
+        if (!tourData[item.region]) tourData[item.region] = [];
+        tourData[item.region].push({ ...item, image: gallery[0] || item.image });
+      });
+    displayTourData = tourData;
+  } else {
+    // Fallback: static seed data (no OFF-filtering needed — all are active by default)
+    const tourData = JSON.parse(JSON.stringify(defaultToursData));
+    delete tourData.southindia;
+    Object.keys(tourData).forEach((region) => {
+      tourData[region] = dedupeTours(tourData[region]);
     });
-
-  Object.keys(tourData).forEach((region) => {
-    tourData[region] = dedupeTours(tourData[region]);
-  });
-
-  const displayTourData = { ...tourData };
-  delete displayTourData.southindia;
+    displayTourData = tourData;
+  }
 
   const regions = REGION_ORDER.filter(
     (region) => Array.isArray(displayTourData[region]) && displayTourData[region].length
