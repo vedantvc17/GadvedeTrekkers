@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { getTourDates } from "../../data/tourDatesStorage";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 import { toursList } from "../../data/toursData";
@@ -109,7 +110,95 @@ function TourDetails() {
     };
   }, [adminItem, id, previewItem, previewSlug, seedTour]);
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const upcomingDates = getTourDates(id).filter((d) => d.date >= todayStr);
+
   const [activeImage, setActiveImage] = useState(0);
+
+  const downloadItinerary = () => {
+    if (!tour) return;
+    const css = `body{font-family:Arial,sans-serif;max-width:820px;margin:0 auto;padding:32px;color:#1a1a1a}
+      h1{color:#0a6a47;font-size:2rem;margin-bottom:4px}
+      h2{color:#0a6a47;margin-top:28px;font-size:0.95rem;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #d5f6e4;padding-bottom:6px}
+      h3{color:#065f46;font-size:.88rem;margin-top:16px;margin-bottom:4px}
+      hr{border:none;border-top:2px solid #d5f6e4;margin:20px 0}
+      ul{padding-left:20px;line-height:2}
+      .stats{display:flex;flex-wrap:wrap;gap:0;border:1px solid #d5f6e4;border-radius:8px;margin:12px 0 20px;overflow:hidden}
+      .stat{padding:10px 18px;font-size:.9rem;border-right:1px solid #d5f6e4;font-weight:600}
+      .stat span{display:block;font-size:.72rem;color:#6b7280;font-weight:400}
+      .day-title{background:#d5f6e4;border-left:5px solid #0a8456;padding:10px 14px;font-weight:800;border-radius:8px;margin-bottom:6px;font-size:.9rem}
+      .event{display:grid;grid-template-columns:140px 1fr;gap:16px;padding:6px 4px;border-bottom:1px solid #eef4f0;font-size:.88rem}
+      .event-time{color:#0a6a47;font-weight:700}
+      .highlight-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;list-style:none;padding-left:0}
+      .highlight-grid li{background:#f0fdf4;border:1px solid #d5f6e4;border-radius:6px;padding:8px 12px;font-size:.86rem}
+      .brief-row{display:grid;grid-template-columns:120px 1fr;gap:16px;padding:10px 0;border-bottom:1px solid #eef4f0}
+      .brief-day{font-weight:800;color:#0a6a47}
+      .inc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}
+      .carry-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;list-style:none;padding-left:0}
+      .carry-grid li{background:#f6fbf8;border:1px solid #e3efe8;border-radius:6px;padding:6px 10px;font-size:.84rem}
+      .price-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eef4f0}
+      .price-label{font-weight:700}
+      .price-val{color:#0a6a47;font-weight:900}
+      .date-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eef4f0}
+      .info-row{padding:10px 0;border-bottom:1px solid #eef4f0}
+      .info-title{font-weight:800;color:#0f3b2b;margin-bottom:4px}
+      .offer{background:#f0fdf4;border:1px solid #d5f6e4;border-radius:8px;padding:10px 14px;margin-bottom:8px}
+      .offer-code{font-weight:900;letter-spacing:1px;color:#065f46}
+      .faq-q{font-weight:800;color:#103528;margin-bottom:4px}
+      .faq-a{color:#385145;line-height:1.7;margin-bottom:12px}
+      @media print{body{padding:16px}.highlight-grid,.inc-grid,.carry-grid{break-inside:avoid}}`;
+
+    const gallery = Array.isArray(tour.imageGallery) ? tour.imageGallery : parseJsonValue(tour.imageGallery, []);
+    const overviewHtml = String(tour.overview || "").split("\n\n").filter(Boolean).map((b) => `<p style="line-height:1.75;color:#374151">${b}</p>`).join("");
+    const highlightItems = highlights.map((h) => `<li><strong style="color:#065f46">${h.title}</strong>${h.desc ? ` — ${h.desc}` : ""}</li>`).join("");
+    const briefRows = briefItinerary.map((item) => `<div class="brief-row"><div class="brief-day">${item.day}</div><div>${item.summary}</div></div>`).join("");
+    const pricingRows = pricingOptions.map((item) => `<div class="price-row"><div class="price-label">${item.label}<br><span style="font-weight:400;color:#5f7168;font-size:.85rem">${item.desc}</span></div><div class="price-val">₹${item.price}</div></div>`).join("");
+    const addOnRows = addOns.map((item) => `<div class="price-row"><div class="price-label">${item.label}</div><div class="price-val">₹${item.price}</div></div>`).join("");
+    const itineraryRows = itineraryDays.map((day) =>
+      `<div style="margin-bottom:18px"><div class="day-title">${day.day}</div>${day.events.map((ev) => `<div class="event"><div class="event-time">${ev.time || "Plan"}</div><div>${ev.description}</div></div>`).join("")}</div>`
+    ).join("");
+    const incList = included.map((i) => `<li>✅ ${i}</li>`).join("");
+    const excList = excluded.map((i) => `<li>❌ ${i}</li>`).join("");
+    const carryList = carryItems.map((i) => `<li>${i}</li>`).join("");
+    const offerItems = (offers.length > 0 && tour.discountEnabled !== false) ? offers.map((o) => `<div class="offer"><span class="offer-code">${o.code}</span> &nbsp; <span style="color:#374151">${o.desc}</span></div>`).join("") : "";
+    const travelRows = travelInfo.map((item) => `<div class="info-row"><div class="info-title">${item.title}</div><div style="color:#3a5246;line-height:1.65">${item.desc}</div></div>`).join("");
+    const payRows = paymentDetails.map((item) => `<div class="price-row"><div class="price-label">${item.label}</div><div style="color:#103528;font-weight:800">${item.value}</div></div>`).join("");
+    const cancelItems = cancellationPolicy.map((i) => `<li>${i}</li>`).join("");
+    const policyItems = policyNotes.map((i) => `<li>${i}</li>`).join("");
+    const faqItems = faqs.map((f) => `<div class="faq-q">${f.question}</div><div class="faq-a">${f.answer}</div>`).join("");
+    const delhiRows = delhiDates.map((d) => `<div class="date-row"><strong>${d.month}</strong><span>${d.dates}</span></div>`).join("");
+    const hometownRows = hometownDates.map((d) => `<div class="date-row"><strong>${d.month}</strong><span>${d.dates}</span></div>`).join("");
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${tour.name} — Full Details</title><style>${css}</style></head><body>
+      <p style="color:#6b7280;font-size:.8rem;margin-bottom:4px">Gadvede Trekkers &nbsp;·&nbsp; gadvedetrekkers.com</p>
+      <h1>${tour.name}</h1>
+      ${tour.subtitle ? `<p style="color:#4b5563;font-size:1rem;margin-top:4px">${tour.subtitle}</p>` : ""}
+      <div class="stats">
+        ${tour.duration ? `<div class="stat"><span>Duration</span>${tour.duration}</div>` : ""}
+        ${tour.state || tour.destinationLine ? `<div class="stat"><span>Destination</span>${tour.state || tour.destinationLine}</div>` : ""}
+        ${tour.price ? `<div class="stat"><span>Starting Price</span>₹${tour.price}</div>` : ""}
+        ${tour.rating ? `<div class="stat"><span>Rating</span>${tour.rating} ★ (${tour.reviews} reviews)</div>` : ""}
+      </div>
+      <hr>
+      ${overviewHtml ? `<h2>About</h2>${overviewHtml}` : ""}
+      ${highlightItems ? `<h2>Key Highlights</h2><ul class="highlight-grid">${highlightItems}</ul>` : ""}
+      ${briefRows ? `<h2>Brief Itinerary</h2>${briefRows}` : ""}
+      ${(pricingRows || addOnRows) ? `<hr><h2>Pricing & Add-ons</h2>${pricingRows}${addOnRows ? `<h3>Add-ons</h3>${addOnRows}` : ""}${tour.bookingNote ? `<p style="color:#b45309;font-weight:700;margin-top:10px">${tour.bookingNote}</p>` : ""}` : ""}
+      ${(delhiRows || hometownRows) ? `<hr><h2>Group Departure Dates</h2><div class="inc-grid"><div><h3>From Delhi</h3>${delhiRows}</div><div><h3>From Mumbai / Pune</h3>${hometownRows}</div></div>` : ""}
+      ${itineraryRows ? `<hr><h2>Detailed Itinerary</h2>${itineraryRows}` : ""}
+      ${(incList || excList) ? `<hr><h2>Inclusions & Exclusions</h2><div class="inc-grid"><div><h3>Included</h3><ul>${incList}</ul></div><div><h3>Not Included</h3><ul>${excList}</ul></div></div>` : ""}
+      ${offerItems ? `<hr><h2>Offers & Discount Codes</h2>${offerItems}` : ""}
+      ${carryList ? `<hr><h2>Things to Carry</h2><ul class="carry-grid">${carryList}</ul>` : ""}
+      ${travelRows ? `<hr><h2>Travel Information</h2>${travelRows}` : ""}
+      ${payRows ? `<hr><h2>Payment Details</h2>${payRows}` : ""}
+      ${cancelItems ? `<hr><h2>Cancellation & Refund Policy</h2><ul>${cancelItems}</ul>` : ""}
+      ${policyItems ? `<h2>Tour Policy</h2><ul>${policyItems}</ul>` : ""}
+      ${faqItems ? `<hr><h2>FAQ</h2>${faqItems}` : ""}
+      <hr><p style="color:#888;font-size:0.78rem;margin-top:24px">Generated by Gadvede Trekkers · gadvedetrekkers.com · Printed on ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>
+      <script>window.onload=()=>{window.print()}</script></body></html>`;
+    const win = window.open("", "_blank");
+    if (win) { win.document.write(html); win.document.close(); }
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -206,6 +295,9 @@ function TourDetails() {
               <Link to="/book" state={{ trek: tour }} className="btn" style={{ background: "#13a567", color: "#fff", borderRadius: 12, padding: "14px 24px", fontWeight: 800 }}>
                 Book Now - ₹{tour.price}
               </Link>
+              <button onClick={downloadItinerary} className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 12, padding: "14px 24px", fontWeight: 700, cursor: "pointer" }}>
+                ⬇️ Download PDF
+              </button>
               <a
                 href={createWhatsAppInquiryUrl({ packageName: tour.name, location: tour.destinationLine || tour.location || "Maharashtra", category: "Tour" })}
                 target="_blank"
@@ -305,6 +397,29 @@ function TourDetails() {
               </div>
             </section>
 
+            {upcomingDates.length > 0 && (
+              <section style={sectionCardStyle}>
+                <h2 style={sectionTitleStyle}>📅 Upcoming Departure Dates</h2>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {upcomingDates.map((d) => {
+                    const displayDate = new Date(`${d.date}T00:00:00`).toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+                    return (
+                      <div key={d.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "12px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <span style={{ fontWeight: 700, color: "#065f46" }}>{displayDate}</span>
+                          {d.label && <span style={{ background: "#d1fae5", color: "#047857", borderRadius: 20, padding: "2px 10px", fontSize: "0.75rem", fontWeight: 700 }}>{d.label}</span>}
+                        </div>
+                        {d.whatsappGroupLink
+                          ? <a href={d.whatsappGroupLink} target="_blank" rel="noopener noreferrer" style={{ background: "#25d366", color: "#fff", borderRadius: 8, padding: "6px 16px", fontWeight: 700, fontSize: "0.82rem", textDecoration: "none" }}>Join WhatsApp</a>
+                          : <a href={`https://wa.me/919856112727?text=I want to book ${tour.name} on ${displayDate}`} target="_blank" rel="noopener noreferrer" style={{ background: "#059669", color: "#fff", borderRadius: 8, padding: "6px 16px", fontWeight: 700, fontSize: "0.82rem", textDecoration: "none" }}>Book Now</a>
+                        }
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
             <section style={sectionCardStyle}>
               <h2 style={sectionTitleStyle}>Group Departure Dates</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 18 }}>
@@ -354,7 +469,14 @@ function TourDetails() {
             </section>
 
             <section id="tour-itinerary" style={sectionCardStyle}>
-              <h2 style={sectionTitleStyle}>Detailed Itinerary</h2>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                <h2 style={{ ...sectionTitleStyle, marginBottom: 0 }}>Detailed Itinerary</h2>
+                {itineraryDays.length > 0 && (
+                  <button onClick={downloadItinerary} style={{ background: "linear-gradient(135deg,#065f46,#047857)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                    ⬇️ Download Itinerary
+                  </button>
+                )}
+              </div>
               <div style={{ display: "grid", gap: 20 }}>
                 {itineraryDays.map((item) => (
                   <div key={item.day}>

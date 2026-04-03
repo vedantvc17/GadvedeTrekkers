@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getAdminItems } from "../../data/adminStorage";
 
 export const villasList = [
   {
@@ -611,7 +612,49 @@ export default function Villas() {
     document.title = "Best Villas in Pune | Villa Booking | Gadvede Trekkers";
   }, []);
 
-  const sorted = [...villasList]
+  const _storedVillas = getAdminItems("gt_villas");
+  const activeVillas = _storedVillas.length > 0
+    ? _storedVillas
+        .filter((v) => v.active !== false)
+        .sort((a, b) => Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999))
+        .map((v) => {
+          let gallery;
+          try { gallery = JSON.parse(v.imageGallery || "[]").filter(Boolean); } catch { gallery = []; }
+          const amenitiesArr = String(v.amenities || "").split("\n").map((s) => s.trim()).filter(Boolean);
+          const maxG = Number(v.maxGuests) || 6;
+          const rating = Number(v.rating) || 0;
+          const ratingLbl = v.ratingLabel || (rating >= 8.5 ? "Fabulous" : rating >= 8 ? "Very good" : "Good");
+          return {
+            id: v.id || String(v.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-") || String(v.sortOrder),
+            name: v.name || "",
+            location: v.location || "",
+            area: v.area || v.location || "",
+            rating,
+            ratingLabel: ratingLbl,
+            reviews: Number(v.reviews) || 0,
+            price: Number(v.price) || 0,
+            originalPrice: Number(v.originalPrice) || 0,
+            guests: "2 adults",
+            size: v.size || "",
+            bedrooms: Number(v.bedrooms) || 0,
+            bathrooms: Number(v.bathrooms) || 0,
+            badge: v.badge || null,
+            image: gallery[0] || "",
+            gallery: gallery.length ? gallery : [],
+            locationScore: Number(v.locationScore) || 0,
+            description: v.description || "",
+            about: v.about || v.description || "",
+            guestReview: v.guestReview || "",
+            reviewerName: v.reviewerName || "",
+            amenities: amenitiesArr,
+            activities: [],
+            accommodation: [{ type: `${v.bedrooms || "?"}-Bedroom Villa`, beds: [], maxGuests: maxG }],
+            distance: v.distance || v.nearbyAttractions || "",
+          };
+        })
+    : villasList;
+
+  const sorted = [...activeVillas]
     .filter((v) => v.rating >= minScore)
     .sort((a, b) => {
       if (sort === "price-asc") return a.price - b.price;

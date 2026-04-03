@@ -13,22 +13,25 @@ const parseGallery = (value, fallback) => {
   }
 };
 
-/* Merge hardcoded treks with admin-created treks from localStorage */
-const adminTreks = getAdminItems("gt_treks")
-  .filter((t) => t.active !== false)
-  .sort((a, b) => Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999))
-  .map((t) => {
-    const fallbackGallery = [t.image, t.image, t.image].filter(Boolean);
-    const gallery = parseGallery(t.imageGallery, fallbackGallery);
-    return {
-      ...normaliseItem(t),
-      image: gallery[0] || t.image,
-      gallery,
-      seasonalTag: "New Listing",
-      _sortOrder: Number(t.sortOrder ?? 999),
-    };
-  });
-const allTreks = [...uniqueTreks, ...adminTreks];
+/* Show only active treks (respects Live/Off status from admin panel) */
+const _storedTreks = getAdminItems("gt_treks");
+const allTreks = _storedTreks.length > 0
+  ? _storedTreks
+      .filter((t) => t.active !== false)
+      .sort((a, b) => Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999))
+      .map((t) => {
+        const fallbackGallery = [t.image, t.image, t.image].filter(Boolean);
+        const gallery = parseGallery(t.imageGallery, fallbackGallery);
+        return {
+          ...normaliseItem(t),
+          slug: t.slug || slugifyTrekName(t.name),
+          image: gallery[0] || t.image,
+          gallery,
+          seasonalTag: t.seasonalTag || "New Listing",
+          _sortOrder: Number(t.sortOrder ?? 999),
+        };
+      })
+  : uniqueTreks;
 
 const DIFFICULTY_FILTERS = ["All", "Easy", "Medium", "Hard"];
 

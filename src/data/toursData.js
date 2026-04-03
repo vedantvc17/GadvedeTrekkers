@@ -20,14 +20,20 @@ export const toursData = {
     { name: "Jodhpur Jaisalmer Udaipur",    duration: "6 Nights 7 Days",   price: 13999, originalPrice: 15999, nextDate: "28 Mar 2026", image: "https://images.unsplash.com/photo-1477587458883-47145ed94245" },
     { name: "Jaipur Jaisalmer Jodhpur",     duration: "5 Days",   price: 13999, originalPrice: 17999, nextDate: "18 Oct 2025", image: "https://images.unsplash.com/photo-1526772662000-3f88f10405ff" },
   ],
-  southindia: [
-    { name: "Malvan Tarkarli with Scuba Diving and Watersports", duration: "3 Nights 4 Days", price: 5500, originalPrice: 6500, nextDate: "27 Mar 2026", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e" },
+  kerala: [
+    { name: "Munnar Thekkady Alleppey | Free Kalaripayattu Show", duration: "4 Nights 5 Days", price: 10999, originalPrice: 17999, nextDate: "27 Mar 2026", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944" },
+    { name: "Kerala with Kanyakumari",      duration: "6 Days",   price: 17999, originalPrice: 21999, nextDate: "14 Oct 2025", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470" },
+  ],
+  goa: [
+    { name: "Goa Backpacking",              duration: "4 Days",   price: 8999,  originalPrice: 11999, nextDate: "20 Oct 2025", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2" },
+  ],
+  maharashtra: [
+    { name: "Malvan Tarkarli with Scuba Diving and Watersports", duration: "3 Nights 4 Days", price: 5500, originalPrice: 6500, nextDate: "27 Mar 2026", image: "https://images.unsplash.com/photo-1519046904884-53103b34b206" },
+  ],
+  karnataka: [
     { name: "Hampi Gokarna Murudeshwar",    duration: "4 Nights 5 Days",   price: 9499, originalPrice: 13999, nextDate: "27 Mar 2026", image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc" },
     { name: "Gokarna Honnavar Murudeshwar", duration: "3 Nights 4 Days",   price: 5499, originalPrice: 11999, nextDate: "27 Mar 2026", image: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21" },
     { name: "Hampi Tour",                   duration: "3 Nights 4 Days",   price: 5499, originalPrice: 8999, nextDate: "27 Mar 2026", image: "https://images.unsplash.com/photo-1548013146-72479768bada" },
-    { name: "Munnar Thekkady Alleppey | Free Kalaripayattu Show", duration: "4 Nights 5 Days", price: 10999, originalPrice: 17999, nextDate: "27 Mar 2026", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944" },
-    { name: "Kerala with Kanyakumari",      duration: "6 Days",   price: 17999, originalPrice: 21999, nextDate: "14 Oct 2025", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470" },
-    { name: "Goa Backpacking",              duration: "4 Days",   price: 8999,  originalPrice: 11999, nextDate: "20 Oct 2025", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e" },
   ],
   uttarakhand: [
     { name: "Do Dham Yatra - Kedarnath Badrinath", duration: "6 Nights 7 Days", price: 15499, originalPrice: 16499, nextDate: "24 Apr 2026", image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23" },

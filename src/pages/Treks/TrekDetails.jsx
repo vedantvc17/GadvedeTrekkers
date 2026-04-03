@@ -115,6 +115,77 @@ function TrekDetails() {
   const [lightboxImg, setLightboxImg] = useState(null);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
 
+  const downloadItinerary = () => {
+    if (!trek) return;
+    const css = `body{font-family:Arial,sans-serif;max-width:820px;margin:0 auto;padding:32px;color:#1a1a1a}
+      h1{color:#0a6a47;font-size:2rem;margin-bottom:4px}
+      h2{color:#0a6a47;margin-top:28px;font-size:0.95rem;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #d5f6e4;padding-bottom:6px}
+      h3{color:#065f46;font-size:0.88rem;margin-top:16px;margin-bottom:6px}
+      hr{border:none;border-top:2px solid #d5f6e4;margin:20px 0}
+      ul{padding-left:20px;line-height:2}
+      .stats{display:flex;flex-wrap:wrap;gap:0;border:1px solid #d5f6e4;border-radius:8px;margin:12px 0 20px;overflow:hidden}
+      .stat{padding:10px 18px;font-size:.9rem;border-right:1px solid #d5f6e4;font-weight:600}
+      .stat span{display:block;font-size:.72rem;color:#6b7280;font-weight:400}
+      .highlight-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-left:0;list-style:none}
+      .highlight-list li{background:#f0fdf4;border:1px solid #d5f6e4;border-radius:6px;padding:8px 12px;font-size:.88rem}
+      .place{margin-bottom:10px}
+      .place strong{color:#065f46}
+      .day-title{background:#d5f6e4;border-left:5px solid #0a8456;padding:10px 14px;font-weight:800;border-radius:8px;margin-bottom:6px;font-size:.9rem}
+      .event{display:flex;gap:16px;padding:5px 4px;border-bottom:1px solid #eef4f0;font-size:.88rem}
+      .event-time{color:#0a6a47;font-weight:700;min-width:90px;flex-shrink:0}
+      .inc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}
+      .carry-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;list-style:none;padding-left:0}
+      .carry-grid li{background:#f6fbf8;border:1px solid #e3efe8;border-radius:6px;padding:6px 10px;font-size:.84rem}
+      .discount{background:#f0fdf4;border:1px solid #d5f6e4;border-radius:8px;padding:10px 14px;margin-bottom:8px}
+      .discount-code{font-weight:900;letter-spacing:1px;color:#065f46}
+      @media print{body{padding:16px}.highlight-list,.inc-grid,.carry-grid{break-inside:avoid}}`;
+
+    const allRoutes = Object.entries(itineraries).map(([key, route]) => {
+      const rows = (route?.days || []).map((day) =>
+        `<div class="day-title">${day.title}</div>${
+          (day.events || []).map((ev) => `<div class="event"><span class="event-time">${ev.time || ""}</span><span>${ev.desc}</span></div>`).join("")
+        }`
+      ).join("<br>");
+      return `<h3>${route?.label || key}</h3>${rows || "<p style='color:#888'>No events listed.</p>"}`;
+    }).join("<br>");
+
+    const highlightItems = highlights.map((h) => `<li>${h.icon || "✨"} ${h.text}</li>`).join("");
+    const placeItems = placesToVisit.map((p) => `<div class="place"><strong>${p.icon || "📍"} ${p.name}</strong>${p.desc ? `<br><span style="color:#4b5563;font-size:.85rem">${p.desc}</span>` : ""}</div>`).join("");
+    const incList = includedItems.map((i) => `<li>${i}</li>`).join("");
+    const excList = excludedItems.map((i) => `<li>${i}</li>`).join("");
+    const carryList = carryItems.map((i) => `<li>${i}</li>`).join("");
+    const discountItems = discountCodes.map((d) => `<div class="discount"><span class="discount-code">${d.code}</span> &nbsp; <span style="color:#374151">${d.desc}</span></div>`).join("");
+    const aboutText = [overview.intro, ...(overview.sections || []).map((s) => `<strong>${s.title}</strong><br>${s.body}`)].filter(Boolean).join("<br><br>");
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${trek.name} — Full Details</title><style>${css}</style></head><body>
+      <p style="color:#6b7280;font-size:.8rem;margin-bottom:4px">Gadvede Trekkers &nbsp;·&nbsp; gadvedetrekkers.com</p>
+      <h1>${trek.name}</h1>
+      ${trek.subtitle ? `<p style="color:#4b5563;font-size:1rem;margin-top:4px">${trek.subtitle}</p>` : ""}
+      <div class="stats">
+        ${trek.location ? `<div class="stat"><span>Location</span>${trek.location}</div>` : ""}
+        ${trek.difficulty ? `<div class="stat"><span>Difficulty</span>${trek.difficulty}</div>` : ""}
+        ${trek.altitude ? `<div class="stat"><span>Altitude</span>${trek.altitude}</div>` : ""}
+        ${trek.duration ? `<div class="stat"><span>Duration</span>${trek.duration}</div>` : ""}
+        ${trek.baseVillage ? `<div class="stat"><span>Base Village</span>${trek.baseVillage}</div>` : ""}
+        ${trek.price ? `<div class="stat"><span>Price</span>From ₹${trek.price}</div>` : ""}
+      </div>
+      <hr>
+      ${aboutText ? `<h2>About</h2><p style="line-height:1.75;color:#374151">${aboutText}</p>` : ""}
+      ${history ? `<h2>History & Background</h2><p style="line-height:1.75;color:#374151">${history}</p>` : ""}
+      ${highlightItems ? `<h2>Trek Highlights</h2><ul class="highlight-list">${highlightItems}</ul>` : ""}
+      ${placeItems ? `<h2>Places to Visit</h2>${placeItems}` : ""}
+      <hr>
+      <h2>Itinerary</h2>${allRoutes || "<p style='color:#888'>Itinerary details coming soon.</p>"}
+      <hr>
+      ${(incList || excList) ? `<h2>Inclusions & Exclusions</h2><div class="inc-grid"><div><h3>What's Included</h3><ul>${incList}</ul></div><div><h3>Not Included</h3><ul>${excList}</ul></div></div>` : ""}
+      ${carryList ? `<h2>Things to Carry</h2><ul class="carry-grid">${carryList}</ul>` : ""}
+      ${discountItems ? `<h2>Offers & Discount Codes</h2>${discountItems}` : ""}
+      <hr><p style="color:#888;font-size:0.78rem;margin-top:24px">Generated by Gadvede Trekkers · gadvedetrekkers.com · Printed on ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>
+      <script>window.onload=()=>{window.print()}</script></body></html>`;
+    const win = window.open("", "_blank");
+    if (win) { win.document.write(html); win.document.close(); }
+  };
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
     if (!staticRichTrek?.meta) return;
@@ -188,6 +259,7 @@ function TrekDetails() {
                 </div>
                 <div className="td-hero-actions">
                   <Link to="/book" state={{ trek }} className="btn td-book-btn">Book Now — ₹{trek.price}</Link>
+                  <button className="btn td-itinerary-btn" onClick={downloadItinerary} style={{ background: "rgba(255,255,255,0.12)", borderColor: "rgba(255,255,255,0.3)" }}>⬇️ Download PDF</button>
                   <button className="btn td-itinerary-btn" onClick={() => setActiveTab("gallery")}>View Photos</button>
                   <a
                     href={createWhatsappHref(trek)}
@@ -378,6 +450,7 @@ function TrekDetails() {
           </div>
           <div className="td-hero-actions">
             <Link to="/book" state={{ trek }} className="btn td-book-btn">Book Now — ₹{trek.price}</Link>
+            <button className="btn td-itinerary-btn" onClick={downloadItinerary} style={{ background: "rgba(255,255,255,0.12)", borderColor: "rgba(255,255,255,0.3)" }}>⬇️ Download PDF</button>
             <button className="btn td-itinerary-btn" onClick={() => setActiveTab("itinerary")}>View Itinerary</button>
             <a
               href={createWhatsappHref(trek)}
@@ -543,7 +616,14 @@ function TrekDetails() {
 
         {activeTab === "itinerary" && (
           <div className="td-section">
-            <h2 className="td-section-title">Trek Itinerary</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 8 }}>
+              <h2 className="td-section-title" style={{ marginBottom: 0 }}>Trek Itinerary</h2>
+              {(itinerary?.days?.length > 0) && (
+                <button onClick={downloadItinerary} className="btn td-itinerary-btn" style={{ background: "linear-gradient(135deg,#065f46,#047857)", color: "#fff", border: "none", fontWeight: 700, fontSize: "0.82rem" }}>
+                  ⬇️ Download Itinerary
+                </button>
+              )}
+            </div>
             <p className="td-muted">
               {itineraryKeys.length > 1
                 ? "Choose your departure route to see the itinerary"

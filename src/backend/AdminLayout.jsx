@@ -12,6 +12,8 @@ const NAV = [
   { path: "/admin/heritage",     icon: "🏛",  label: "Heritage Walks" },
   { path: "/admin/camping",      icon: "⛺",  label: "Camping" },
   { path: "/admin/rentals",      icon: "🏠",  label: "Rentals" },
+  { path: "/admin/villas",       icon: "🏡",  label: "Villas on Rent" },
+  { path: "/admin/industrial-visits", icon: "🎓", label: "Industrial Visits" },
   { path: "/admin/events",              icon: "📅",  label: "Events" },
   { path: "/admin/property-listings",   icon: "🏡",  label: "Property Listings" },
   { path: "/admin/campsite-listings",   icon: "⛺",  label: "Campsite Listings" },

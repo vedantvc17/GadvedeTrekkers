@@ -13,11 +13,24 @@ const FIELDS = [
   { key: "nextDate",      label: "Next Date",       placeholder: "20 Oct 2025" },
   { key: "rating",        label: "Rating (1-5)",    type: "number", placeholder: "4.8" },
   { key: "image",         label: "Image URL",       col: 12, placeholder: "https://..." },
+  {
+    key: "description", label: "Walk Description", type: "textarea", col: 12,
+    placeholder: "Describe the heritage walk — what visitors will see, experience, and learn.",
+    aiPrompt: (form) => `Write a 100–130 word description for the heritage walk: "${form.name || "[Walk Name]"}" — a ${form.duration || "[Duration]"} ${form.type || "heritage"} walk in ${form.location || "[Location]"}, priced at ₹${form.price || "?"} per person.
+
+Cover:
+1. What this walk explores (forts, temples, streets, history)
+2. The experience and atmosphere
+3. What participants will learn or discover
+4. Who should attend (history buffs, families, students, tourists)
+
+Style: engaging, informative, tourism-friendly. Output only the description text.`,
+  },
 ];
 
 const DEFAULT = {
   name: "", type: "city", location: "", duration: "",
-  price: "", originalPrice: "", nextDate: "", rating: "", image: "", active: true,
+  price: "", originalPrice: "", nextDate: "", rating: "", image: "", description: "", active: true,
 };
 
 export default function ManageHeritage() {

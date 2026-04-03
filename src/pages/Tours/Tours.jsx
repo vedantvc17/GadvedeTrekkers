@@ -12,6 +12,9 @@ const REGION_ORDER = [
   "rajasthan",
   "kerala",
   "uttarakhand",
+  "goa",
+  "maharashtra",
+  "karnataka",
 ];
 
 const REGION_LABELS = {
@@ -21,10 +24,10 @@ const REGION_LABELS = {
   rajasthan: "Rajasthan",
   kerala: "Kerala",
   uttarakhand: "Uttarakhand",
+  goa: "Goa",
+  maharashtra: "Maharashtra",
+  karnataka: "Karnataka",
 };
-
-const KERALA_TOUR_MATCHER =
-  /kerala|munnar|thekkady|alleppey|alappuzha|kochi|kochin|athirapally|athirappilly|kanyakumari/i;
 
 const slugifyTourName = (value = "") =>
   String(value)
@@ -53,6 +56,7 @@ function Tours() {
 
   getAdminItems("gt_tours")
     .filter((tour) => tour.active !== false)
+    .sort((a, b) => Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999))
     .forEach((tour) => {
       const item = normaliseItem(tour);
       const gallery = parseJsonValue(item.imageGallery, [item.image]).filter(Boolean);
@@ -64,17 +68,7 @@ function Tours() {
     tourData[region] = dedupeTours(tourData[region]);
   });
 
-  const displayTourData = {
-    ...tourData,
-    kerala: dedupeTours(
-      (tourData.southindia || []).filter((tour) =>
-        KERALA_TOUR_MATCHER.test(
-          `${tour.name} ${tour.subtitle || ""} ${tour.destinationLine || ""}`
-        )
-      )
-    ),
-  };
-
+  const displayTourData = { ...tourData };
   delete displayTourData.southindia;
 
   const regions = REGION_ORDER.filter(
@@ -88,6 +82,9 @@ function Tours() {
     rajasthan: useRef(null),
     kerala: useRef(null),
     uttarakhand: useRef(null),
+    goa: useRef(null),
+    maharashtra: useRef(null),
+    karnataka: useRef(null),
   };
 
   useEffect(() => {

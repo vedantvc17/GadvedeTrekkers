@@ -187,7 +187,7 @@ const rentalItems = [
   },
 ];
 
-const CATEGORIES = ["All", "Tents", "Gear"];
+const CATEGORIES = ["All", "Tents", "Gear", "Villas"];
 
 export default function Rental() {
   const location = useLocation();
@@ -200,10 +200,13 @@ export default function Rental() {
     document.title = "Rent Camping & Trekking Gear | Gadvede Trekkers";
   }, []);
 
-  const adminRentals = getAdminItems("gt_rentals")
-    .filter((r) => r.active !== false)
-    .map(normaliseItem);
-  const allItems = [...rentalItems, ...adminRentals];
+  const _rawRentals = getAdminItems("gt_rentals");
+  const adminRentals = _rawRentals.filter((r) => r.active !== false).map(normaliseItem);
+  const baseRentals = _rawRentals.length > 0 ? adminRentals : rentalItems;
+  const adminVillas = getAdminItems("gt_villas")
+    .filter((v) => v.active !== false)
+    .map((v) => ({ ...normaliseItem(v), category: "Villas" }));
+  const allItems = [...baseRentals, ...adminVillas];
   const filtered = activeCategory === "All"
     ? allItems
     : allItems.filter((i) => i.category === activeCategory);

@@ -467,6 +467,17 @@ function ManagePage({
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const formRef = useRef(null);
+  const [aiModal, setAiModal] = useState({ open: false, label: "", prompt: "" });
+  const [copied, setCopied] = useState(false);
+
+  const openAiPrompt = (f) => {
+    const prompt = f.aiPrompt(form);
+    setAiModal({ open: true, label: f.label, prompt });
+    setCopied(false);
+  };
+  const copyPrompt = () => {
+    navigator.clipboard.writeText(aiModal.prompt).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
 
   const openCreate = () => {
     setForm(defaultForm);
@@ -545,10 +556,17 @@ function ManagePage({
             <div className="row g-3">
               {fields.map((f) => (
                 <div className={`col-md-${f.col || 6}`} key={f.key}>
-                  <label className="form-label small fw-semibold mb-1">
-                    {f.label}
-                    {f.required && <span className="text-danger ms-1">*</span>}
-                  </label>
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <label className="form-label small fw-semibold mb-0">
+                      {f.label}
+                      {f.required && <span className="text-danger ms-1">*</span>}
+                    </label>
+                    {f.aiPrompt && (
+                      <button type="button" className="btn btn-sm py-0 px-2" style={{ fontSize: "0.7rem", background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", borderRadius: 6, lineHeight: 1.6 }} onClick={() => openAiPrompt(f)}>
+                        ✨ AI Prompt
+                      </button>
+                    )}
+                  </div>
 
                   {f.type === "select" ? (
                     <select className="form-select form-select-sm" value={form[f.key] ?? ""} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} required={f.required}>
@@ -579,6 +597,11 @@ function ManagePage({
                     <ImageGalleryField value={form[f.key] ?? "[]"} onChange={(val) => setForm({ ...form, [f.key]: val })} />
                   ) : (
                     <input type={f.type || "text"} className="form-control form-control-sm" value={form[f.key] ?? ""} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} placeholder={f.placeholder || ""} required={f.required} />
+                  )}
+                  {f.helpText && (
+                    <div style={{ fontSize: "0.71rem", color: "#6c757d", marginTop: 6, lineHeight: 1.55, background: "#f8f9fa", padding: "8px 12px", borderRadius: 6, borderLeft: "3px solid #adb5bd", whiteSpace: "pre-line" }}>
+                      {f.helpText}
+                    </div>
                   )}
                 </div>
               ))}
@@ -674,6 +697,30 @@ function ManagePage({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {/* ── AI Prompt Modal ── */}
+      {aiModal.open && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 12, maxWidth: 680, width: "100%", maxHeight: "85vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 64px rgba(0,0,0,0.3)" }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <span style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7c3aed" }}>✨ AI Prompt</span>
+                <div style={{ fontWeight: 700, fontSize: "0.95rem", marginTop: 2 }}>{aiModal.label}</div>
+              </div>
+              <button type="button" className="btn-close" onClick={() => setAiModal({ open: false, label: "", prompt: "" })} />
+            </div>
+            <div style={{ padding: 20, overflowY: "auto", flex: 1 }}>
+              <p style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: 10 }}>Copy this prompt and paste it into ChatGPT or Claude to generate content for this field.</p>
+              <pre style={{ background: "#f5f3ff", border: "1px solid #ddd6fe", borderRadius: 8, padding: 16, fontSize: "0.82rem", whiteSpace: "pre-wrap", wordBreak: "break-word", color: "#1e1b4b", lineHeight: 1.7 }}>{aiModal.prompt}</pre>
+            </div>
+            <div style={{ padding: "12px 20px", borderTop: "1px solid #e5e7eb", display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setAiModal({ open: false, label: "", prompt: "" })}>Close</button>
+              <button type="button" className="btn btn-sm px-4" style={{ background: copied ? "#059669" : "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", border: "none", borderRadius: 6 }} onClick={copyPrompt}>
+                {copied ? "✓ Copied!" : "📋 Copy Prompt"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

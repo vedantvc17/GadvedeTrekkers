@@ -36,6 +36,8 @@ import ManageEvents            from "../backend/ManageEvents";
 import AddEventPage            from "../backend/AddEventPage";
 import ManagePropertyListings  from "../backend/ManagePropertyListings";
 import ManageCampsiteListings  from "../backend/ManageCampsiteListings";
+import ManageVillas            from "../backend/ManageVillas";
+import ManageIV               from "../backend/ManageIV";
 
 /* ================= TREK PAGES ================= */
 import Trek           from "../pages/Treks/Trek";
@@ -185,6 +187,8 @@ function AppRoutes() {
         <Route path="events/new"        element={<AddEventPage />} />
         <Route path="property-listings" element={<ManagePropertyListings />} />
         <Route path="campsite-listings" element={<ManageCampsiteListings />} />
+        <Route path="villas"            element={<ManageVillas />} />
+        <Route path="industrial-visits" element={<ManageIV />} />
       </Route>
     </Routes>
   );

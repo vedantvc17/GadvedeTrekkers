@@ -246,16 +246,125 @@ const FIELDS = [
   { key: "wildlifeSanctuary", label: "Wildlife Sanctuary",   placeholder: "Kalsubai Harishchandragad WS", col: 4 },
 
   /* ── Content ── */
-  { key: "about",          label: "About (Overview)",        type: "textarea", col: 12 },
-  { key: "history",        label: "History & Significance",  type: "textarea", col: 12 },
-  { key: "mainAttractions",label: "Main Attractions",        type: "textarea", col: 12 },
-  { key: "detailedHistory",label: "Detailed History",        type: "textarea", col: 12 },
+  {
+    key: "about", label: "About (Overview)", type: "textarea", col: 12,
+    aiPrompt: (f) => `Write a detailed, SEO-friendly overview for ${f.name || "[Trek Name]"}, a ${f.difficulty || "Medium"} difficulty trek in ${f.location || "[Location]"}, Maharashtra, India.
+
+Trek details:
+- Duration: ${f.duration || "[Duration]"}
+- Altitude: ${f.altitude || "[Altitude]"}
+- Base Village: ${f.baseVillage || "[Base Village]"}
+- Region: ${f.regionArea || f.location || "[Region]"}
+
+Write 150–200 words covering:
+1. What makes this trek special and unique
+2. Landscape, terrain, and key features along the trail
+3. Best season to visit
+4. Who should do this trek (beginner/intermediate/expert)
+5. An engaging opening hook
+
+Reference style (Kalsubai Trek):
+"Kalsubai Peak (1646 m / 5400 ft) is the highest peak in Maharashtra, nestled in the Sahyadri range inside the Kalsubai Harishchandragad Wildlife Sanctuary. Steel railings, chains, and ladders at difficult sections make this trek accessible for beginners and thrilling for veterans alike."
+
+Output only the paragraph text, no headings or bullet points.`,
+  },
+  {
+    key: "history", label: "History & Significance", type: "textarea", col: 12,
+    aiPrompt: (f) => `Write the historical background and cultural significance of ${f.name || "[Trek Name]"} located in ${f.location || "[Location]"}, Maharashtra.
+
+Trek type: ${f.fortType || "Hill Trek"}
+Region: ${f.regionArea || f.location || "[Region]"}
+
+Cover in 100–150 words:
+1. Historical usage (fort, vantage point, trade route, etc.)
+2. Mythological legends or local stories
+3. Connection to Maratha history or tribal communities
+4. Any temples, ruins, or heritage elements
+
+Reference style (Kalsubai):
+"Kalsubai is named after a local woman named Kalsu who is believed to have lived on the peak and the goddess Kalsubai who is worshipped at the small temple at the summit. Legends say Kalsu was a devoted woman whose spirit guards the mountain..."
+
+Output only the paragraph, no headings.`,
+  },
+  {
+    key: "mainAttractions", label: "Main Attractions", type: "textarea", col: 12,
+    aiPrompt: (f) => `List and describe the main attractions of ${f.name || "[Trek Name]"} trek in ${f.location || "[Location]"}, Maharashtra.
+
+Trek details: ${f.difficulty || "Medium"} difficulty, ${f.altitude || "[Altitude]"} altitude, ${f.duration || "[Duration]"}
+
+Write 4–6 main attractions as short paragraphs (2–3 sentences each). Cover:
+- Key viewpoints or summits
+- Temples, caves, or heritage structures
+- Wildlife, forests, or waterfalls
+- Unique trail features (ladders, rocky patches, etc.)
+- Sunrise or stargazing opportunities
+
+Format each attraction as:
+[Attraction Name]: [2–3 sentence description]
+
+Output only the list, no extra commentary.`,
+  },
+  {
+    key: "detailedHistory", label: "Detailed History", type: "textarea", col: 12,
+    aiPrompt: (f) => `Write a detailed historical and cultural essay about ${f.name || "[Trek Name]"} in ${f.location || "[Location]"}, Maharashtra.
+
+Fort/Trek type: ${f.fortType || "Hill Fort / Peak"}
+Region: ${f.regionArea || f.location || "[Region]"}
+Altitude: ${f.altitude || "[Altitude]"}
+
+Write 250–350 words covering:
+1. Pre-medieval and medieval history
+2. Maratha empire connection (Shivaji Maharaj / Peshwas)
+3. Architectural details if a fort (bastions, gates, water cisterns, temples)
+4. Legends and folklore
+5. Ecological and wildlife significance
+6. Current condition and trekking heritage
+
+Reference style: Detailed, evocative, Wikipedia-quality historical writing with a travel-friendly tone.
+
+Output only the essay text, no headings.`,
+  },
 
   /* ── Lists (one item per line) ── */
-  { key: "highlights",    label: "Trek Highlights (one per line, e.g. 🏔 4650 Ft High)",
-    type: "textarea", col: 12 },
-  { key: "placesToVisit", label: "Places to Visit (Name|Description, one per line)",
-    type: "textarea", col: 12 },
+  {
+    key: "highlights", label: "Trek Highlights (one per line, e.g. 🏔 4650 Ft High)", type: "textarea", col: 12,
+    aiPrompt: (f) => `Generate exactly 8 trek highlight bullet points for ${f.name || "[Trek Name]"} — a ${f.difficulty || "Medium"} trek at ${f.altitude || "[Altitude]"} in ${f.location || "[Location]"}, Maharashtra.
+
+Format each line as: [emoji] [Short highlight text]
+
+Reference (Kalsubai Trek highlights):
+🏔 Highest Peak in Maharashtra — 1646m / 5400 ft
+🌟 Walk under the Milky Way on a Night Trek
+🌅 Witness Breathtaking Sahyadri Sunrise
+⛩️ Seek Blessings at the Kalsubai Temple
+🦅 Inside Kalsubai Harishchandragad Wildlife Sanctuary
+🪜 3 Iron Ladders — Safe for Beginners
+🎖️ E-Certificates on Successful Completion
+🍱 Veg Thali + Jain Food Available at Base
+
+Include highlights about: altitude/distance, unique terrain features, viewpoints, temples/heritage, wildlife, difficulty level, food/certificates. Keep each line under 10 words.
+
+Output only the 8 lines, one per line, no numbering.`,
+  },
+  {
+    key: "placesToVisit", label: "Places to Visit (Name|Description, one per line)", type: "textarea", col: 12,
+    aiPrompt: (f) => `List 5–6 places to visit at or near ${f.name || "[Trek Name]"} in ${f.location || "[Location]"}, Maharashtra.
+
+Format each line exactly as: PlaceName|Brief description (1–2 sentences)
+
+Example format:
+Konkan Kada|A dramatic overhanging cliff offering a breathtaking view of the Konkan coast far below. Best visited early morning to catch the mist rolling in.
+Kedareshwar Cave|An ancient Shiva temple inside a water-filled cave with a large Shivalinga at its centre. Considered one of the most sacred spots on this trail.
+
+Include:
+- Summit/peak viewpoints
+- Temples or caves
+- Water bodies (lake, waterfall, dam)
+- Nearby forts or heritage spots
+- Unique geological formations
+
+Output only the lines in the specified format, nothing else.`,
+  },
   {
     key: "included",
     label: "What's Included",
@@ -294,6 +403,7 @@ const FIELDS = [
     type: "departurePlans",
     col: 12,
     cityOptions: ["Mumbai", "Pune", "Kasara", "Base Village"],
+    helpText: `HOW TO ADD ITINERARY — Click "+ Add City" for each departure point (e.g. Mumbai, Pune, Kasara).\n\nFor each city tab:\n• Price: Enter per-person price from that city (e.g. 1449)\n• Pickup Points: Add each stop with time and location (click "+ Add Pickup Point")\n  Example: 10:30 PM → Kasara Railway Station, Platform 1\n• Itinerary: One event per line in format → Day Title|Time|Description\n  Example:\n  Day 01|10:30 PM|Depart from Kasara Station by private vehicle\n  Day 01|11:45 PM|Arrive at Base Village — settle in and rest\n  Day 02|04:30 AM|Wake up call — light snacks served\n  Day 02|05:00 AM|Begin trek to Kalsubai Peak\n  Day 02|08:00 AM|Reach summit — sunrise views and temple darshan\n  Day 02|10:30 AM|Descend to base village\n  Day 02|12:30 PM|Lunch at base — depart for home`,
   },
 ];
 

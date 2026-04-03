@@ -44,7 +44,7 @@ export const ADDITIONAL_TOUR_SEEDS = {
   "malvan-tarkarli-with-scuba-diving-and-watersports": {
     name: "Malvan Tarkarli with Scuba Diving and Watersports",
     slug: "malvan-tarkarli-with-scuba-diving-and-watersports",
-    region: "southindia",
+    region: "maharashtra",
     state: "Tarkarli, Maharashtra",
     destinationLine: "Malvan, Tarkarli, Devbaug, Sindhudurg Fort, Rock Garden",
     duration: "3 Nights 4 Days",
@@ -85,7 +85,7 @@ export const ADDITIONAL_TOUR_SEEDS = {
   "hampi-gokarna-murudeshwar": {
     name: "Hampi Gokarna Murudeshwar",
     slug: "hampi-gokarna-murudeshwar",
-    region: "southindia",
+    region: "karnataka",
     state: "Hampi, Karnataka",
     destinationLine: "Hampi, Anegundi, Murudeshwar, Gokarna, Honnavar",
     duration: "4 Nights 5 Days",
@@ -126,7 +126,7 @@ export const ADDITIONAL_TOUR_SEEDS = {
   "gokarna-honnavar-murudeshwar": {
     name: "Gokarna Honnavar Murudeshwar",
     slug: "gokarna-honnavar-murudeshwar",
-    region: "southindia",
+    region: "karnataka",
     state: "Gokarna, Karnataka",
     destinationLine: "Gokarna, Yana Caves, Mirjan Fort, Honnavar, Murudeshwar",
     duration: "3 Nights 4 Days",
@@ -166,7 +166,7 @@ export const ADDITIONAL_TOUR_SEEDS = {
   "hampi-tour": {
     name: "Hampi Tour",
     slug: "hampi-tour",
-    region: "southindia",
+    region: "karnataka",
     state: "Hampi, Karnataka",
     destinationLine: "Hampi, Anegundi, Sanapur Lake, Anjanadri Hill",
     duration: "3 Nights 4 Days",
@@ -246,7 +246,7 @@ export const ADDITIONAL_TOUR_SEEDS = {
   "munnar-thekkady-alleppey-free-kalaripayattu-show": {
     name: "Munnar Thekkady Alleppey | Free Kalaripayattu Show",
     slug: "munnar-thekkady-alleppey-free-kalaripayattu-show",
-    region: "southindia",
+    region: "kerala",
     state: "Kerala",
     destinationLine: "Kochi, Athirapally, Munnar, Thekkady, Alleppey",
     duration: "4 Nights 5 Days",

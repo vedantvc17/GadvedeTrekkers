@@ -11,11 +11,20 @@ const FIELDS = [
   { key: "originalPrice", label: "Original Price (₹)", type: "number", placeholder: "499" },
   { key: "rating",        label: "Rating (1-5)",     type: "number", placeholder: "4.7" },
   { key: "image",         label: "Image URL",        col: 12, placeholder: "https://..." },
+  {
+    key: "description", label: "Item Description", type: "textarea", col: 12,
+    placeholder: "Describe the item — features, capacity, best use case.",
+    aiPrompt: (form) => `Write a 2–3 sentence product description for the rental item: "${form.name || "[Item Name]"}" (Category: ${form.category || "Camping Gear"}) available in ${form.location || "[Location]"} at ₹${form.price || "?"}/day.
+
+Cover: what the item is, its key features, and who it's best suited for (solo trekkers, families, groups, etc.).
+
+Style: clear, concise, like an e-commerce listing. Output only the description text.`,
+  },
 ];
 
 const DEFAULT = {
   name: "", category: "Tents", location: "",
-  price: "", originalPrice: "", rating: "", image: "", active: true,
+  price: "", originalPrice: "", rating: "", image: "", description: "", active: true,
 };
 
 export default function ManageRentals() {
