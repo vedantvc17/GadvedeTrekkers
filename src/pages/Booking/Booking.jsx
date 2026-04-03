@@ -275,6 +275,19 @@ function Booking() {
   }, [activePickupOptions, formData.tickets]);
 
   useEffect(() => {
+    if (!availableDates.length) {
+      return;
+    }
+
+    const hasSelectedDate = availableDates.some((dateOption) => dateOption.date === formData.travelDate);
+    if (hasSelectedDate) {
+      return;
+    }
+
+    handleDateSelect(availableDates[0].date);
+  }, [availableDates, formData.travelDate, trekSlug]);
+
+  useEffect(() => {
     setAdditionalTravelers((current) =>
       current.map((traveler) => {
         const nextDeparture = activeDepartureOptions.includes(traveler.departureOrigin)
@@ -637,30 +650,36 @@ function Booking() {
 
               {/* ── Travel Date ── */}
               {availableDates.length > 0 ? (
-                <div className="booking-field">
+                <label className="booking-field">
                   <span>
                     Travel Date
                     <InfoTooltip text="Choose one of the configured batch dates. The matching WhatsApp group link is auto-mapped for that batch." />
                   </span>
-                  <div className="booking-radio-grid">
-                    {availableDates.map(d => {
-                      const displayDate = new Date(d.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+                  <select
+                    name="travelDate"
+                    value={formData.travelDate}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="" disabled>
+                      Select travel date
+                    </option>
+                    {availableDates.map((d) => {
+                      const displayDate = new Date(d.date).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      });
+
                       return (
-                        <label className="booking-option-card" key={d.id}>
-                          <input
-                            type="radio"
-                            name="travelDate"
-                            value={d.date}
-                            checked={formData.travelDate === d.date}
-                            onChange={() => handleDateSelect(d.date)}
-                            required
-                          />
-                          <span>{displayDate}{d.label ? ` · ${d.label}` : ""}</span>
-                        </label>
+                        <option value={d.date} key={d.id}>
+                          {displayDate}
+                          {d.label ? ` - ${d.label}` : ""}
+                        </option>
                       );
                     })}
-                  </div>
-                </div>
+                  </select>
+                </label>
               ) : (
                 <label className="booking-field">
                   <span>

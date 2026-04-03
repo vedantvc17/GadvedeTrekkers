@@ -51,11 +51,65 @@ const activeTreks = _storedTreks.length > 0
 function downloadTrekPdf(trek) {
   const parseLines = (v = "") => String(v).split("\n").map((s) => s.trim()).filter(Boolean);
   const name = trek.name || "Trek";
+
   const highlightItems = parseLines(trek.highlights).map((h) => `<li style="background:#f0fdf4;border:1px solid #d5f6e4;border-radius:6px;padding:7px 12px;font-size:.87rem">${h}</li>`).join("");
   const incList = parseLines(trek.included).map((i) => `<li>✅ ${i}</li>`).join("");
   const excList = parseLines(trek.notIncluded).map((i) => `<li>❌ ${i}</li>`).join("");
   const carryList = parseLines(trek.thingsToCarry).map((i) => `<li style="background:#f6fbf8;border:1px solid #e3efe8;border-radius:6px;padding:6px 10px;font-size:.84rem">${i}</li>`).join("");
   const about = trek.about || "";
+
+  // ── Build schedule HTML from departurePlans (JSON) or legacy itinerary (pipe-delimited) ──
+  let scheduleHtml = "";
+  try {
+    const plans = JSON.parse(trek.departurePlans || "{}");
+    const entries = Object.entries(plans).filter(([, p]) => p && String(p.itinerary || "").trim());
+    if (entries.length > 0) {
+      scheduleHtml = entries.map(([city, plan]) => {
+        const price = plan.price ? ` — ₹${plan.price}/person` : "";
+        const dayMap = {};
+        String(plan.itinerary || "").split("\n").map((l) => l.trim()).filter(Boolean).forEach((line) => {
+          const parts = line.split("|").map((p) => p.trim());
+          const day = parts[0] || "Day";
+          const time = parts[1] || "";
+          const desc = parts[2] || parts[1] || "";
+          if (!dayMap[day]) dayMap[day] = [];
+          dayMap[day].push({ time: parts.length >= 3 ? time : "", desc: parts.length >= 3 ? desc : (parts[1] || "") });
+        });
+        const daysHtml = Object.entries(dayMap).map(([day, events]) =>
+          `<div style="background:#d5f6e4;border-left:5px solid #0a8456;padding:8px 12px;font-weight:800;border-radius:6px;margin:10px 0 4px;font-size:.88rem">${day}</div>` +
+          events.map((ev) => `<div style="display:flex;gap:14px;padding:4px 2px;border-bottom:1px solid #eef4f0;font-size:.85rem"><span style="color:#0a6a47;font-weight:700;min-width:90px;flex-shrink:0">${ev.time}</span><span>${ev.desc}</span></div>`).join("")
+        ).join("");
+        return `<h3 style="color:#065f46;font-size:.9rem;margin-top:18px;margin-bottom:4px">📍 ${city}${price}</h3>${daysHtml}`;
+      }).join("<br>");
+    }
+  } catch {/* ignore */}
+
+  // Fallback to legacy pipe-delimited itinerary: City|Day N|Time|Activity
+  if (!scheduleHtml) {
+    const lines = parseLines(trek.itinerary);
+    if (lines.length > 0) {
+      const cityMap = {};
+      lines.forEach((line) => {
+        const parts = line.split("|").map((p) => p.trim());
+        if (parts.length < 2) return;
+        const city = parts[0];
+        const day = parts[1];
+        const time = parts.length >= 4 ? parts[2] : "";
+        const desc = parts.length >= 4 ? parts[3] : (parts[2] || "");
+        if (!cityMap[city]) cityMap[city] = {};
+        if (!cityMap[city][day]) cityMap[city][day] = [];
+        cityMap[city][day].push({ time, desc });
+      });
+      scheduleHtml = Object.entries(cityMap).map(([city, days]) => {
+        const daysHtml = Object.entries(days).map(([day, events]) =>
+          `<div style="background:#d5f6e4;border-left:5px solid #0a8456;padding:8px 12px;font-weight:800;border-radius:6px;margin:10px 0 4px;font-size:.88rem">${day}</div>` +
+          events.map((ev) => `<div style="display:flex;gap:14px;padding:4px 2px;border-bottom:1px solid #eef4f0;font-size:.85rem"><span style="color:#0a6a47;font-weight:700;min-width:90px;flex-shrink:0">${ev.time}</span><span>${ev.desc}</span></div>`).join("")
+        ).join("");
+        return `<h3 style="color:#065f46;font-size:.9rem;margin-top:18px;margin-bottom:4px">📍 ${city}</h3>${daysHtml}`;
+      }).join("<br>");
+    }
+  }
+
   const css = `body{font-family:Arial,sans-serif;max-width:820px;margin:0 auto;padding:32px;color:#1a1a1a}h1{color:#0a6a47;font-size:1.9rem}h2{color:#0a6a47;font-size:.93rem;text-transform:uppercase;letter-spacing:.07em;border-bottom:2px solid #d5f6e4;padding-bottom:5px;margin-top:26px}hr{border:none;border-top:2px solid #d5f6e4;margin:18px 0}ul{padding-left:20px;line-height:2}.hl{display:grid;grid-template-columns:1fr 1fr;gap:6px;list-style:none;padding-left:0}.ig{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}.cg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;list-style:none;padding-left:0}@media print{body{padding:16px}}`;
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${name} — Trek Details</title><style>${css}</style></head><body>
     <p style="color:#6b7280;font-size:.8rem;margin-bottom:4px">Gadvede Trekkers · gadvedetrekkers.com</p>
@@ -65,7 +119,8 @@ function downloadTrekPdf(trek) {
     <hr>
     ${about ? `<h2>About</h2><p style="line-height:1.75;color:#374151">${about}</p>` : ""}
     ${highlightItems ? `<h2>Trek Highlights</h2><ul class="hl">${highlightItems}</ul>` : ""}
-    ${(incList || excList) ? `<hr><h2>Inclusions & Exclusions</h2><div class="ig"><div><h3 style="color:#065f46">Included</h3><ul>${incList}</ul></div><div><h3 style="color:#065f46">Not Included</h3><ul>${excList}</ul></div></div>` : ""}
+    ${scheduleHtml ? `<hr><h2>Trek Schedule / Itinerary</h2>${scheduleHtml}` : ""}
+    ${(incList || excList) ? `<hr><h2>Inclusions &amp; Exclusions</h2><div class="ig"><div><h3 style="color:#065f46">Included</h3><ul>${incList}</ul></div><div><h3 style="color:#065f46">Not Included</h3><ul>${excList}</ul></div></div>` : ""}
     ${carryList ? `<hr><h2>Things to Carry</h2><ul class="cg">${carryList}</ul>` : ""}
     <hr><p style="color:#888;font-size:.78rem;margin-top:20px">Generated by Gadvede Trekkers · gadvedetrekkers.com · ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>
     <script>window.onload=()=>{window.print()}</script></body></html>`;
@@ -216,11 +271,11 @@ function HomeTrekCard({ trek }) {
           <button
             type="button"
             className="btn trek-secondary-btn"
-            style={{ padding: "0 10px", minWidth: 0 }}
+            style={{ padding: "0 12px", minWidth: 0, fontSize: "0.8rem", display: "flex", alignItems: "center", gap: 4 }}
             title="Download Itinerary PDF"
             onClick={(e) => { e.preventDefault(); downloadTrekPdf(trek); }}
           >
-            ⬇️
+            ⬇️ PDF
           </button>
         </div>
       </div>
@@ -360,7 +415,7 @@ function IVDestCard({ dest, idx, onEnquire }) {
     >
       {/* 2×2 image grid with zoom on hover */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, height: 180, overflow: "hidden", position: "relative" }}>
-        {dest.images.slice(0, 4).map((img, i) => (
+        {(dest.images || []).slice(0, 4).map((img, i) => (
           <div key={i} style={{ overflow: "hidden", position: "relative" }}>
             <img
               src={img.src}
@@ -401,7 +456,7 @@ function IVDestCard({ dest, idx, onEnquire }) {
 
         {/* Highlights */}
         <ul style={{ listStyle: "none", padding: 0, margin: "0 0 14px", flex: 1 }}>
-          {dest.highlights.slice(0, 3).map((h) => (
+          {(dest.highlights || []).slice(0, 3).map((h) => (
             <li key={h} style={{ fontSize: "0.78rem", color: "#374151", marginBottom: 5, display: "flex", gap: 7, alignItems: "flex-start" }}>
               <span style={{ color: "#059669", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✔</span>
               <span>{h}</span>
@@ -637,7 +692,12 @@ function Home() {
 
   const _storedIV = getAdminItems("gt_iv");
   const ivDestinations = _storedIV.length > 0
-    ? _storedIV.filter((d) => d.active !== false).map(normaliseItem)
+    ? _storedIV.filter((d) => d.active !== false).map((d) => {
+        let images = [];
+        try { images = JSON.parse(d.imageGallery || "[]").filter(Boolean).map((url) => ({ src: url, caption: "" })); } catch { images = []; }
+        const highlights = String(d.highlights || "").split("\n").map((s) => s.trim()).filter(Boolean);
+        return { ...normaliseItem(d), images, highlights };
+      })
     : _ivDestinations;
 
   return (
