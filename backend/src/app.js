@@ -12,13 +12,21 @@ import supabaseAdmin    from "./config/supabaseAdminClient.js";
 
 const app = express();
 
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(",").map((value) => value.trim()).filter(Boolean)
-      : true,
-  })
-);
+// Production domains are always allowed so a stale CORS_ORIGIN env var on the
+// server never silently blocks the live frontend.  Additional origins (e.g.
+// local dev) are appended via the CORS_ORIGIN environment variable.
+const PRODUCTION_ORIGINS = [
+  "https://gadvede.com",
+  "https://www.gadvede.com",
+];
+
+const _envOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((v) => v.trim()).filter(Boolean)
+  : [];
+
+const allowedOrigins = Array.from(new Set([...PRODUCTION_ORIGINS, ..._envOrigins]));
+
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 app.get("/", (req, res) => {
