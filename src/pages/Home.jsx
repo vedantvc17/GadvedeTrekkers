@@ -6,8 +6,9 @@ import { rentalsList } from "../data/rentalsData";
 import { isHeritageEnabled } from "../data/featureFlags";
 import { ivDestinations as _ivDestinations } from "../data/industrialVisitsData";
 import EnquiryModal from "../components/EnquiryModal";
-import { getAdminItems, normaliseItem } from "../data/adminStorage";
+import { getAdminItems, normaliseItem, saveAdminItems } from "../data/adminStorage";
 import BookingCTA from "../components/BookingCTA";
+import { syncProductsFromApi } from "../api/getAll";
 
 const CAMPING_ROUTE_BY_NAME = {
   "Alibaug Camping | Music | Barbecue | Bonfire": "alibaug-camping",
@@ -567,6 +568,17 @@ function Home() {
   const [slideAnim, setSlideAnim]     = useState("");
   const [enquiryDest, setEnquiryDest] = useState(null);
   const gridRef = useRef(null);
+  const [, setSyncKey] = useState(0);
+
+  // Sync camping + rentals from backend so Live/Off status is cross-device
+  useEffect(() => {
+    syncProductsFromApi("camping", "gt_camping")
+      .then((items) => { if (items) setSyncKey((k) => k + 1); })
+      .catch(() => {});
+    syncProductsFromApi("rental", "gt_rentals")
+      .then((items) => { if (items) setSyncKey((k) => k + 1); })
+      .catch(() => {});
+  }, []);
 
   const loadedTreks  = activeTreks.slice(0, loadedCount);
   const totalPages   = Math.ceil(loadedCount / CPP);
