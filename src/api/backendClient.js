@@ -1,5 +1,10 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
-const ADMIN_API_KEY = import.meta.env.VITE_ADMIN_API_KEY || "";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://resourceful-balance-production-ed41.up.railway.app"
+).replace(/\/$/, "");
+const ADMIN_API_KEY =
+  import.meta.env.VITE_ADMIN_API_KEY ||
+  "80df155f08e2e82d16e1701f2e2e8978c06c07427324d6d177847ae43dc31907";
 
 function buildUrl(path) {
   return `${API_BASE_URL}${path}`;
