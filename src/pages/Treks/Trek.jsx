@@ -284,31 +284,6 @@ function Trek() {
             </div>
           </div>
 
-          <div className="trek-hero-slider" aria-hidden="true">
-            <div className="trek-hero-track">
-              {[...treks.slice(0, 6), ...treks.slice(0, 6)].map(
-                (trek, index) => (
-                  <div
-                    className="trek-hero-slide"
-                    key={`${trek.name}-${index}`}
-                  >
-                    <img
-                      src={trek.gallery[0]}
-                      alt={`${trek.name} - ${trek.location}`}
-                      className="trek-hero-slide-image"
-                      loading="lazy"
-                    />
-                    <div className="trek-hero-slide-overlay">
-                      <span className="trek-hero-slide-tag">
-                        {trek.seasonalTag}
-                      </span>
-                      <h3>{trek.name}</h3>
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
-          </div>
         </header>
 
         {/* ── SEARCH BAR ────────────────────────────── */}
