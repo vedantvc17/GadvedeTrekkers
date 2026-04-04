@@ -17,6 +17,7 @@ import {
   DEFAULT_SALES_SMS,
   openSmsWithMessage,
 } from "../utils/leadActions";
+import { canAssignEnquiries } from "../utils/roleHelpers";
 
 const STATUS_COLUMNS = [
   { key: ENQUIRY_STATUS.NEW_LEAD, label: "New Lead", color: "#d97706", bg: "#fff7ed" },
@@ -44,7 +45,7 @@ function formatDuration(ms = 0) {
   return mins ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
-function EnquiryBoard({ items, expanded, setExpanded, onStatusDrop, onStatusUpdate, onArchive, onTagToggle, onAssign, onCall, onWhatsApp, onEmail, onContact, salesPeople, showStatusControls = true }) {
+function EnquiryBoard({ items, expanded, setExpanded, onStatusDrop, onStatusUpdate, onArchive, onTagToggle, onAssign, onCall, onWhatsApp, onEmail, onContact, salesPeople, showStatusControls = true, showAssignControls = true }) {
   const columns = STATUS_COLUMNS.map((status) => ({
     ...status,
     items: items.filter((item) => item.status === status.key),
@@ -208,27 +209,29 @@ function EnquiryBoard({ items, expanded, setExpanded, onStatusDrop, onStatusUpda
                         </div>
                       </div>
 
-                      <div className="mt-3">
-                        <strong style={{ fontSize: 13 }}>Assign Sales</strong>
-                        <div className="mt-2">
-                          <select
-                            className="form-select form-select-sm"
-                            value={item.assignedSalesEmployeeId || ""}
-                            onChange={(event) => {
-                              const employeeId = event.target.value;
-                              const assignee = salesPeople.find((person) => person.employeeId === employeeId) || {};
-                              onAssign(item.id, assignee);
-                            }}
-                          >
-                            <option value="">Unassigned</option>
-                            {salesPeople.map((person) => (
-                              <option value={person.employeeId} key={person.employeeId}>
-                                {person.fullName} ({person.username})
-                              </option>
-                            ))}
-                          </select>
+                      {showAssignControls && (
+                        <div className="mt-3">
+                          <strong style={{ fontSize: 13 }}>Assign Sales</strong>
+                          <div className="mt-2">
+                            <select
+                              className="form-select form-select-sm"
+                              value={item.assignedSalesEmployeeId || ""}
+                              onChange={(event) => {
+                                const employeeId = event.target.value;
+                                const assignee = salesPeople.find((person) => person.employeeId === employeeId) || {};
+                                onAssign(item.id, assignee);
+                              }}
+                            >
+                              <option value="">Unassigned</option>
+                              {salesPeople.map((person) => (
+                                <option value={person.employeeId} key={person.employeeId}>
+                                  {person.fullName} ({person.username})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -246,7 +249,10 @@ export default function ManageEnquiries() {
   const [expanded, setExpanded] = useState(null);
   const [salesFilter, setSalesFilter] = useState("");
 
-  const { enquiries, loading, refresh } = useEnquiries({ limit: 500 });
+  const { enquiries, loading, refresh, currentUser, seeAll } = useEnquiries({ limit: 500 });
+
+  // Management / Super Admin can filter by sales person; Sales users cannot.
+  const canAssign = canAssignEnquiries(currentUser.role);
 
   useEffect(() => { syncEnquiriesWithBookings(); }, []);
 
@@ -264,7 +270,10 @@ export default function ManageEnquiries() {
       item.bookedEventName?.toLowerCase().includes(q) ||
       item.location?.toLowerCase().includes(q);
 
-    const matchesSales = !salesFilter || item.assignedSalesEmployeeId === salesFilter;
+    // The salesFilter dropdown is only rendered for Management/Super Admin.
+    // Sales users' records are already pre-scoped by the API — no extra filter needed.
+    const matchesSales = !seeAll || !salesFilter || item.assignedSalesEmployeeId === salesFilter;
+
     return matchesSearch && matchesSales;
   });
 
@@ -375,14 +384,34 @@ export default function ManageEnquiries() {
           onChange={(e) => setSearch(e.target.value)}
           style={{ flex: 1 }}
         />
-        <select className="form-select form-select-sm" value={salesFilter} onChange={(e) => setSalesFilter(e.target.value)} style={{ maxWidth: 260 }}>
-          <option value="">All Sales Owners</option>
-          {salesPeople.map((person) => (
-            <option value={person.employeeId} key={person.employeeId}>
-              {person.fullName}
-            </option>
-          ))}
-        </select>
+
+        {/* Sales-owner dropdown — Management/Super Admin only */}
+        {seeAll && (
+          <select
+            className="form-select form-select-sm"
+            value={salesFilter}
+            onChange={(e) => setSalesFilter(e.target.value)}
+            style={{ maxWidth: 260 }}
+          >
+            <option value="">All Sales Owners</option>
+            {salesPeople.map((person) => (
+              <option value={person.employeeId} key={person.employeeId}>
+                {person.fullName}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {/* Scope pill — visible to Sales users so they know the view is filtered */}
+        {!seeAll && (
+          <span style={{
+            padding: "4px 12px", borderRadius: 999, fontSize: 12, fontWeight: 700,
+            background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe",
+            whiteSpace: "nowrap",
+          }}>
+            👤 My enquiries only
+          </span>
+        )}
       </div>
 
       <div className="adm-form-card mb-4">
@@ -428,6 +457,7 @@ export default function ManageEnquiries() {
         onEmail={handleEmail}
         onContact={handleContact}
         salesPeople={salesPeople}
+        showAssignControls={canAssign}
       />
     </div>
   );

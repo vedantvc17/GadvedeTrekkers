@@ -1,5 +1,12 @@
 import supabaseAdmin from "../config/supabaseAdminClient.js";
 
+/* ─── Role helpers (backend copy — kept in sync with src/utils/roleHelpers.js) ── */
+const MANAGEMENT_TIER = ["Super Admin", "Management"];
+
+function canSeeAllEnquiries(role) {
+  return MANAGEMENT_TIER.includes(role);
+}
+
 function toRow(e) {
   return {
     id:                         e.id,
@@ -84,12 +91,17 @@ function createLeadBackfillEnquiry(lead = {}) {
 /* ── GET /api/enquiries ── */
 export async function listEnquiries(req, res) {
   const {
-    search = "",
-    status = "",
+    search          = "",
+    status          = "",
     include_archived = "false",
-    limit = "500",
-    offset = "0",
+    limit           = "500",
+    offset          = "0",
+    assigned_to     = "",   // set by the frontend for Sales-role users
   } = req.query;
+
+  // req.admin is populated by requireAdminJWT: { username, name, role }
+  const callerRole     = req.admin?.role     || "";
+  const callerUsername = req.admin?.username || "";
 
   let query = supabaseAdmin
     .from("enquiries")
@@ -105,6 +117,21 @@ export async function listEnquiries(req, res) {
     query = query.or(
       `name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%,event_name.ilike.%${q}%,id.ilike.%${q}%`
     );
+  }
+
+  /**
+   * Role-based data scoping (enforced server-side — this is the security gate):
+   *
+   *   Management / Super Admin → no restriction, sees all enquiries
+   *   Sales                    → restricted to enquiries where assigned_sales_username
+   *                              matches the authenticated caller's username.
+   *
+   * Even if a Sales user crafts a request without ?assigned_to, the server
+   * applies the filter using their JWT identity — they cannot bypass this.
+   */
+  if (!canSeeAllEnquiries(callerRole)) {
+    // Use the JWT identity, NOT the query param — query params are untrusted.
+    query = query.eq("assigned_sales_username", callerUsername);
   }
 
   const { data, error, count } = await query;
