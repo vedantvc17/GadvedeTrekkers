@@ -106,14 +106,26 @@ function savePartialCollection({ bookingId, amount, collectedBy }) {
   } catch { return false; }
 }
 
+// Usernames that belong to management — they oversee the full pipeline.
+const MGMT_USERNAMES = ["pratik.ubhe", "rohit.panhalkar", "akshay.kangude"];
+
+function isManagementUser(session) {
+  return MGMT_USERNAMES.includes(session?.username);
+}
+
 function canAccessAssignedEnquiries(session, emp) {
-  const mgmt = ["pratik.ubhe", "rohit.panhalkar", "akshay.kangude"];
-  if (mgmt.includes(session?.username)) return true;
+  if (isManagementUser(session)) return true;
   const role = String(emp?.role || emp?.expertise || "").toLowerCase();
   return role.includes("sales") || role.includes("coordinator");
 }
 
-function getAssignedEnquiriesForUser(session) {
+/**
+ * Returns the enquiry list scoped to the user's access level.
+ *   Management → all enquiries (full pipeline view)
+ *   Sales / Coordinator → only enquiries assigned to that user
+ */
+function getEnquiriesForUser(session, emp) {
+  if (isManagementUser(session)) return getEnquiries();
   return getEnquiries().filter(item =>
     item.assignedSalesEmployeeId === session.employeeId ||
     item.assignedSalesUsername === session.username ||
@@ -196,7 +208,9 @@ export default function EmployeePortal() {
   const treks = useMemo(() => getUpcomingTreks(), [tick]);
   const myTrekEvents = useMemo(() => getLeaderTrekEvents(session.fullName), [tick]);
   const canViewEnquiries = useMemo(() => canAccessAssignedEnquiries(session, emp), [session, emp]);
-  const assignedEnquiries = useMemo(() => getAssignedEnquiriesForUser(session), [session, tick]);
+  // emp is a dep: management status is derived from session.username (stable),
+  // but emp must be included so the list re-evaluates if the employee record changes.
+  const assignedEnquiries = useMemo(() => getEnquiriesForUser(session, emp), [session, emp, tick]);
 
   const referralCode = cred?.referralCode || session.referralCode || "";
   const referralLink = `${BASE_URL}/book?ref=${referralCode}`;

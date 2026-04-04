@@ -243,14 +243,6 @@ export default function WebsiteNotificationBridge() {
     }
   }, [permission, getUnseen]);
 
-  /* ── Permission request on mount (only if undecided) ── */
-  useEffect(() => {
-    if (typeof Notification === "undefined") return;
-    if (Notification.permission === "default") {
-      Notification.requestPermission().then(setPermission);
-    }
-  }, []); // intentionally empty — runs once
-
   /* ── Polling loop (restarts when processAlerts changes, i.e. on permission change) ── */
   useEffect(() => {
     if (typeof window === "undefined") return;
