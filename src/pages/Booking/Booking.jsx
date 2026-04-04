@@ -682,21 +682,43 @@ function Booking() {
                   </select>
                 </label>
               ) : (
-                <label className="booking-field booking-field-full">
-                  <span>
-                    Travel Date
-                    <InfoTooltip text="Only future dates are allowed. Select your preferred trek date." />
-                  </span>
-                  <input
-                    type="date"
-                    name="travelDate"
-                    value={formData.travelDate}
-                    onChange={handleChange}
-                    min={new Date().toISOString().slice(0, 10)}
-                    required
-                    style={{ fontSize: "1rem" }}
-                  />
-                </label>
+                /* No admin-configured batch dates for this trek.
+                   Show a clear message instead of a free-form calendar so
+                   users cannot book invalid / unavailable dates. */
+                <div className="booking-field booking-field-full">
+                  <span>Travel Date</span>
+                  <div style={{
+                    padding: "16px 18px",
+                    background: "#fefce8",
+                    border: "1.5px solid #fde68a",
+                    borderRadius: 14,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                  }}>
+                    <div style={{ fontWeight: 700, color: "#92400e", fontSize: "0.9rem" }}>
+                      📅 No scheduled batches for this trek yet
+                    </div>
+                    <div style={{ color: "#78350f", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                      Available dates haven't been published for this trek.
+                      Contact us on WhatsApp and we'll confirm your preferred date.
+                    </div>
+                    <a
+                      href={`https://wa.me/918605866155?text=${encodeURIComponent(`Hi! I want to book the ${selectedTrek?.name || "trek"} — can you share available dates?`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        background: "#25d366", color: "#fff",
+                        borderRadius: 10, padding: "9px 18px",
+                        fontWeight: 700, fontSize: "0.88rem",
+                        textDecoration: "none", alignSelf: "flex-start",
+                      }}
+                    >
+                      💬 Ask on WhatsApp
+                    </a>
+                  </div>
+                </div>
               )}
 
               <label className="booking-field">

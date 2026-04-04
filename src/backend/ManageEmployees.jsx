@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { useToast } from "../components/Toast";
+import { useConfirm } from "../components/ConfirmModal";
 import {
   getAllEmployees, saveEmployee, deleteEmployee, queryEmployees,
   getAllAssignments, saveAssignment, deleteAssignment,
@@ -11,6 +13,7 @@ import { getUserPermissions, togglePermission, ALL_PERMISSIONS, currentUserHasPe
 import { submitRateApproval, getPendingApprovals, approveRateRequest, rejectRateRequest, hasPendingRequest } from "../data/rateApprovalStorage";
 import { getWhatsAppLinkForDate } from "../data/trekDatesStorage";
 import { slugifyTrekName } from "../data/treks";
+import { getErrorMessage } from "../utils/errorMessage";
 
 /* ─── constants ─── */
 const ROLES      = ["Trek Leader", "Coordinator", "Support Staff", "Guide", "Instructor"];
@@ -50,6 +53,7 @@ const EMPTY_EMP = {
 };
 
 function EmployeeForm({ initial, onSave, onCancel }) {
+  const toast = useToast();
   const [f, setF] = useState(initial || EMPTY_EMP);
   const [skillInput, setSkillInput] = useState("");
   const [certInput,  setCertInput]  = useState({ name:"", details:"" });
@@ -214,7 +218,7 @@ function EmployeeForm({ initial, onSave, onCancel }) {
       ))}
 
       <div className="d-flex gap-2 mt-4">
-        <button className="btn btn-success btn-sm" onClick={()=>{ if(!f.fullName.trim()){alert("Full name required");return;} onSave(f); }}>
+        <button className="btn btn-success btn-sm" onClick={()=>{ if(!f.fullName.trim()){toast.error("Full name is required.");return;} onSave(f); }}>
           {initial?.employeeId ? "Update Employee" : "Add Employee"}
         </button>
         <button className="btn btn-outline-secondary btn-sm" onClick={onCancel}>Cancel</button>
@@ -227,6 +231,8 @@ function EmployeeForm({ initial, onSave, onCancel }) {
    EMPLOYEES TAB
 ═══════════════════════════════════════════════════════ */
 function EmployeesTab({ tick, onTick }) {
+  const toast = useToast();
+  const confirm = useConfirm();
   const [search,   setSearch]   = useState("");
   const [roleF,    setRoleF]    = useState("");
   const [statusF,  setStatusF]  = useState("");
@@ -241,20 +247,31 @@ function EmployeesTab({ tick, onTick }) {
     if (emp.payPerTrek && !hasVendorPayments) {
       const existingEmp = getAllEmployees().find(e => e.employeeId === emp.employeeId);
       const empToSave = { ...emp, payPerTrek: existingEmp?.payPerTrek || "" };
-      const savedEmp = saveEmployee(empToSave);
-      submitRateApproval({
-        type: "employee",
-        targetId: savedEmp?.employeeId || emp.employeeId || empToSave.employeeId,
-        targetName: emp.fullName,
-        field: "payPerTrek",
-        proposedAmount: emp.payPerTrek,
-        currentAmount: existingEmp?.payPerTrek || 0,
-      });
-      alert(`Pay per trek submitted for Rohit's approval.`);
+      try {
+        const savedEmp = saveEmployee(empToSave);
+        submitRateApproval({
+          type: "employee",
+          targetId: savedEmp?.employeeId || emp.employeeId || empToSave.employeeId,
+          targetName: emp.fullName,
+          field: "payPerTrek",
+          proposedAmount: emp.payPerTrek,
+          currentAmount: existingEmp?.payPerTrek || 0,
+        });
+        toast.info("Pay per trek submitted for Rohit's approval.");
+      } catch (error) {
+        toast.error(getErrorMessage(error, "Employee rate request could not be submitted."));
+        return;
+      }
     } else {
-      saveEmployee(emp);
+      try {
+        saveEmployee(emp);
+      } catch (error) {
+        toast.error(getErrorMessage(error, "Employee could not be saved."));
+        return;
+      }
     }
     setShowForm(false); setEditing(null); onTick();
+    toast.success(editing ? "Employee updated successfully." : "Employee added successfully.");
   };
 
   const pendingEmpApprovals = getPendingApprovals().filter(a => a.type === "employee");
@@ -284,9 +301,16 @@ function EmployeesTab({ tick, onTick }) {
                 <div className="d-flex gap-2">
                   <button
                     className="btn btn-success btn-sm py-0 px-2" style={{ fontSize: 12 }}
-                    onClick={() => {
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Approve Pay Request?",
+                        message: `Approve the trek pay change for ${approval.targetName}?`,
+                        confirmText: "Approve",
+                        type: "success",
+                      });
+                      if (!ok) return;
                       const existingEmp = getAllEmployees().find(e => e.employeeId === approval.targetId);
-                      if (!existingEmp) { alert("Employee not found."); return; }
+                      if (!existingEmp) { toast.error("Employee not found."); return; }
                       approveRateRequest(approval.id);
                       saveEmployee({ ...existingEmp, payPerTrek: approval.proposedAmount });
                       logActivity({
@@ -297,11 +321,19 @@ function EmployeesTab({ tick, onTick }) {
                         severity: "success",
                       });
                       onTick();
+                      toast.success("Employee pay request approved.");
                     }}
                   >Approve</button>
                   <button
                     className="btn btn-danger btn-sm py-0 px-2" style={{ fontSize: 12 }}
-                    onClick={() => {
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Reject Pay Request?",
+                        message: `Reject the trek pay change for ${approval.targetName}?`,
+                        confirmText: "Continue",
+                        type: "danger",
+                      });
+                      if (!ok) return;
                       const reason = window.prompt("Reason for rejection:");
                       if (reason === null) return;
                       rejectRateRequest(approval.id, reason);
@@ -313,6 +345,7 @@ function EmployeesTab({ tick, onTick }) {
                         severity: "warning",
                       });
                       onTick();
+                      toast.warning("Employee pay request rejected.");
                     }}
                   >Reject</button>
                 </div>

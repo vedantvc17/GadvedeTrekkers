@@ -276,8 +276,28 @@ export default function Camping() {
     if (location.state) window.history.replaceState({}, document.title);
   }, [location.state]);
 
-  const adminCamps = getAdminItems("gt_camping").filter((c) => c.active !== false).map(normaliseItem);
-  const allCampingSites = [...campingSites, ...adminCamps];
+  const adminCampsRaw = getAdminItems("gt_camping");
+  // Build lookup by both shortName and full name so mismatched seeds still match
+  const adminLookup = new Map();
+  adminCampsRaw.forEach((c) => {
+    if (c.shortName) adminLookup.set(c.shortName.toLowerCase(), c);
+    if (c.name) adminLookup.set(c.name.toLowerCase(), c);
+  });
+  const activeCampingSites = campingSites.filter((s) => {
+    const adminItem =
+      adminLookup.get((s.shortName || "").toLowerCase()) ||
+      adminLookup.get((s.name || "").toLowerCase());
+    return !adminItem || adminItem.active !== false;
+  });
+  const hardcodedKeys = new Set();
+  campingSites.forEach((s) => {
+    if (s.shortName) hardcodedKeys.add(s.shortName.toLowerCase());
+    if (s.name) hardcodedKeys.add(s.name.toLowerCase());
+  });
+  const extraAdminCamps = adminCampsRaw
+    .filter((c) => c.active !== false && !hardcodedKeys.has((c.shortName || "").toLowerCase()) && !hardcodedKeys.has((c.name || "").toLowerCase()))
+    .map(normaliseItem);
+  const allCampingSites = [...activeCampingSites, ...extraAdminCamps];
 
   const filtered = allCampingSites
     .filter((s) => activeFilter === "All" || s.type === activeFilter)

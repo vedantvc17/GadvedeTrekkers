@@ -8,6 +8,7 @@ import {
   saveListingSubmissions,
   updateListingSubmission,
 } from "../data/listingSubmissionStorage";
+import { getErrorMessage } from "../utils/errorMessage";
 
 const STATUS_COLORS = {
   PENDING:  { bg: "#fef3c7", color: "#92400e", label: "Pending Review" },
@@ -117,26 +118,47 @@ export default function ManagePropertyListings() {
     setListings(updated);
   };
 
-  const handleSaveEdit = (updated) => {
-    updateListingSubmission("property", updated.id, updated);
-    setListings(listings.map((l) => (l.id === updated.id ? updated : l)));
-    setEditing(null);
-    toast.success("Property listing updated successfully.");
+  const handleSaveEdit = async (updated) => {
+    try {
+      await updateListingSubmission("property", updated.id, updated);
+      setListings(listings.map((l) => (l.id === updated.id ? updated : l)));
+      setEditing(null);
+      toast.success("Property listing updated successfully.");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Property listing could not be updated."));
+    }
   };
 
   const handleDelete = async (id) => {
     const ok = await confirm({ title: "Delete Listing?", message: "This listing will be permanently removed.", confirmText: "Delete", type: "danger" });
     if (!ok) return;
-    deleteListingSubmission("property", id);
-    setListings(listings.filter((l) => l.id !== id));
-    toast.success("Listing deleted.");
+    try {
+      await deleteListingSubmission("property", id);
+      setListings(listings.filter((l) => l.id !== id));
+      toast.success("Listing deleted.");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Listing could not be deleted."));
+    }
   };
 
-  const setStatus = (id, status) => {
-    updateListingSubmission("property", id, { status });
-    setListings(listings.map((l) => (l.id === id ? { ...l, status } : l)));
-    const labels = { APPROVED: "Approved", REJECTED: "Rejected", LIVE: "Published as Live!" };
-    toast.success(`Listing status updated to ${labels[status] || status}.`);
+  const setStatus = async (id, status) => {
+    const labels = { APPROVED: "approve", REJECTED: "reject", LIVE: "publish live" };
+    const ok = await confirm({
+      title: "Confirm Listing Action",
+      message: `Are you sure you want to ${labels[status] || status.toLowerCase()} this property listing?`,
+      confirmText: "Yes, Continue",
+      type: status === "REJECTED" ? "danger" : status === "LIVE" ? "primary" : "success",
+    });
+    if (!ok) return;
+
+    try {
+      await updateListingSubmission("property", id, { status });
+      setListings(listings.map((l) => (l.id === id ? { ...l, status } : l)));
+      const statusLabels = { APPROVED: "Approved", REJECTED: "Rejected", LIVE: "Published as Live!" };
+      toast.success(`Listing status updated to ${statusLabels[status] || status}.`);
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Listing status could not be updated."));
+    }
   };
 
   const filtered = listings.filter((l) => {

@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { uniqueTreks, slugifyTrekName } from "../../data/treks";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
+import BookingCTA from "../../components/BookingCTA";
 
 const parseGallery = (value, fallback) => {
   try {
@@ -426,15 +427,11 @@ function Trek() {
 
                   {/* Hover quick-action overlay */}
                   <div className="trek-card-overlay">
-                    <Link
-                      to="/book"
-                      state={{ trek }}
+                    <BookingCTA
+                      trek={trek}
                       className="trek-overlay-btn trek-overlay-book"
-                      tabIndex="-1"
-                      aria-hidden="true"
-                    >
-                      Book Now
-                    </Link>
+                      label="Book on WhatsApp"
+                    />
                     <Link
                       to={`/treks/${slugifyTrekName(trek.name)}`}
                       className="trek-overlay-btn trek-overlay-details"
@@ -508,9 +505,7 @@ function Trek() {
                   </div>
 
                   <div className="trek-card-actions">
-                    <Link to="/book" state={{ trek }} className="btn trek-primary-btn">
-                      Book Now
-                    </Link>
+                    <BookingCTA trek={trek} className="btn trek-primary-btn" label="Book on WhatsApp" />
                     <Link
                       to={`/treks/${slugifyTrekName(trek.name)}`}
                       className="btn trek-secondary-btn"

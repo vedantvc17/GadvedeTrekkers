@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { useToast } from "../components/Toast";
+import { useConfirm } from "../components/ConfirmModal";
 import { getAllVendors, saveVendor, deleteVendor } from "../data/vendorStorage";
 import { logActivity } from "../data/activityLogStorage";
 import { currentUserHasPermission, getCurrentAdminUser } from "../data/permissionStorage";
 import { submitRateApproval, getPendingApprovals, approveRateRequest, rejectRateRequest } from "../data/rateApprovalStorage";
+import { getErrorMessage } from "../utils/errorMessage";
 
 const SERVICE_TYPES = ["Bus", "Food", "Adventure Activity"];
 const RATE_PLACEHOLDERS = {
@@ -17,6 +20,8 @@ const PAYMENT_METHODS = ["UPI", "Bank Transfer (NEFT/RTGS)", "Cheque", "Cash"];
 
 function VendorPayments() {
   const canPay = currentUserHasPermission("vendor_payments");
+  const toast = useToast();
+  const confirm = useConfirm();
   const [tick, setTick] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [vendors] = useState(() => getAllVendors());
@@ -43,29 +48,45 @@ function VendorPayments() {
     set("vendorName", v?.name || "");
   };
 
-  const handleSubmit = () => {
-    if (!form.vendorId || !form.amount) return alert("Select vendor and enter amount.");
-    const user = getCurrentAdminUser();
-    const entry = {
-      paymentId: `PAY-${Date.now()}`,
-      ...form,
-      amount: Number(form.amount),
-      paidBy: user.name,
-      paidByUsername: user.username,
-      paidAt: new Date().toISOString(),
-    };
-    const all = JSON.parse(localStorage.getItem("gt_vendor_payments") || "[]");
-    localStorage.setItem("gt_vendor_payments", JSON.stringify([entry, ...all]));
-    logActivity({
-      action: "VENDOR_PAYMENT",
-      actionLabel: "Made Vendor Payment",
-      details: `₹${Number(form.amount).toLocaleString("en-IN")} to ${form.vendorName} via ${form.method}${form.reference ? ` (Ref: ${form.reference})` : ""}`,
-      module: "Payments",
-      severity: "success",
+  const handleSubmit = async () => {
+    if (!form.vendorId || !form.amount) {
+      toast.error("Select vendor and enter a valid amount.");
+      return;
+    }
+    const ok = await confirm({
+      title: "Confirm Vendor Payment?",
+      message: `Are you sure you want to record a payment of ₹${Number(form.amount).toLocaleString("en-IN")} to ${form.vendorName || "this vendor"}?`,
+      confirmText: "Confirm Payment",
+      type: "warning",
     });
-    setShowForm(false);
-    setForm({ vendorId:"", vendorName:"", amount:"", method:"UPI", reference:"", description:"", date: new Date().toISOString().slice(0,10) });
-    refresh();
+    if (!ok) return;
+
+    const user = getCurrentAdminUser();
+    try {
+      const entry = {
+        paymentId: `PAY-${Date.now()}`,
+        ...form,
+        amount: Number(form.amount),
+        paidBy: user.name,
+        paidByUsername: user.username,
+        paidAt: new Date().toISOString(),
+      };
+      const all = JSON.parse(localStorage.getItem("gt_vendor_payments") || "[]");
+      localStorage.setItem("gt_vendor_payments", JSON.stringify([entry, ...all]));
+      logActivity({
+        action: "VENDOR_PAYMENT",
+        actionLabel: "Made Vendor Payment",
+        details: `₹${Number(form.amount).toLocaleString("en-IN")} to ${form.vendorName} via ${form.method}${form.reference ? ` (Ref: ${form.reference})` : ""}`,
+        module: "Payments",
+        severity: "success",
+      });
+      setShowForm(false);
+      setForm({ vendorId:"", vendorName:"", amount:"", method:"UPI", reference:"", description:"", date: new Date().toISOString().slice(0,10) });
+      refresh();
+      toast.success("Vendor payment recorded successfully.");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Vendor payment could not be recorded."));
+    }
   };
 
   if (!canPay) {
@@ -162,6 +183,8 @@ function VendorPayments() {
 }
 
 export default function ManageVendors() {
+  const toast = useToast();
+  const confirm = useConfirm();
   const [tick,       setTick]       = useState(0);
   const [search,     setSearch]     = useState("");
   const [showForm,   setShowForm]   = useState(false);
@@ -187,46 +210,60 @@ export default function ManageVendors() {
   };
 
   const handleSave = () => {
-    if (!form.name || !form.contactNumber) return alert("Name and Contact Number are required.");
-    const hasVendorPayments = currentUserHasPermission("vendor_payments");
-    const existingVendor = editId ? getAllVendors().find(v => v.id === editId) : null;
-
-    if (form.rateAmount && !hasVendorPayments) {
-      const vendorToSave = { ...form, id: editId || undefined, rateAmount: existingVendor?.rateAmount || "" };
-      saveVendor(vendorToSave);
-      // For new vendors, find the just-saved record (most recent by createdAt)
-      const savedVendorId = editId || (() => {
-        const all = getAllVendors();
-        const match = all.find(v => v.name === form.name && v.contactNumber === form.contactNumber);
-        return match?.id || "";
-      })();
-      submitRateApproval({
-        type: "vendor",
-        targetId: savedVendorId,
-        targetName: form.name,
-        field: "rateAmount",
-        proposedAmount: form.rateAmount,
-        currentAmount: existingVendor?.rateAmount || 0,
-      });
-      alert("Rate amount submitted for Rohit's approval.");
-    } else {
-      saveVendor({ ...form, id: editId || undefined });
+    if (!form.name || !form.contactNumber) {
+      toast.error("Name and Contact Number are required.");
+      return;
     }
-    logActivity({
-      action: editId ? "VENDOR_UPDATED" : "VENDOR_ADDED",
-      actionLabel: editId ? "Updated Vendor" : "Added Vendor",
-      details: `${form.serviceType} vendor: ${form.name}`,
-      module: "Vendors",
-      severity: "success",
-    });
-    setShowForm(false);
-    setForm(EMPTY);
-    setEditId(null);
-    refresh();
+    try {
+      const hasVendorPayments = currentUserHasPermission("vendor_payments");
+      const existingVendor = editId ? getAllVendors().find(v => v.id === editId) : null;
+
+      if (form.rateAmount && !hasVendorPayments) {
+        const vendorToSave = { ...form, id: editId || undefined, rateAmount: existingVendor?.rateAmount || "" };
+        saveVendor(vendorToSave);
+        const savedVendorId = editId || (() => {
+          const all = getAllVendors();
+          const match = all.find(v => v.name === form.name && v.contactNumber === form.contactNumber);
+          return match?.id || "";
+        })();
+        submitRateApproval({
+          type: "vendor",
+          targetId: savedVendorId,
+          targetName: form.name,
+          field: "rateAmount",
+          proposedAmount: form.rateAmount,
+          currentAmount: existingVendor?.rateAmount || 0,
+        });
+        toast.info("Rate amount submitted for Rohit's approval.");
+      } else {
+        saveVendor({ ...form, id: editId || undefined });
+      }
+      logActivity({
+        action: editId ? "VENDOR_UPDATED" : "VENDOR_ADDED",
+        actionLabel: editId ? "Updated Vendor" : "Added Vendor",
+        details: `${form.serviceType} vendor: ${form.name}`,
+        module: "Vendors",
+        severity: "success",
+      });
+      setShowForm(false);
+      setForm(EMPTY);
+      setEditId(null);
+      refresh();
+      toast.success(editId ? "Vendor updated successfully." : "Vendor added successfully.");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Vendor could not be saved."));
+    }
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Delete this vendor?")) {
+  const handleDelete = async (id) => {
+    const ok = await confirm({
+      title: "Delete Vendor?",
+      message: "This vendor will be permanently removed.",
+      confirmText: "Delete",
+      type: "danger",
+    });
+    if (ok) {
+      try {
       const v = getAllVendors().find(x => x.id === id);
       logActivity({
         action: "VENDOR_DELETED",
@@ -237,6 +274,10 @@ export default function ManageVendors() {
       });
       deleteVendor(id);
       refresh();
+      toast.success("Vendor deleted.");
+      } catch (error) {
+        toast.error(getErrorMessage(error, "Vendor could not be deleted."));
+      }
     }
   };
 
@@ -284,9 +325,16 @@ export default function ManageVendors() {
                 <div className="d-flex gap-2">
                   <button
                     className="btn btn-success btn-sm py-0 px-2" style={{ fontSize: 12 }}
-                    onClick={() => {
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Approve Rate Request?",
+                        message: `Approve the new rate for ${approval.targetName}?`,
+                        confirmText: "Approve",
+                        type: "success",
+                      });
+                      if (!ok) return;
                       const existingV = getAllVendors().find(v => v.id === approval.targetId);
-                      if (!existingV) { alert("Vendor not found."); return; }
+                      if (!existingV) { toast.error("Vendor not found."); return; }
                       approveRateRequest(approval.id);
                       saveVendor({ ...existingV, rateAmount: approval.proposedAmount });
                       logActivity({
@@ -297,11 +345,19 @@ export default function ManageVendors() {
                         severity: "success",
                       });
                       refresh();
+                      toast.success("Vendor rate request approved.");
                     }}
                   >Approve</button>
                   <button
                     className="btn btn-danger btn-sm py-0 px-2" style={{ fontSize: 12 }}
-                    onClick={() => {
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Reject Rate Request?",
+                        message: `Reject the new rate request for ${approval.targetName}?`,
+                        confirmText: "Continue",
+                        type: "danger",
+                      });
+                      if (!ok) return;
                       const reason = window.prompt("Reason for rejection:");
                       if (reason === null) return;
                       rejectRateRequest(approval.id, reason);
@@ -313,6 +369,7 @@ export default function ManageVendors() {
                         severity: "warning",
                       });
                       refresh();
+                      toast.warning("Vendor rate request rejected.");
                     }}
                   >Reject</button>
                 </div>

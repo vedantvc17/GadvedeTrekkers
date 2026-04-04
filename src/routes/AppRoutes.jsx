@@ -1,4 +1,14 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { getEmployeeSession } from "../data/employeePortalStorage";
+
+/* ── Employee-only route guard ────────────────────────────── */
+function EmployeeRoute({ children }) {
+  const location = useLocation();
+  if (!getEmployeeSession()) {
+    return <Navigate to={`/employee-login?next=${encodeURIComponent(location.pathname)}`} replace />;
+  }
+  return children;
+}
 import Home from "../pages/Home";
 import About from "../pages/About";
 import Contact from "../pages/Contact";
@@ -21,6 +31,7 @@ import ManageMarketing   from "../backend/ManageMarketing";
 import ManageFeedback    from "../backend/ManageFeedback";
 import ManageEarnings   from "../backend/ManageEarnings";
 import ManageEmployees  from "../backend/ManageEmployees";
+import ManageTraining   from "../backend/ManageTraining";
 import EmployeeOnboarding from "../backend/EmployeeOnboarding";
 import EmployeeLogin  from "../pages/Employee/EmployeeLogin";
 import EmployeePortal from "../pages/Employee/EmployeePortal";
@@ -66,6 +77,12 @@ import CampingDetails from "../pages/Camping/CampingDetails";
 /* ================= RENTAL PAGES ================= */
 import Rental        from "../pages/Rentals/Rental";
 import RentalDetails from "../pages/Rentals/RentalDetails";
+
+/* ================= LEADER TRAINING ================= */
+import LeaderTraining      from "../pages/LeaderTraining/LeaderTraining";
+import TrainingModules     from "../pages/LeaderTraining/TrainingModules";
+import TrainingTest        from "../pages/LeaderTraining/TrainingTest";
+import LeaderCertification from "../pages/LeaderTraining/LeaderCertification";
 
 /* ================= CORPORATE ================= */
 import Corporate from "../pages/Corporate/Corporate";
@@ -151,6 +168,12 @@ function AppRoutes() {
       {/* ================= INDUSTRIAL VISITS ================= */}
       <Route path="/industrial-visits" element={<IndustrialVisits />} />
 
+      {/* ================= LEADER TRAINING (employee only) ================= */}
+      <Route path="/leader-training"                  element={<EmployeeRoute><LeaderTraining /></EmployeeRoute>} />
+      <Route path="/leader-training/module/:moduleId" element={<EmployeeRoute><TrainingModules /></EmployeeRoute>} />
+      <Route path="/leader-training/test"             element={<EmployeeRoute><TrainingTest /></EmployeeRoute>} />
+      <Route path="/leader-training/certification"    element={<EmployeeRoute><LeaderCertification /></EmployeeRoute>} />
+
       {/* ================= CORPORATE ================= */}
       <Route path="/corporate"            element={<Corporate />} />
       <Route path="/corporate/trek"       element={<Corporate />} />
@@ -179,6 +202,7 @@ function AppRoutes() {
         <Route path="feedback"     element={<ManageFeedback />} />
         <Route path="earnings"     element={<ManageEarnings />} />
         <Route path="employees"    element={<ManageEmployees />} />
+        <Route path="training"     element={<ManageTraining />} />
         <Route path="onboarding"   element={<EmployeeOnboarding />} />
         <Route path="logs"         element={<ActivityLogs />} />
         <Route path="docs"         element={<ManageDocs />} />
