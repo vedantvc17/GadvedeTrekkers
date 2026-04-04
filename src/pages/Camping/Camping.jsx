@@ -277,16 +277,25 @@ export default function Camping() {
   }, [location.state]);
 
   const adminCampsRaw = getAdminItems("gt_camping");
-  const adminByShortName = new Map(
-    adminCampsRaw.map((c) => [(c.shortName || c.name || "").toLowerCase(), c])
-  );
+  // Build lookup by both shortName and full name so mismatched seeds still match
+  const adminLookup = new Map();
+  adminCampsRaw.forEach((c) => {
+    if (c.shortName) adminLookup.set(c.shortName.toLowerCase(), c);
+    if (c.name) adminLookup.set(c.name.toLowerCase(), c);
+  });
   const activeCampingSites = campingSites.filter((s) => {
-    const adminItem = adminByShortName.get((s.shortName || s.name || "").toLowerCase());
+    const adminItem =
+      adminLookup.get((s.shortName || "").toLowerCase()) ||
+      adminLookup.get((s.name || "").toLowerCase());
     return !adminItem || adminItem.active !== false;
   });
-  const hardcodedNames = new Set(campingSites.map((s) => (s.shortName || s.name || "").toLowerCase()));
+  const hardcodedKeys = new Set();
+  campingSites.forEach((s) => {
+    if (s.shortName) hardcodedKeys.add(s.shortName.toLowerCase());
+    if (s.name) hardcodedKeys.add(s.name.toLowerCase());
+  });
   const extraAdminCamps = adminCampsRaw
-    .filter((c) => c.active !== false && !hardcodedNames.has((c.shortName || c.name || "").toLowerCase()))
+    .filter((c) => c.active !== false && !hardcodedKeys.has((c.shortName || "").toLowerCase()) && !hardcodedKeys.has((c.name || "").toLowerCase()))
     .map(normaliseItem);
   const allCampingSites = [...activeCampingSites, ...extraAdminCamps];
 
