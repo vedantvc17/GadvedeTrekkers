@@ -126,13 +126,28 @@ function Heritage() {
     ],
   };
 
-  /* Merge admin-created heritage walks */
-  getAdminItems("gt_heritage").filter((w) => w.active !== false).forEach((w) => {
-    const item = normaliseItem(w);
-    const cat = item.type || "city";
-    if (!heritageData[cat]) heritageData[cat] = [];
-    heritageData[cat].push(item);
+  /* Merge admin-created heritage walks, respecting Live/Off status */
+  const _adminHeritage = getAdminItems("gt_heritage");
+  const _adminByName = new Map(_adminHeritage.map((w) => [(w.name || "").toLowerCase(), w]));
+
+  // Remove hardcoded items that admin has toggled Off
+  Object.keys(heritageData).forEach((cat) => {
+    heritageData[cat] = heritageData[cat].filter((w) => {
+      const adminItem = _adminByName.get((w.name || "").toLowerCase());
+      return !adminItem || adminItem.active !== false;
+    });
   });
+
+  // Append admin-only items (not duplicates of hardcoded) that are active
+  const _hardcodedNames = new Set(Object.values(heritageData).flat().map((w) => (w.name || "").toLowerCase()));
+  _adminHeritage
+    .filter((w) => w.active !== false && !_hardcodedNames.has((w.name || "").toLowerCase()))
+    .forEach((w) => {
+      const item = normaliseItem(w);
+      const cat = (item.type || "city").toLowerCase();
+      if (!heritageData[cat]) heritageData[cat] = [];
+      heritageData[cat].push(item);
+    });
 
   const categories = Object.keys(heritageData);
 
