@@ -659,22 +659,26 @@ function Home() {
     },
   ];
 
-  const adminCampsites = getAdminItems("gt_camping")
-    .filter((camp) => camp.active !== false)
-    .map(normaliseItem);
-  const allCampsites = [...campingList, ...adminCampsites];
-  const campsiteCards = allCampsites.slice(0, 8).map((camp) => ({
-    id: CAMPING_ROUTE_BY_NAME[camp.name],
+  // Camping — admin-first: only show active admin items; fall back to campingList if admin is empty
+  const _adminCampsRaw = getAdminItems("gt_camping");
+  const _activeCamps = _adminCampsRaw.length > 0
+    ? _adminCampsRaw.filter((c) => c.active !== false).map(normaliseItem)
+    : campingList;
+  const campsiteCards = _activeCamps.slice(0, 8).map((camp) => ({
+    id: camp.slug || CAMPING_ROUTE_BY_NAME[camp.name] || null,
     name: camp.shortName || camp.name,
     price: `Starting ₹${camp.price}`,
     img: camp.image,
     location: camp.location,
-  }));
-  const adminRentals = getAdminItems("gt_rentals")
-    .filter((item) => item.active !== false)
-    .map(normaliseItem);
-  const tentRentalCards = [...rentalsList, ...adminRentals]
-    .filter((item) => item.category === "Tents")
+  })).filter((c) => c.img);
+
+  // Rentals — admin-first: only show active admin items; fall back to rentalsList if admin is empty
+  const _adminRentalsRaw = getAdminItems("gt_rentals");
+  const _activeRentals = _adminRentalsRaw.length > 0
+    ? _adminRentalsRaw.filter((item) => item.active !== false).map(normaliseItem)
+    : rentalsList;
+  const tentRentalCards = _activeRentals
+    .filter((item) => (item.category || "").toLowerCase() === "tents" && item.image)
     .slice(0, 8)
     .map((item, idx) => ({
       id: item.id || `tent-rental-${idx}`,
