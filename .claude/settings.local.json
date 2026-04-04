@@ -52,7 +52,22 @@
       "Bash(git clone:*)",
       "Bash(npx uipro-cli:*)",
       "Bash(python skills/ui-ux-pro-max/scripts/search.py \"adventure travel trekking outdoor nature tour booking\" --design-system -p \"Gadvede Trekkers\" -f markdown)",
-      "Bash(py --version)"
+      "Bash(py --version)",
+      "Bash(ls -la /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers/src/backend/Manage*.jsx)",
+      "Bash(grep -rn \"storageKey\\\\s*=\" src/backend/Manage*.jsx)",
+      "Bash(grep -rn \"storageKey\" src/backend/Manage*.jsx)",
+      "Bash(ls src/backend/Manage*.jsx)",
+      "Bash(npx vite:*)",
+      "Bash(node -e \"const fs = require\\(''fs''\\); const src = fs.readFileSync\\(''src/main.jsx'',''utf8''\\); console.log\\(src.slice\\(0,300\\)\\)\")",
+      "Bash(netlify --version)",
+      "Bash(grep -r \"VITE_API_BASE_URL\\\\|API_BASE_URL\" /c/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers --include=*.js --include=*.jsx --include=*.md ! -path */node_modules/* ! -path */.git/*)",
+      "Bash(node --input-type=module --eval \"import ''''./src/app.js''''\")",
+      "Bash(grep -E \"\\\\.jsx$|\\\\.js$\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr :5173)",
+      "Bash(find C:UsersCodengineGadvedeTrekkersGadvedeTrekkerssrc -name *.png -o -name *.jpg -o -name *.jpeg -o -name *.webp -o -name *.svg)",
+      "Bash(node -e \"const p=require\\(''./package.json''\\); console.log\\(JSON.stringify\\({motion: p.dependencies?.motion||p.devDependencies?.motion, lucide: p.dependencies?.[''lucide-react'']||p.devDependencies?.[''lucide-react'']}, null, 2\\)\\)\")",
+      "Bash(npm install:*)"
     ]
   },
   "disableAllHooks": true
