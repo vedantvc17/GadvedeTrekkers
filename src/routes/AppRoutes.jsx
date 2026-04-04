@@ -140,7 +140,7 @@ function AppRoutes() {
 
       {/* ================= EMPLOYEE PORTAL ================= */}
       <Route path="/employee-login"  element={<EmployeeLogin />} />
-      <Route path="/employee/direct-booking" element={<DirectBookingForm />} />
+      <Route path="/employee/direct-booking" element={<EmployeeRoute><DirectBookingForm /></EmployeeRoute>} />
       <Route path="/employee/*"      element={<EmployeePortal />} />
 
       {/* ================= OPPORTUNITIES ================= */}

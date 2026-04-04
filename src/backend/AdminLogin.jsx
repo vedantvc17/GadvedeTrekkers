@@ -1,15 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiRequest } from "../api/backendClient";
 
 const BG_IMAGE   = "/TrekImages/PuneTrek.png";
 const LOGO_IMAGE = "/gadvedelogo.png";
-
-const USERS = [
-  { username: "admin",           password: "gadvede@123",    name: "Admin",           role: "Super Admin" },
-  { username: "pratik.ubhe",     password: "Pratik@gadvede", name: "Pratik Ubhe",     role: "Management" },
-  { username: "rohit.panhalkar", password: "Rohit@gadvede",  name: "Rohit Panhalkar", role: "Management" },
-  { username: "akshay.kangude",  password: "Akshay@gadvede", name: "Akshay Kangude",  role: "Management" },
-];
 
 /* ── Eye icon ──────────────────────────────────────────────── */
 function EyeIcon({ open }) {
@@ -140,23 +134,25 @@ function SignInView({ onBack }) {
   const [error, setError]      = useState("");
   const [loading, setLoading]  = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-    setTimeout(() => {
-      const user = USERS.find(
-        (u) => u.username === form.username.trim() && u.password === form.password.trim()
-      );
+    try {
+      const data = await apiRequest("/api/auth/admin/login", {
+        method: "POST",
+        body: { username: form.username.trim(), password: form.password.trim() },
+      });
+      // data = { token, username, name, role }
+      sessionStorage.setItem("gt_admin", "true");
+      sessionStorage.setItem("gt_admin_token", data.token);
+      sessionStorage.setItem("gt_user", JSON.stringify({ name: data.name, role: data.role, username: data.username }));
+      navigate("/admin/dashboard");
+    } catch (err) {
+      setError(err.message || "Invalid username or password.");
+    } finally {
       setLoading(false);
-      if (user) {
-        sessionStorage.setItem("gt_admin", "true");
-        sessionStorage.setItem("gt_user", JSON.stringify({ name: user.name, role: user.role, username: user.username }));
-        navigate("/admin/dashboard");
-      } else {
-        setError("Invalid username or password.");
-      }
-    }, 400);
+    }
   };
 
   return (

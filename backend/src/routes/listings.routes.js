@@ -1,5 +1,5 @@
 import express from "express";
-import requireAdminApiKey from "../middleware/requireAdminApiKey.js";
+import requireAdminJWT from "../middleware/requireAdminJWT.js";
 import {
   createListing,
   deleteAdminListing,
@@ -10,8 +10,8 @@ import {
 const router = express.Router();
 
 router.post("/:type", createListing);
-router.get("/admin/list", requireAdminApiKey, getAdminListings);
-router.patch("/admin/:id", requireAdminApiKey, updateAdminListing);
-router.delete("/admin/:id", requireAdminApiKey, deleteAdminListing);
+router.get("/admin/list", requireAdminJWT, getAdminListings);
+router.patch("/admin/:id", requireAdminJWT, updateAdminListing);
+router.delete("/admin/:id", requireAdminJWT, deleteAdminListing);
 
 export default router;

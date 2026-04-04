@@ -2,14 +2,19 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   "https://resourceful-balance-production-ed41.up.railway.app"
 ).replace(/\/$/, "");
-const ADMIN_API_KEY =
-  import.meta.env.VITE_ADMIN_API_KEY ||
-  "80df155f08e2e82d16e1701f2e2e8978c06c07427324d6d177847ae43dc31907";
 
 function buildUrl(path) {
   return `${API_BASE_URL}${path}`;
 }
 
+/**
+ * Make a request to the backend API.
+ *
+ * @param {string} path - e.g. "/api/products"
+ * @param {{ method?, body?, admin? }} options
+ *   admin: true → attach the admin JWT from sessionStorage as a Bearer token.
+ *          No token = request is sent without auth header (will get 401 from server).
+ */
 export async function apiRequest(path, { method = "GET", body, admin = false } = {}) {
   const headers = {};
 
@@ -17,8 +22,11 @@ export async function apiRequest(path, { method = "GET", body, admin = false } =
     headers["Content-Type"] = "application/json";
   }
 
-  if (admin && ADMIN_API_KEY) {
-    headers["x-admin-api-key"] = ADMIN_API_KEY;
+  if (admin) {
+    const token = sessionStorage.getItem("gt_admin_token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
   }
 
   const response = await fetch(buildUrl(path), {

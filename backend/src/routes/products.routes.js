@@ -1,5 +1,5 @@
 import express from "express";
-import requireAdminApiKey from "../middleware/requireAdminApiKey.js";
+import requireAdminJWT from "../middleware/requireAdminJWT.js";
 import {
   deleteAdminProduct,
   getAdminProducts,
@@ -11,9 +11,9 @@ import {
 const router = express.Router();
 
 router.get("/", getAllProducts);
-router.get("/admin/list", requireAdminApiKey, getAdminProducts);
-router.post("/admin/upsert", requireAdminApiKey, upsertAdminProduct);
-router.delete("/admin/:storageKey/:identifier", requireAdminApiKey, deleteAdminProduct);
+router.get("/admin/list", requireAdminJWT, getAdminProducts);
+router.post("/admin/upsert", requireAdminJWT, upsertAdminProduct);
+router.delete("/admin/:storageKey/:identifier", requireAdminJWT, deleteAdminProduct);
 router.get("/:slug", getProductBySlug);
 
 export default router;

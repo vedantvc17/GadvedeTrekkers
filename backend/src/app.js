@@ -7,6 +7,7 @@ import customersRoutes  from "./routes/customers.routes.js";
 import paymentsRoutes   from "./routes/payments.routes.js";
 import enquiriesRoutes  from "./routes/enquiries.routes.js";
 import leadsRoutes      from "./routes/leads.routes.js";
+import authRoutes       from "./routes/auth.routes.js";
 import supabasePublic   from "./config/supabasePublicClient.js";
 import supabaseAdmin    from "./config/supabaseAdminClient.js";
 
@@ -33,6 +34,7 @@ app.get("/", (req, res) => {
   res.json({ success: true, message: "Backend is working" });
 });
 
+app.use("/api/auth",       authRoutes);
 app.use("/api/products",   productsRoutes);
 app.use("/api/listings",   listingsRoutes);
 app.use("/api/bookings",   bookingsRoutes);

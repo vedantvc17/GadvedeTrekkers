@@ -1,5 +1,5 @@
 import express from "express";
-import requireAdminApiKey from "../middleware/requireAdminApiKey.js";
+import requireAdminJWT from "../middleware/requireAdminJWT.js";
 import {
   listBookings,
   getBookingByCode,
@@ -9,9 +9,9 @@ import {
 
 const router = express.Router();
 
-router.get("/",                            requireAdminApiKey, listBookings);
-router.get("/:bookingCode",                requireAdminApiKey, getBookingByCode);
+router.get("/",                            requireAdminJWT, listBookings);
+router.get("/:bookingCode",                requireAdminJWT, getBookingByCode);
 router.post("/",                           createOrUpdateBooking);
-router.patch("/admin/:bookingCode/status", requireAdminApiKey, updateBookingStatus);
+router.patch("/admin/:bookingCode/status", requireAdminJWT, updateBookingStatus);
 
 export default router;
