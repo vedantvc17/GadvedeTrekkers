@@ -67,7 +67,10 @@
       "Bash(findstr :5173)",
       "Bash(find C:UsersCodengineGadvedeTrekkersGadvedeTrekkerssrc -name *.png -o -name *.jpg -o -name *.jpeg -o -name *.webp -o -name *.svg)",
       "Bash(node -e \"const p=require\\(''./package.json''\\); console.log\\(JSON.stringify\\({motion: p.dependencies?.motion||p.devDependencies?.motion, lucide: p.dependencies?.[''lucide-react'']||p.devDependencies?.[''lucide-react'']}, null, 2\\)\\)\")",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(grep -l \"getAdminItems\\\\|hydrateCampingStore\\\\|saveAdminItems\" \"C:/Users/Codengine/GadvedeTrekkers/GadvedeTrekkers/src/pages\"/**/*.jsx)",
+      "Bash(curl -s \"https://resourceful-balance-production-ed41.up.railway.app/api/health\")",
+      "Bash(curl -s https://resourceful-balance-production-ed41.up.railway.app/api/products?type=camping)"
     ]
   },
   "disableAllHooks": true

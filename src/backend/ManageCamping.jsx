@@ -1,25 +1,153 @@
 import ManagePage from "./ManagePage";
-import { campingList } from "../data/campingData";
+import {
+  CAMPING_CARRY_OPTIONS,
+  CAMPING_EXCLUDED_OPTIONS,
+  CAMPING_INCLUDED_OPTIONS,
+  CAMPING_SEED_DATA,
+  getPrimaryCampingImage,
+  parseJsonValue,
+} from "../data/campingDetailsData";
 
 const CAMPING_PREVIEW_KEY = "gt_camping_preview";
 
 const FIELDS = [
-  { key: "name",          label: "Site Name (Full)", required: true, col: 8 },
-  { key: "shortName",     label: "Short Name",       placeholder: "Pawna Lake Camping" },
-  { key: "type",          label: "Type",             required: true, type: "select", options: ["Beach", "Lake", "Forest", "Hill", "Farm"] },
-  { key: "location",      label: "Location",         required: true, placeholder: "Pawna Lake — Keware Village" },
-  { key: "duration",      label: "Duration",         required: true, placeholder: "Overnight" },
-  { key: "price",         label: "Price (₹)",        required: true, type: "number", placeholder: "1099" },
+  { key: "sortOrder", label: "Sort Order", type: "number", placeholder: "1" },
+  { key: "name", label: "Camp Name (Full)", required: true, col: 8 },
+  { key: "shortName", label: "Short Name", required: true, col: 4, placeholder: "Alibaug Camping" },
+  { key: "type", label: "Type", required: true, type: "select", options: ["Beach", "Lake", "Forest", "Mountain", "Hill", "Farm"] },
+  { key: "location", label: "Location", required: true, placeholder: "Alibaug, Maharashtra" },
+  { key: "duration", label: "Duration", required: true, placeholder: "Overnight" },
+  { key: "price", label: "Price (₹)", required: true, type: "number", placeholder: "1099" },
   { key: "originalPrice", label: "Original Price (₹)", type: "number", placeholder: "1499" },
-  { key: "badge",         label: "Badge",            placeholder: "Most Popular" },
-  { key: "description",   label: "Description",      type: "textarea", col: 12, placeholder: "Brief description of the camping experience…" },
-  { key: "image",         label: "Image URL",        col: 12, placeholder: "https://..." },
+  { key: "badge", label: "Badge", placeholder: "Most Popular" },
+  { key: "availability", label: "Availability", placeholder: "Available / On Request" },
+  { key: "coupon", label: "Coupon / Offers Label", placeholder: "3 offers" },
+  { key: "description", label: "Listing Description", type: "textarea", col: 12, placeholder: "Short card description shown on the camping listing page." },
+  { key: "imageGallery", label: "Camp Image Gallery", type: "imageGallery", col: 12 },
+  { key: "nextDates", label: "Upcoming Dates", type: "textarea", col: 12, placeholder: "One date per line\nExample:\n27 Mar, 4:00 PM\n03 Apr, 4:00 PM" },
+  { key: "overview", label: "Overview", type: "textarea", col: 12, placeholder: "Main overview visible on the details page." },
+  { key: "howToReach", label: "How To Reach", type: "textarea", col: 12, placeholder: "Add travel instructions line by line." },
+  {
+    key: "eventDetails",
+    label: "Camp Detail Highlights",
+    type: "textarea",
+    col: 12,
+    placeholder: "Format: Title|Detail\nExample:\nCamping Location|Alibaug near Nagaon Beach\nFood|Dinner and breakfast included",
+  },
+  {
+    key: "itinerary",
+    label: "Detailed Itinerary",
+    type: "textarea",
+    col: 12,
+    placeholder: "Format: Day|Time|Description\nExample:\nDay 1|04:00 PM|Reach campsite and check in",
+  },
+  {
+    key: "highlights",
+    label: "Highlights",
+    type: "textarea",
+    col: 12,
+    placeholder: "Format: Title|Description\nExample:\nBeachside Bonfire|Relax by the fire with the sound of waves",
+  },
+  {
+    key: "included",
+    label: "What's Included",
+    type: "checklistTextarea",
+    col: 12,
+    options: CAMPING_INCLUDED_OPTIONS,
+    placeholder: "Add one inclusion per line",
+  },
+  {
+    key: "notIncluded",
+    label: "What's Not Included",
+    type: "checklistTextarea",
+    col: 12,
+    options: CAMPING_EXCLUDED_OPTIONS,
+    placeholder: "Add one exclusion per line",
+  },
+  {
+    key: "thingsToCarry",
+    label: "Things To Carry",
+    type: "checklistTextarea",
+    col: 12,
+    options: CAMPING_CARRY_OPTIONS,
+    placeholder: "Add one item per line",
+  },
+  {
+    key: "offers",
+    label: "Offers / Coupons",
+    type: "textarea",
+    col: 12,
+    placeholder: "Format: CODE|Description\nExample:\nEARLY75|Early Booking Discount",
+  },
+  {
+    key: "faqs",
+    label: "FAQs",
+    type: "textarea",
+    col: 12,
+    placeholder: "Format: Question|Answer",
+  },
+  { key: "cancellationPolicy", label: "Cancellation Policy", type: "textarea", col: 12, placeholder: "Add one policy line per row." },
+  { key: "rules", label: "Rules & Regulations", type: "textarea", col: 12, placeholder: "Add one rule per line." },
 ];
 
 const DEFAULT = {
-  name: "", shortName: "", type: "Lake", location: "", duration: "",
-  price: "", originalPrice: "", badge: "", description: "", image: "", active: true,
+  sortOrder: "",
+  slug: "",
+  name: "",
+  shortName: "",
+  type: "Lake",
+  location: "",
+  duration: "Overnight",
+  price: "",
+  originalPrice: "",
+  badge: "",
+  availability: "Available",
+  coupon: "",
+  description: "",
+  image: "",
+  imageGallery: "[]",
+  nextDates: "",
+  overview: "",
+  howToReach: "",
+  eventDetails: "",
+  itinerary: "",
+  highlights: "",
+  included: "",
+  notIncluded: "",
+  thingsToCarry: "",
+  offers: "",
+  faqs: "",
+  cancellationPolicy: "",
+  rules: "",
+  active: true,
 };
+
+function slugify(value = "") {
+  return String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function prepareCampingForm(form) {
+  const gallery = parseJsonValue(form.imageGallery, []).filter(Boolean);
+  const nextDates = String(form.nextDates || "")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return {
+    ...form,
+    slug: form.slug || slugify(form.shortName || form.name),
+    sortOrder: form.sortOrder === "" ? "" : Number(form.sortOrder) || 0,
+    price: Number(form.price) || 0,
+    originalPrice: Number(form.originalPrice) || 0,
+    imageGallery: JSON.stringify(gallery),
+    image: gallery[0] || form.image || "",
+    nextDates: JSON.stringify(nextDates.length ? nextDates : ["Available on Request"]),
+  };
+}
 
 export default function ManageCamping() {
   return (
@@ -29,17 +157,15 @@ export default function ManageCamping() {
       storageKey="gt_camping"
       fields={FIELDS}
       defaultForm={DEFAULT}
-      seedData={campingList}
-      onPreview={(form) => {
+      seedData={CAMPING_SEED_DATA}
+      transformForm={prepareCampingForm}
+      onPreview={(currentForm) => {
         const previewCamp = {
-          ...form,
+          ...prepareCampingForm(currentForm),
           id: "preview",
-          image: form.image || "https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=800&q=80",
-          shortName: form.shortName || form.name || "Preview Campsite",
-          availability: "Preview",
-          coupon: "PREVIEW",
-          nextDates: ["Preview Batch"],
-          description: form.description || "Preview campsite details page.",
+          shortName: currentForm.shortName || currentForm.name || "Preview Campsite",
+          name: currentForm.name || currentForm.shortName || "Preview Campsite",
+          image: getPrimaryCampingImage(currentForm),
         };
 
         sessionStorage.setItem(CAMPING_PREVIEW_KEY, JSON.stringify(previewCamp));

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
+import { syncProductsFromApi } from "../../api/getAll";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 
 /* ─── Rental catalogue ─── */
@@ -195,9 +196,15 @@ export default function Rental() {
     location.state?.category || "All"
   );
 
+  const [, setSyncKey] = useState(0);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
     document.title = "Rent Camping & Trekking Gear | Gadvede Trekkers";
+    // Sync from backend so admin changes reflect on all devices
+    syncProductsFromApi("rental", "gt_rentals")
+      .then((items) => { if (items) setSyncKey((k) => k + 1); })
+      .catch(() => {});
   }, []);
 
   const _rawRentals = getAdminItems("gt_rentals");

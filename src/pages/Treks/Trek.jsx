@@ -4,6 +4,7 @@ import { uniqueTreks, slugifyTrekName } from "../../data/treks";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 import BookingCTA from "../../components/BookingCTA";
+import { syncProductsFromApi } from "../../api/getAll";
 
 const parseGallery = (value, fallback) => {
   try {
@@ -71,6 +72,32 @@ function Trek() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [activeSort, setActiveSort] = useState("recommended");
   const [searchQuery, setSearchQuery] = useState("");
+  const [treks, setTreks] = useState(allTreks);
+
+  // Sync from backend on mount so admin changes reflect on all devices
+  useEffect(() => {
+    syncProductsFromApi("trek", "gt_treks")
+      .then((items) => {
+        if (!items) return;
+        const mapped = items
+          .filter((t) => t.active !== false)
+          .sort((a, b) => Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999))
+          .map((t) => {
+            const fallbackGallery = [t.image, t.image, t.image].filter(Boolean);
+            const gallery = parseGallery(t.imageGallery, fallbackGallery);
+            return {
+              ...normaliseItem(t),
+              slug: t.slug || slugifyTrekName(t.name),
+              image: gallery[0] || t.image,
+              gallery,
+              seasonalTag: t.seasonalTag || "New Listing",
+              _sortOrder: Number(t.sortOrder ?? 999),
+            };
+          });
+        if (mapped.length > 0) setTreks(mapped);
+      })
+      .catch(() => {});
+  }, []);
   const initialVisibleTreks = 10;
 
   /* ── SEO ─────────────────────────────────────── */
@@ -125,8 +152,8 @@ function Trek() {
       description:
         "Top-rated trekking experiences in Maharashtra including Kalsubai, Harihar, Harishchandragad and more, organized by Gadvede Trekkers.",
       url: "https://www.gadvede.com/treks",
-      numberOfItems: allTreks.length,
-      itemListElement: allTreks.map((trek, i) => ({
+      numberOfItems: treks.length,
+      itemListElement: treks.map((trek, i) => ({
         "@type": "ListItem",
         position: i + 1,
         item: {
@@ -167,17 +194,17 @@ function Trek() {
 
   /* ── Counts per difficulty ────────────────────── */
   const difficultyCounts = useMemo(() => {
-    const counts = { All: allTreks.length };
+    const counts = { All: treks.length };
     DIFFICULTY_FILTERS.slice(1).forEach((d) => {
-      counts[d] = allTreks.filter((t) => t.difficulty === d).length;
+      counts[d] = treks.filter((t) => t.difficulty === d).length;
     });
     return counts;
-  }, []);
+  }, [treks]);
 
   /* ── Filtered + sorted treks ─────────────────── */
   const isSearchActive = searchQuery.trim().length >= 3;
   const filteredTreks = useMemo(() => {
-    let result = [...allTreks];
+    let result = [...treks];
     if (activeFilter !== "All") {
       result = result.filter((t) => t.difficulty === activeFilter);
     }
@@ -199,7 +226,7 @@ function Trek() {
     else if (activeSort === "rating") result.sort((a, b) => b.rating - a.rating);
     else result.sort((a, b) => Number(a._sortOrder ?? 999) - Number(b._sortOrder ?? 999));
     return result;
-  }, [activeFilter, activeSort, searchQuery]);
+  }, [treks, activeFilter, activeSort, searchQuery]);
 
   const visibleTreks = showAllTreks
     ? filteredTreks
@@ -217,7 +244,7 @@ function Trek() {
 
   /* ── Hero stats ─────────────────────────────── */
   const heroStats = [
-    { value: `${allTreks.length}+`, label: "Treks Listed" },
+    { value: `${treks.length}+`, label: "Treks Listed" },
     { value: "8+", label: "Destinations" },
     { value: "5000+", label: "Happy Trekkers" },
     { value: "4.8★", label: "Avg Rating" },
@@ -259,7 +286,7 @@ function Trek() {
 
           <div className="trek-hero-slider" aria-hidden="true">
             <div className="trek-hero-track">
-              {[...allTreks.slice(0, 6), ...allTreks.slice(0, 6)].map(
+              {[...treks.slice(0, 6), ...treks.slice(0, 6)].map(
                 (trek, index) => (
                   <div
                     className="trek-hero-slide"

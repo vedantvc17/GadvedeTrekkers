@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
+import { syncProductsFromApi } from "../../api/getAll";
 import { toursData as defaultToursData } from "../../data/toursData";
 import { parseJsonValue } from "../../data/manaliTourDetails";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
@@ -52,6 +53,14 @@ function dedupeTours(items = []) {
 function Tours() {
   const location = useLocation();
   const selectedRegion = location.state?.region || null;
+  const [, setSyncKey] = useState(0);
+
+  // Sync from backend on mount so admin changes reflect on all devices
+  useEffect(() => {
+    syncProductsFromApi("tour", "gt_tours")
+      .then((items) => { if (items) setSyncKey((k) => k + 1); })
+      .catch(() => {});
+  }, []);
 
   // Admin-first: if gt_tours has any data, use ONLY active admin tours.
   // Static defaultToursData is used as fallback only when admin storage is empty.

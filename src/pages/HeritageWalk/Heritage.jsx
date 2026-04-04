@@ -1,11 +1,20 @@
 import { Link, useLocation } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
+import { syncProductsFromApi } from "../../api/getAll";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 
 function Heritage() {
   const location = useLocation();
   const selectedCategory = location.state?.category || null;
+  const [, setSyncKey] = useState(0);
+
+  // Sync from backend on mount so admin changes reflect on all devices
+  useEffect(() => {
+    syncProductsFromApi("heritage", "gt_heritage")
+      .then((items) => { if (items) setSyncKey((k) => k + 1); })
+      .catch(() => {});
+  }, []);
 
   const heritageData = {
     city: [
