@@ -1,138 +1,103 @@
-import { useEffect, useState } from "react";
-import { getAdminItems, saveAdminItems } from "../data/adminStorage";
-import { apiRequest } from "../api/backendClient";
-
-function slugify(value = "") {
-  return String(value)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 /**
- * CRUD hook backed by localStorage.
- * If the store is empty and seedData is provided, auto-seeds on first load.
+ * useAdminData — React CRUD hook for admin product management.
+ *
+ * Responsibility split:
+ *   useAdminData  → React state, optimistic UI, lifecycle (this file)
+ *   productService → business logic, offline strategy, seeding/hydration
+ *   productsApi    → HTTP transport (paths, headers, serialisation)
+ *
+ * Changing the backend URL?  Edit src/api/products.api.js only.
+ * Changing seed/hydration logic?  Edit src/services/product.service.js only.
+ * Changing which component uses which data?  Edit this hook's callers only.
  */
+
+import { useEffect, useState } from "react";
+import { saveAdminItems } from "../data/adminStorage";
+import { productService } from "../services/product.service";
+
 export function useAdminData(key, seedData = []) {
   const [data, setData] = useState(() => {
-    const stored = getAdminItems(key);
-    if (stored.length === 0 && seedData.length > 0) {
-      const seeded = seedData.map((item, i) => ({
-        ...item,
-        price: Number(item.price) || 0,
-        originalPrice: Number(item.originalPrice) || 0,
-        active: true,
-        id: `seed_${key}_${i}`,
-      }));
-      saveAdminItems(key, seeded);
-      return seeded;
-    }
-    if (stored.length > 0 && seedData.length > 0) {
-      const seedByName = new Map(
-        seedData.map((item) => [String(item.name || item.title || "").toLowerCase(), item])
-      );
-      let changed = false;
-      const hydrated = stored.map((item) => {
-        const match = seedByName.get(String(item.name || item.title || "").toLowerCase());
-        if (!match) return item;
-        const next = { ...item };
-        Object.entries(match).forEach(([field, value]) => {
-          if (field === "id") return;
-          if ((next[field] === "" || next[field] == null) && value !== "" && value != null) {
-            next[field] = value;
-            changed = true;
-          }
-        });
-        return next;
-      });
-      if (changed) {
-        saveAdminItems(key, hydrated);
-      }
-      return hydrated;
-    }
-    return stored;
+    // Seed empty store or hydrate existing records from seed.
+    if (seedData.length === 0) return productService.getLocal(key);
+    const stored = productService.getLocal(key);
+    if (stored.length === 0) return productService.seedIfEmpty(key, seedData);
+    return productService.hydrate(key, seedData);
   });
 
+  /* ── Sync from backend on mount ─────────────────────────────────────── */
   useEffect(() => {
     let cancelled = false;
 
-    apiRequest(`/api/products/admin/list?storageKey=${encodeURIComponent(key)}`, { admin: true })
+    productService.adminList(key)
       .then((remoteItems) => {
         if (cancelled || !Array.isArray(remoteItems)) return;
-        if (remoteItems.length === 0 && data.length > 0) return;
         setData(remoteItems);
-        saveAdminItems(key, remoteItems);
       })
-      .catch((error) => {
-        console.warn("Admin product fetch failed", error);
-      });
+      .catch((err) => console.warn("useAdminData: remote fetch failed —", err.message));
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [key]);
 
+  /* ── Optimistic local persistence ───────────────────────────────────── */
   const persist = (next) => {
     setData(next);
     saveAdminItems(key, next);
   };
 
+  /* ── CRUD operations ─────────────────────────────────────────────────── */
+
   const add = (item) => {
     const created = { ...item, active: true, id: Date.now().toString() };
     persist([...data, created]);
-    apiRequest("/api/products/admin/upsert", {
-      method: "POST",
-      admin: true,
-      body: { storageKey: key, item: created },
-    })
-      .then((remoteItem) => {
-        if (!remoteItem) return;
-        const next = getAdminItems(key).map((entry) => (entry.id === created.id ? remoteItem : entry));
-        saveAdminItems(key, next);
-        setData(next);
+
+    productService
+      .save(key, created, (remote) => {
+        // Backend confirmed — replace optimistic record with backend-assigned values.
+        setData((prev) => {
+          const next = prev.map((entry) => (entry.id === created.id ? remote : entry));
+          saveAdminItems(key, next);
+          return next;
+        });
       })
-      .catch((error) => console.warn("Admin product add failed", error));
+      .catch((err) => console.warn("useAdminData.add: backend sync failed —", err.message));
+
     return created;
   };
 
   const update = (id, item) => {
     const updated = { ...item, id };
     persist(data.map((d) => (d.id === id ? updated : d)));
-    apiRequest("/api/products/admin/upsert", {
-      method: "POST",
-      admin: true,
-      body: { storageKey: key, item: updated },
-    })
-      .then((remoteItem) => {
-        if (!remoteItem) return;
-        const next = getAdminItems(key).map((entry) => (entry.id === id ? remoteItem : entry));
-        saveAdminItems(key, next);
-        setData(next);
+
+    productService
+      .save(key, updated, (remote) => {
+        setData((prev) => {
+          const next = prev.map((entry) => (entry.id === id ? remote : entry));
+          saveAdminItems(key, next);
+          return next;
+        });
       })
-      .catch((error) => console.warn("Admin product update failed", error));
+      .catch((err) => console.warn("useAdminData.update: backend sync failed —", err.message));
+
     return updated;
   };
 
   const remove = (id) => {
-    const existing = data.find((d) => d.id === id);
+    const target = data.find((d) => d.id === id);
     persist(data.filter((d) => d.id !== id));
-    const identifier = existing?.id || slugify(existing?.name || existing?.title || "");
-    apiRequest(`/api/products/admin/${encodeURIComponent(key)}/${encodeURIComponent(identifier)}`, {
-      method: "DELETE",
-      admin: true,
-    }).catch((error) => console.warn("Admin product delete failed", error));
+
+    productService
+      .remove(key, target)
+      .catch((err) => console.warn("useAdminData.remove: backend sync failed —", err.message));
   };
 
   const toggleActive = (id) => {
     const next = data.map((d) => (d.id === id ? { ...d, active: !d.active } : d));
     persist(next);
+
     const updated = next.find((d) => d.id === id);
-    apiRequest("/api/products/admin/upsert", {
-      method: "POST",
-      admin: true,
-      body: { storageKey: key, item: updated },
-    }).catch((error) => console.warn("Admin product toggle failed", error));
+    productService
+      .save(key, updated)
+      .catch((err) => console.warn("useAdminData.toggleActive: backend sync failed —", err.message));
   };
 
   return { data, add, update, remove, toggleActive };
