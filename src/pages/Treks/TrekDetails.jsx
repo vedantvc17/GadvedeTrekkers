@@ -1,10 +1,12 @@
-import { Link, useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 import { findTrekBySlug, slugifyTrekName } from "../../data/treks";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
 import { richTrekDetails } from "../../data/richTrekDetails";
 import { getTrekDates } from "../../data/trekDatesStorage";
+import BookingCTA from "../../components/BookingCTA";
+import { buildShareWhatsAppUrl } from "../../config/bookingConfig";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -114,6 +116,32 @@ function TrekDetails() {
   const [activeItinerary, setActiveItinerary] = useState(defaultItineraryKey);
   const [lightboxImg, setLightboxImg] = useState(null);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+
+  /* ── Date selection for WhatsApp booking message ──────────── */
+  const [selectedBookingDate, setSelectedBookingDate] = useState(
+    upcomingDates.length > 0 ? upcomingDates[0].date : null
+  );
+
+  /* ── Referral code from URL ?ref= param ──────────────────── */
+  const location = useLocation();
+  const referralCode = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("ref") || "";
+  }, [location.search]);
+
+  /* Persist referral code in localStorage so booking form can auto-fill it */
+  useEffect(() => {
+    if (referralCode) {
+      localStorage.setItem("gt_ref_code", referralCode);
+    }
+  }, [referralCode]);
+
+  /* Canonical referral URL for this trek */
+  const trekSlugForRef = trek ? slugifyTrekName(trek.name) : "";
+  const referralUrl = useMemo(() => {
+    const base = `https://www.gadvede.com/treks/${trekSlugForRef}`;
+    return referralCode ? `${base}?ref=${referralCode}` : base;
+  }, [trekSlugForRef, referralCode]);
 
   const downloadItinerary = () => {
     if (!trek) return;
@@ -258,19 +286,9 @@ function TrekDetails() {
                   ))}
                 </div>
                 <div className="td-hero-actions">
-                  <Link to="/book" state={{ trek }} className="btn td-book-btn">Book Now — ₹{trek.price}</Link>
+                  <BookingCTA trek={trek} selectedDate={selectedBookingDate} className="btn td-book-btn" label={`Book on WhatsApp — ₹${trek.price}`} />
                   <button className="btn td-itinerary-btn" onClick={downloadItinerary} style={{ background: "rgba(255,255,255,0.12)", borderColor: "rgba(255,255,255,0.3)" }}>⬇️ Download PDF</button>
                   <button className="btn td-itinerary-btn" onClick={() => setActiveTab("gallery")}>View Photos</button>
-                  <a
-                    href={createWhatsappHref(trek)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn td-itinerary-btn"
-                    style={{ background: "#25d366", color: "#fff", borderColor: "#25d366" }}
-                    title="Chat with us on WhatsApp"
-                  >
-                    💬 WhatsApp
-                  </a>
                 </div>
               </div>
             </div>
@@ -278,6 +296,9 @@ function TrekDetails() {
               <div className="container-fluid td-shell py-4">
                 <div className="td-card td-dates-card">
                   <h3 className="td-section-title">📅 Upcoming Departures</h3>
+                  <p style={{ color: "#64748b", fontSize: "0.88rem", marginBottom: 12 }}>
+                    Select a date below, then tap <strong>Book on WhatsApp</strong> — we'll confirm your spot instantly.
+                  </p>
                   <div className="td-dates-list">
                     {upcomingDates.map((d) => {
                       const displayDate = new Date(`${d.date}T00:00:00`).toLocaleDateString("en-IN", {
@@ -286,13 +307,36 @@ function TrekDetails() {
                         month: "short",
                         year: "numeric",
                       });
+                      const isSelected = selectedBookingDate === d.date;
                       return (
-                        <div key={d.id} className="td-date-row">
+                        <div
+                          key={d.id}
+                          className="td-date-row"
+                          style={{
+                            cursor: "pointer",
+                            borderColor: isSelected ? "#16a34a" : undefined,
+                            background: isSelected ? "#f0fdf4" : undefined,
+                          }}
+                          onClick={() => setSelectedBookingDate(d.date)}
+                        >
                           <div className="td-date-info">
+                            <input
+                              type="radio"
+                              name="bookingDate"
+                              value={d.date}
+                              checked={isSelected}
+                              onChange={() => setSelectedBookingDate(d.date)}
+                              style={{ accentColor: "#16a34a", marginRight: 8 }}
+                            />
                             <span className="td-date-text">{displayDate}</span>
                             {d.label && <span className="td-date-badge">{d.label}</span>}
                           </div>
-                          <Link to="/book" state={{ trek }} className="td-date-book-btn">Book</Link>
+                          <BookingCTA
+                            trek={trek}
+                            selectedDate={d.date}
+                            className="td-date-book-btn"
+                            label="Book on WhatsApp"
+                          />
                         </div>
                       );
                     })}
@@ -449,18 +493,18 @@ function TrekDetails() {
             ))}
           </div>
           <div className="td-hero-actions">
-            <Link to="/book" state={{ trek }} className="btn td-book-btn">Book Now — ₹{trek.price}</Link>
+            <BookingCTA trek={trek} selectedDate={selectedBookingDate} className="btn td-book-btn" label={`Book on WhatsApp — ₹${trek.price}`} />
             <button className="btn td-itinerary-btn" onClick={downloadItinerary} style={{ background: "rgba(255,255,255,0.12)", borderColor: "rgba(255,255,255,0.3)" }}>⬇️ Download PDF</button>
             <button className="btn td-itinerary-btn" onClick={() => setActiveTab("itinerary")}>View Itinerary</button>
             <a
-              href={createWhatsappHref(trek)}
+              href={buildShareWhatsAppUrl(trek, referralUrl, selectedBookingDate)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn td-itinerary-btn"
-              style={{ background: "#25d366", color: "#fff", borderColor: "#25d366" }}
-              title="Chat with us on WhatsApp"
+              style={{ background: "rgba(255,255,255,0.12)", borderColor: "rgba(255,255,255,0.3)" }}
+              title="Share this trek on WhatsApp"
             >
-              💬 WhatsApp
+              🔗 Share
             </a>
           </div>
         </div>
@@ -687,15 +731,15 @@ function TrekDetails() {
                   ))}
                 </ol>
                 <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <Link to="/book" state={{ trek }} className="btn td-book-btn">Book Now</Link>
+                  <BookingCTA trek={trek} selectedDate={selectedBookingDate} className="btn td-book-btn" />
                   <a
-                    href={createWhatsappHref(trek)}
+                    href={buildShareWhatsAppUrl(trek, referralUrl, selectedBookingDate)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn td-itinerary-btn"
                     style={{ background: "#25d366", color: "#fff", borderColor: "#25d366" }}
                   >
-                    💬 WhatsApp Enquiry
+                    🔗 Share Trek
                   </a>
                 </div>
               </div>
@@ -745,7 +789,7 @@ function TrekDetails() {
                       <div className="td-pricing-card" key={price.label}>
                         <div className="td-pricing-label">{price.label}</div>
                         <div className="td-pricing-price">₹{price.price}<span>/person</span></div>
-                        <Link to="/book" state={{ trek }} className="btn td-pricing-book-btn">Book This</Link>
+                        <BookingCTA trek={trek} selectedDate={selectedBookingDate} className="btn td-pricing-book-btn" label="Book on WhatsApp" />
                       </div>
                     ))}
                   </div>
@@ -795,16 +839,21 @@ function TrekDetails() {
           <span className="td-cta-amount">₹{trek.price}</span>
           <span className="td-cta-orig">₹{trek.originalPrice}</span>
         </div>
-        <Link to="/book" state={{ trek }} className="btn td-cta-book-btn">Book Now</Link>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
+          <BookingCTA trek={trek} selectedDate={selectedBookingDate} className="btn td-cta-book-btn" />
+          <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.7)", whiteSpace: "nowrap" }}>
+            Quick booking via WhatsApp
+          </span>
+        </div>
         <a
-          href={createWhatsappHref(trek)}
+          href={buildShareWhatsAppUrl(trek, referralUrl, selectedBookingDate)}
           target="_blank"
           rel="noopener noreferrer"
           className="btn td-cta-book-btn"
           style={{ background: "#25d366", borderColor: "#25d366" }}
-          title="Ask on WhatsApp"
+          title="Share this trek"
         >
-          💬 WhatsApp
+          🔗 Share
         </a>
       </div>
     </div>

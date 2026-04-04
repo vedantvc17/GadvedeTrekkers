@@ -4,6 +4,7 @@ import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 import { toursData as defaultToursData } from "../../data/toursData";
 import { parseJsonValue } from "../../data/manaliTourDetails";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
+import BookingCTA from "../../components/BookingCTA";
 
 const REGION_ORDER = [
   "himachal",
@@ -150,7 +151,7 @@ function Tours() {
                     </div>
 
                     <div className="d-flex gap-2 flex-wrap">
-                      <button className="btn btn-success w-50">Book Now</button>
+                      <BookingCTA trek={tour} className="btn btn-success w-50" label="Book on WhatsApp" />
 
                       <Link
                         to={`/tours/${slugifyTourName(tour.slug || tour.name)}`}

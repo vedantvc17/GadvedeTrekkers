@@ -276,8 +276,19 @@ export default function Camping() {
     if (location.state) window.history.replaceState({}, document.title);
   }, [location.state]);
 
-  const adminCamps = getAdminItems("gt_camping").filter((c) => c.active !== false).map(normaliseItem);
-  const allCampingSites = [...campingSites, ...adminCamps];
+  const adminCampsRaw = getAdminItems("gt_camping");
+  const adminByShortName = new Map(
+    adminCampsRaw.map((c) => [(c.shortName || c.name || "").toLowerCase(), c])
+  );
+  const activeCampingSites = campingSites.filter((s) => {
+    const adminItem = adminByShortName.get((s.shortName || s.name || "").toLowerCase());
+    return !adminItem || adminItem.active !== false;
+  });
+  const hardcodedNames = new Set(campingSites.map((s) => (s.shortName || s.name || "").toLowerCase()));
+  const extraAdminCamps = adminCampsRaw
+    .filter((c) => c.active !== false && !hardcodedNames.has((c.shortName || c.name || "").toLowerCase()))
+    .map(normaliseItem);
+  const allCampingSites = [...activeCampingSites, ...extraAdminCamps];
 
   const filtered = allCampingSites
     .filter((s) => activeFilter === "All" || s.type === activeFilter)

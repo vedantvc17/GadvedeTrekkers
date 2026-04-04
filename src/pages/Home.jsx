@@ -7,6 +7,7 @@ import { isHeritageEnabled } from "../data/featureFlags";
 import { ivDestinations as _ivDestinations } from "../data/industrialVisitsData";
 import EnquiryModal from "../components/EnquiryModal";
 import { getAdminItems, normaliseItem } from "../data/adminStorage";
+import BookingCTA from "../components/BookingCTA";
 
 const CAMPING_ROUTE_BY_NAME = {
   "Alibaug Camping | Music | Barbecue | Bonfire": "alibaug-camping",
@@ -198,15 +199,11 @@ function HomeTrekCard({ trek }) {
           ))}
         </div>
         <div className="trek-card-overlay">
-          <Link
-            to="/book"
-            state={{ trek }}
+          <BookingCTA
+            trek={trek}
             className="trek-overlay-btn trek-overlay-book"
-            tabIndex="-1"
-            aria-hidden="true"
-          >
-            Book Now
-          </Link>
+            label="Book on WhatsApp"
+          />
           <Link
             to={`/treks/${slugifyTrekName(trek.name)}`}
             className="trek-overlay-btn trek-overlay-details"
@@ -259,9 +256,7 @@ function HomeTrekCard({ trek }) {
         </div>
 
         <div className="trek-card-actions">
-          <Link to="/book" state={{ trek }} className="btn trek-primary-btn">
-            Book Now
-          </Link>
+          <BookingCTA trek={trek} className="btn trek-primary-btn" label="Book on WhatsApp" />
           <Link
             to={`/treks/${slugifyTrekName(trek.name)}`}
             className="btn trek-secondary-btn"

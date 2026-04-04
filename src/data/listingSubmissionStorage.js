@@ -112,29 +112,23 @@ export function saveListingSubmissions(submissionType, items) {
 }
 
 export function submitListingSubmission(submissionType, item) {
-  const current = getListingSubmissions(submissionType);
-  const next = [item, ...current];
-  saveListingSubmissions(submissionType, next);
-
   const payload = mapLocalSubmissionToSupabase(submissionType, item);
-
-  apiRequest(`/api/listings/${submissionType}`, {
+  return apiRequest(`/api/listings/${submissionType}`, {
     method: "POST",
     body: payload,
   })
     .then((remote) => {
-      if (!remote?.id) return;
-      const latest = getListingSubmissions(submissionType);
-      saveListingSubmissions(
-        submissionType,
-        latest.map((entry) =>
-          entry.id === item.id ? mapRemoteSubmissionToLocal(submissionType, remote) : entry
-        )
-      );
+      const savedItem = remote?.id
+        ? mapRemoteSubmissionToLocal(submissionType, remote)
+        : item;
+      const current = getListingSubmissions(submissionType);
+      saveListingSubmissions(submissionType, [savedItem, ...current]);
+      return savedItem;
     })
-    .catch((error) => console.warn("Listing submission sync failed", error));
-
-  return item;
+    .catch((error) => {
+      console.warn("Listing submission sync failed", error);
+      throw error;
+    });
 }
 
 export function updateListingSubmission(submissionType, id, updates) {
@@ -142,22 +136,29 @@ export function updateListingSubmission(submissionType, id, updates) {
   const next = current.map((item) => (item.id === id ? { ...item, ...updates } : item));
   saveListingSubmissions(submissionType, next);
   const updatedItem = next.find((item) => item.id === id);
-  apiRequest(`/api/listings/admin/${id}`, {
+  return apiRequest(`/api/listings/admin/${id}`, {
     method: "PATCH",
     admin: true,
     body: mapLocalSubmissionToSupabase(submissionType, updatedItem),
-  }).catch((error) => console.warn("Listing update sync failed", error));
-  return updatedItem || null;
+  })
+    .then(() => updatedItem || null)
+    .catch((error) => {
+      console.warn("Listing update sync failed", error);
+      throw error;
+    });
 }
 
 export function deleteListingSubmission(submissionType, id) {
   const current = getListingSubmissions(submissionType);
   const next = current.filter((item) => item.id !== id);
   saveListingSubmissions(submissionType, next);
-  apiRequest(`/api/listings/admin/${id}`, {
+  return apiRequest(`/api/listings/admin/${id}`, {
     method: "DELETE",
     admin: true,
-  }).catch((error) => console.warn("Listing delete sync failed", error));
+  }).catch((error) => {
+    console.warn("Listing delete sync failed", error);
+    throw error;
+  });
 }
 
 export async function hydrateListingSubmissions(submissionType) {

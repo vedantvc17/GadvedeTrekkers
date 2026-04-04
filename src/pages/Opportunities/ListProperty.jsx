@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useToast } from "../../components/Toast";
 import { submitListingSubmission } from "../../data/listingSubmissionStorage";
+import { getErrorMessage } from "../../utils/errorMessage";
 
 const PROPERTY_TYPES = ["Homestay", "Villa", "Resort", "Farmhouse", "Bungalow", "Cottage", "Other"];
 
@@ -26,6 +28,8 @@ export default function ListProperty() {
   const [form, setForm] = useState(EMPTY);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
   const validate = () => {
     const e = {};
@@ -58,18 +62,30 @@ export default function ListProperty() {
     ).then((imgs) => setForm((f) => ({ ...f, images: [...f.images, ...imgs] })));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      toast.error("Please fill all required property listing fields.");
+      return;
+    }
 
-    submitListingSubmission("property", {
-      id: `PROP-${Date.now()}`,
-      ...form,
-      submittedAt: new Date().toISOString(),
-      status: "PENDING",
-    });
-    setSubmitted(true);
+    setIsSubmitting(true);
+    try {
+      await submitListingSubmission("property", {
+        id: `PROP-${Date.now()}`,
+        ...form,
+        submittedAt: new Date().toISOString(),
+        status: "PENDING",
+      });
+      toast.success("Property listing submitted successfully.");
+      setSubmitted(true);
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Property listing could not be submitted right now."));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -253,8 +269,8 @@ export default function ListProperty() {
               </div>
 
               <div className="col-12">
-                <button type="submit" className="btn btn-success px-5 py-2 fw-semibold">
-                  Submit Listing →
+                <button type="submit" className="btn btn-success px-5 py-2 fw-semibold" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit Listing →"}
                 </button>
               </div>
 

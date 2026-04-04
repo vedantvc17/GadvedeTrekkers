@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { findTrekBySlug } from "../../data/treks";
+import BookingCTA from "../../components/BookingCTA";
 
 const HERO_IMG = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80";
 
@@ -217,7 +218,7 @@ export default function RajmachiTrek() {
             ))}
           </div>
           <div className="td-hero-actions">
-            <Link to="/book" state={{ trek }} className="btn td-book-btn">Book Now — ₹1,499</Link>
+            <BookingCTA trek={trek} className="btn td-book-btn" label="Book on WhatsApp" />
             <button className="btn td-itinerary-btn" onClick={() => setActiveTab("itinerary")}>View Itinerary</button>
           </div>
         </div>
@@ -432,7 +433,7 @@ export default function RajmachiTrek() {
                   </li>
                 ))}
               </ol>
-              <Link to="/book" state={{ trek }} className="btn td-book-btn" style={{ marginTop: 20 }}>Book Now</Link>
+              <BookingCTA trek={trek} className="btn td-book-btn" style={{ marginTop: 20 }} label="Book on WhatsApp" />
             </div>
           </div>
         )}
@@ -462,7 +463,7 @@ export default function RajmachiTrek() {
                       <div className="td-pricing-card" key={p.label}>
                         <div className="td-pricing-label">{p.label}</div>
                         <div className="td-pricing-price">₹{p.price}<span>/person</span></div>
-                        <Link to="/book" state={{ trek }} className="btn td-pricing-book-btn">Book This</Link>
+                        <BookingCTA trek={trek} className="btn td-pricing-book-btn" label="Book on WhatsApp" />
                       </div>
                     ))}
                   </div>
@@ -499,7 +500,7 @@ export default function RajmachiTrek() {
           <span className="td-cta-from">from</span>
           <span className="td-cta-amount">₹1,499</span>
         </div>
-        <Link to="/book" state={{ trek }} className="btn td-cta-book-btn">Book Now</Link>
+        <BookingCTA trek={trek} className="btn td-cta-book-btn" label="Book on WhatsApp" />
       </div>
     </div>
   );

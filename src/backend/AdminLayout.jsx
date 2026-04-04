@@ -28,6 +28,7 @@ const NAV = [
   { path: "/admin/feedback",     icon: "⭐",  label: "Feedback" },
   { path: "/admin/earnings",     icon: "💰",  label: "Payments & Earnings" },
   { path: "/admin/employees",    icon: "👨‍💼", label: "Employees"  },
+  { path: "/admin/training",     icon: "🎓",  label: "Training" },
   { path: "/admin/onboarding",   icon: "📋",  label: "Onboarding" },
   { path: "/admin/logs",         icon: "📋",  label: "Activity Logs" },
   { path: "/admin/docs",         icon: "📖",  label: "How It Works" },

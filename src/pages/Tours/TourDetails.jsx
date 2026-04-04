@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { getTourDates } from "../../data/tourDatesStorage";
 import { getAdminItems, normaliseItem } from "../../data/adminStorage";
 import { createWhatsAppInquiryUrl } from "../../utils/leadActions";
+import BookingCTA from "../../components/BookingCTA";
 import { toursList } from "../../data/toursData";
 import { ADDITIONAL_TOUR_SEEDS } from "../../data/additionalTourDetails";
 import {
@@ -292,9 +293,7 @@ function TourDetails() {
             </div>
 
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
-              <Link to="/book" state={{ trek: tour }} className="btn" style={{ background: "#13a567", color: "#fff", borderRadius: 12, padding: "14px 24px", fontWeight: 800 }}>
-                Book Now - ₹{tour.price}
-              </Link>
+              <BookingCTA trek={tour} className="btn" style={{ background: "#13a567", color: "#fff", borderRadius: 12, padding: "14px 24px", fontWeight: 800 }} label={`Book on WhatsApp — ₹${tour.price}`} />
               <button onClick={downloadItinerary} className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 12, padding: "14px 24px", fontWeight: 700, cursor: "pointer" }}>
                 ⬇️ Download PDF
               </button>
@@ -618,9 +617,7 @@ function TourDetails() {
                   <span>₹{Number(tour.price || 0) + gstAmount}</span>
                 </div>
               </div>
-              <Link to="/book" state={{ trek: tour }} className="btn w-100" style={{ background: "#0f9d63", color: "#fff", borderRadius: 12, padding: "13px 16px", fontWeight: 800, marginBottom: 8 }}>
-                Book Now
-              </Link>
+              <BookingCTA trek={tour} className="btn w-100" style={{ background: "#0f9d63", color: "#fff", borderRadius: 12, padding: "13px 16px", fontWeight: 800, marginBottom: 8 }} label="Book on WhatsApp" />
               <a
                 href={createWhatsAppInquiryUrl({ packageName: tour.name, location: tour.destinationLine || tour.location || "Maharashtra", category: "Tour" })}
                 target="_blank"

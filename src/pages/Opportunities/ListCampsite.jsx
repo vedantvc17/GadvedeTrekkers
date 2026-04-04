@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useToast } from "../../components/Toast";
 import { submitListingSubmission } from "../../data/listingSubmissionStorage";
+import { getErrorMessage } from "../../utils/errorMessage";
 
 const FACILITIES = [
   "Tents Provided", "Sleeping Bags", "Bonfire", "Washrooms", "Running Water",
@@ -24,6 +26,8 @@ export default function ListCampsite() {
   const [form, setForm] = useState(EMPTY);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
   const validate = () => {
     const e = {};
@@ -56,18 +60,30 @@ export default function ListCampsite() {
     ).then((imgs) => setForm((f) => ({ ...f, images: [...f.images, ...imgs] })));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      toast.error("Please fill all required campsite listing fields.");
+      return;
+    }
 
-    submitListingSubmission("campsite", {
-      id: `CAMP-${Date.now()}`,
-      ...form,
-      submittedAt: new Date().toISOString(),
-      status: "PENDING",
-    });
-    setSubmitted(true);
+    setIsSubmitting(true);
+    try {
+      await submitListingSubmission("campsite", {
+        id: `CAMP-${Date.now()}`,
+        ...form,
+        submittedAt: new Date().toISOString(),
+        status: "PENDING",
+      });
+      toast.success("Campsite listing submitted successfully.");
+      setSubmitted(true);
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Campsite listing could not be submitted right now."));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -250,8 +266,8 @@ export default function ListCampsite() {
               </div>
 
               <div className="col-12">
-                <button type="submit" className="btn btn-success px-5 py-2 fw-semibold">
-                  Submit Campsite →
+                <button type="submit" className="btn btn-success px-5 py-2 fw-semibold" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit Campsite →"}
                 </button>
               </div>
 

@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useToast } from "../../components/Toast";
 import { submitListingSubmission } from "../../data/listingSubmissionStorage";
+import { getErrorMessage } from "../../utils/errorMessage";
 
 const EVENT_TYPES = [
   "Trekking Event",
@@ -66,6 +68,8 @@ export default function ListEvent() {
   const [showPickups, setShowPickups] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
@@ -84,20 +88,32 @@ export default function ListEvent() {
     return e;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      toast.error("Please fill all required event listing fields.");
+      return;
+    }
 
     const filledPickups = pickupPoints.filter((p) => p.city.trim() || p.location.trim());
-    submitListingSubmission("event", {
-      id: `EVT-${Date.now()}`,
-      ...form,
-      pickupPoints: filledPickups,
-      submittedAt: new Date().toISOString(),
-      status: "PENDING",
-    });
-    setSubmitted(true);
+    setIsSubmitting(true);
+    try {
+      await submitListingSubmission("event", {
+        id: `EVT-${Date.now()}`,
+        ...form,
+        pickupPoints: filledPickups,
+        submittedAt: new Date().toISOString(),
+        status: "PENDING",
+      });
+      toast.success("Event listing submitted successfully.");
+      setSubmitted(true);
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Event listing could not be submitted right now."));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -489,8 +505,8 @@ export default function ListEvent() {
               </ul>
             </div>
 
-            <button type="submit" className="btn btn-success px-5 py-2 fw-semibold" style={{ fontSize: 15 }}>
-              Submit Event →
+            <button type="submit" className="btn btn-success px-5 py-2 fw-semibold" style={{ fontSize: 15 }} disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Event →"}
             </button>
 
           </form>
