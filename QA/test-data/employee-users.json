@@ -1,0 +1,48 @@
+{
+  "management": [
+    {
+      "employeeId": "EMP-ADMIN-PRATIK",
+      "fullName": "Pratik Ubhe",
+      "username": "pratik.ubhe",
+      "password": "Pratik@gadvede",
+      "role": "Sales Manager",
+      "expectedScope": "ALL_ENQUIRIES"
+    },
+    {
+      "employeeId": "EMP-ADMIN-ROHIT",
+      "fullName": "Rohit Panhalkar",
+      "username": "rohit.panhalkar",
+      "password": "Rohit@gadvede",
+      "role": "Operations Head",
+      "expectedScope": "ALL_ENQUIRIES"
+    }
+  ],
+  "sales": [
+    {
+      "employeeId": "EMP-SALES-001",
+      "fullName": "Pranav Surve",
+      "username": "pranav.surve",
+      "password": "pranav001",
+      "role": "Sales Executive",
+      "expectedScope": "ASSIGNED_ONLY"
+    },
+    {
+      "employeeId": "EMP-SALES-002",
+      "fullName": "Mrunali Gor",
+      "username": "mrunali.gor",
+      "password": "mrunali002",
+      "role": "Sales Coordinator",
+      "expectedScope": "ASSIGNED_ONLY"
+    }
+  ],
+  "operations": [
+    {
+      "employeeId": "EMP-SEED-001",
+      "fullName": "Rahul Patil",
+      "username": "rahul.patil",
+      "password": "rahul001",
+      "role": "Trek Leader",
+      "expectedScope": "NO_ENQUIRY_TAB"
+    }
+  ]
+}

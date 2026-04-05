@@ -1,0 +1,54 @@
+{
+  "trekUpdate": {
+    "targetEvent": "Harihar Trek",
+    "fieldsToEdit": {
+      "price": 1399,
+      "nextDate": "2026-04-18",
+      "description": "QA update: verify trek detail reflection on listing and detail page."
+    },
+    "expectedFrontendChecks": [
+      "updated price visible on trek listing",
+      "updated next date visible on trek detail page",
+      "description visible on detail page"
+    ]
+  },
+  "campingUpdate": {
+    "targetEvent": "Alibag Beach Camping",
+    "fieldsToEdit": {
+      "price": 1899,
+      "duration": "2 Days 1 Night",
+      "highlight": "QA update: backend-managed camping content reflects on frontend."
+    },
+    "expectedFrontendChecks": [
+      "updated camping price visible on listing",
+      "duration visible on detail page",
+      "highlight text visible on detail page"
+    ]
+  },
+  "tourUpdate": {
+    "targetEvent": "Goa Backpacking",
+    "fieldsToEdit": {
+      "price": 6499,
+      "nextDate": "2026-04-25",
+      "overview": "QA update for tours listing/detail consistency."
+    },
+    "expectedFrontendChecks": [
+      "updated tour price visible",
+      "tour detail page shows overview",
+      "frontend matches backend content"
+    ]
+  },
+  "rentalUpdate": {
+    "targetEvent": "Tent Rental - 2 Person Dome Tent",
+    "fieldsToEdit": {
+      "price": 599,
+      "availability": "In Stock",
+      "shortDescription": "QA update for rental listing reflection."
+    },
+    "expectedFrontendChecks": [
+      "rental price updated",
+      "availability visible",
+      "preview and detail page consistent"
+    ]
+  }
+}

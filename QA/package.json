@@ -1,0 +1,26 @@
+{
+  "name": "gadvede-trekkers-qa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npx playwright test -c playwright.config.js",
+    "test:headed": "npx playwright test -c playwright.config.js --headed",
+    "test:ui": "npx playwright test -c playwright.config.js --ui",
+    "test:employee": "npx playwright test -c playwright.config.js tests/employee",
+    "test:public": "npx playwright test -c playwright.config.js tests/public",
+    "test:admin": "npx playwright test -c playwright.config.js tests/admin",
+    "test:api": "npx playwright test -c playwright.config.js tests/api",
+    "test:admin:login": "npx playwright test -c playwright.config.js tests/admin/admin-login.spec.js",
+    "test:admin:products": "npx playwright test -c playwright.config.js tests/admin/admin-products.spec.js",
+    "test:admin:crm": "npx playwright test -c playwright.config.js tests/admin/admin-crm-advanced.spec.js",
+    "test:admin:misc": "npx playwright test -c playwright.config.js tests/admin/admin-misc.spec.js",
+    "test:public:home": "npx playwright test -c playwright.config.js tests/public/home-navigation.spec.js",
+    "test:public:static": "npx playwright test -c playwright.config.js tests/public/static-pages.spec.js",
+    "test:public:heritage": "npx playwright test -c playwright.config.js tests/public/heritage-rental.spec.js",
+    "test:public:booking": "npx playwright test -c playwright.config.js tests/public/booking-flow.spec.js",
+    "test:public:treks": "npx playwright test -c playwright.config.js tests/public/trek-detail-pages.spec.js",
+    "test:public:notifications": "npx playwright test -c playwright.config.js tests/public/notification-bridge.spec.js",
+    "test:employee:portal": "npx playwright test -c playwright.config.js tests/employee/employee-portal.spec.js",
+    "report": "npx playwright show-report reports/html"
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "scenarios": [
+    {
+      "id": "SCN-001",
+      "name": "Public enquiry creates CRM lead",
+      "type": "public-enquiry",
+      "inputUserId": "PUB-001",
+      "expectedResults": [
+        "enquiry saved with status NEW_LEAD",
+        "customer record created or updated",
+        "WhatsApp opens with prefilled message",
+        "notification alert created"
+      ]
+    },
+    {
+      "id": "SCN-002",
+      "name": "Booking converts matching enquiry by phone",
+      "type": "crm-conversion",
+      "matchRule": "PHONE_AND_EVENT",
+      "expectedResults": [
+        "matching enquiry status becomes CONVERTED",
+        "booked event name linked into enquiry",
+        "customer history contains both enquiry and booking"
+      ]
+    },
+    {
+      "id": "SCN-003",
+      "name": "Booking converts matching enquiry by email",
+      "type": "crm-conversion",
+      "matchRule": "EMAIL_AND_EVENT",
+      "expectedResults": [
+        "matching enquiry status becomes CONVERTED",
+        "convertedAt gets set",
+        "booking id linked to enquiry"
+      ]
+    },
+    {
+      "id": "SCN-004",
+      "name": "Management sees all enquiries",
+      "type": "employee-portal",
+      "actor": "pratik.ubhe",
+      "expectedResults": [
+        "enquiries tab visible",
+        "all seeded enquiries visible",
+        "assigned and unassigned enquiries visible"
+      ]
+    },
+    {
+      "id": "SCN-005",
+      "name": "Sales sees assigned enquiries only",
+      "type": "employee-portal",
+      "actor": "pranav.surve",
+      "expectedResults": [
+        "enquiries tab visible",
+        "only assigned enquiries visible",
+        "unassigned enquiries hidden"
+      ]
+    },
+    {
+      "id": "SCN-006",
+      "name": "Employee direct booking is tax exempt",
+      "type": "employee-direct-booking",
+      "expectedResults": [
+        "booking saved successfully",
+        "taxAmount stored as 0",
+        "taxExempt stored as true",
+        "customer updated"
+      ]
+    },
+    {
+      "id": "SCN-007",
+      "name": "Admin event update reflects on frontend",
+      "type": "admin-content",
+      "expectedResults": [
+        "backend save succeeds",
+        "listing reflects updated content",
+        "detail page reflects updated content"
+      ]
+    }
+  ]
+}

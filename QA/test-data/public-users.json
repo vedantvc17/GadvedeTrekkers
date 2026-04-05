@@ -1,0 +1,62 @@
+[
+  {
+    "id": "PUB-001",
+    "name": "Aarav Kulkarni",
+    "phone": "9000011111",
+    "email": "aarav.kulkarni+qa1@gmail.com",
+    "eventName": "Harihar Trek",
+    "category": "Trek",
+    "location": "Nashik",
+    "expectedLeadStatus": "NEW_LEAD"
+  },
+  {
+    "id": "PUB-002",
+    "name": "Meera Patil",
+    "phone": "9000011112",
+    "email": "meera.patil+qa2@gmail.com",
+    "eventName": "Alibag Beach Camping",
+    "category": "Camping",
+    "location": "Alibag",
+    "expectedLeadStatus": "NEW_LEAD"
+  },
+  {
+    "id": "PUB-003",
+    "name": "Rohan Deshmukh",
+    "phone": "9000011113",
+    "email": "rohan.deshmukh+qa3@gmail.com",
+    "eventName": "Goa Backpacking",
+    "category": "Tour",
+    "location": "Goa",
+    "expectedLeadStatus": "NEW_LEAD"
+  },
+  {
+    "id": "PUB-004",
+    "name": "Isha Joshi",
+    "phone": "9000011114",
+    "email": "isha.joshi+qa4@gmail.com",
+    "eventName": "Shaniwar Wada Heritage Walk",
+    "category": "Heritage Walk",
+    "location": "Pune",
+    "expectedLeadStatus": "NEW_LEAD"
+  },
+  {
+    "id": "PUB-005",
+    "name": "Karan Bhosale",
+    "phone": "9000011115",
+    "email": "karan.bhosale+qa5@gmail.com",
+    "eventName": "Tent Rental - 2 Person Dome Tent",
+    "category": "Rental",
+    "location": "Pune",
+    "expectedLeadStatus": "NEW_LEAD"
+  },
+  {
+    "id": "PUB-006",
+    "name": "Snehal Naik",
+    "phone": "9000011116",
+    "email": "snehal.naik+qa6@gmail.com",
+    "eventName": "Corporate Outing - Lonavala",
+    "category": "Corporate",
+    "location": "Lonavala",
+    "expectedLeadStatus": "NEW_LEAD"
+  }
+]
