@@ -450,7 +450,7 @@ function Home() {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#198754",
+    color: "#0F172A",
     transition: "box-shadow 0.2s ease",
   });
 
@@ -653,7 +653,7 @@ function Home() {
           margin-bottom: 18px;
         }
         .ht-hero-headline .ht-accent {
-          color: #4ade80;
+          color: #D4A853;
           position: relative;
         }
         .ht-hero-sub {
@@ -665,19 +665,19 @@ function Home() {
         }
         .ht-hero-cta {
           display: inline-flex; align-items: center; gap: 8px;
-          background: #16a34a;
+          background: linear-gradient(135deg, #0D9488, #14B8A6);
           color: #fff;
           font-weight: 700;
           font-size: 1rem;
           padding: 14px 32px;
           border-radius: 999px;
           text-decoration: none;
-          box-shadow: 0 8px 28px rgba(22,163,74,0.4);
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          box-shadow: 0 8px 28px rgba(13,148,136,0.4);
+          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
         }
         .ht-hero-cta:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 14px 36px rgba(22,163,74,0.5);
+          transform: translateY(-4px) scale(1.03);
+          box-shadow: 0 14px 36px rgba(13,148,136,0.55);
           color: #fff;
         }
         .ht-hero-cta-outline {
@@ -691,38 +691,39 @@ function Home() {
           text-decoration: none;
           transition: background 0.2s ease, color 0.2s ease;
         }
-        .ht-hero-cta-outline:hover { background: #fff; color: #16a34a; }
+        .ht-hero-cta-outline:hover { background: rgba(255,255,255,0.1); border-color: #D4A853; color: #D4A853; }
 
         /* Service cards */
         .ht-svc-card {
           border-radius: 18px;
           padding: 28px 24px;
           background: #fff;
-          border: 1px solid #e8f5e9;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-          transition: transform 0.22s ease, box-shadow 0.22s ease;
+          border: 1px solid #E8E5DF;
+          box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
           height: 100%;
           display: flex; flex-direction: column;
         }
         .ht-svc-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 14px 36px rgba(0,0,0,0.1);
+          transform: translateY(-8px);
+          box-shadow: 0 12px 36px rgba(15,23,42,0.12), 0 0 20px rgba(212,168,83,0.15);
         }
         .ht-svc-icon {
           font-size: 2.2rem;
           margin-bottom: 14px;
           width: 52px; height: 52px;
           display: flex; align-items: center; justify-content: center;
-          background: #f0fdf4;
+          background: linear-gradient(135deg, #0F172A, #1E293B);
           border-radius: 14px;
+          box-shadow: 0 6px 16px rgba(15,23,42,0.2);
         }
 
         /* SEO chips */
         .ht-seo-chip {
           display: inline-block;
-          background: #f0fdf4;
-          color: #16a34a;
-          border: 1px solid #bbf7d0;
+          background: rgba(13,148,136,0.08);
+          color: #0D9488;
+          border: 1px solid rgba(13,148,136,0.2);
           font-size: 0.78rem;
           font-weight: 600;
           padding: 5px 14px;
@@ -904,7 +905,7 @@ function Home() {
           <div className="text-center mb-4">
             <span
               style={{
-                color: "#16a34a",
+                color: "#0D9488",
                 fontWeight: 700,
                 fontSize: "0.8rem",
                 letterSpacing: "0.14em",
@@ -954,7 +955,7 @@ function Home() {
                   key={i}
                   style={{
                     width: "8px", height: "8px", borderRadius: "50%",
-                    background: i === page ? "#198754" : "#ccc",
+                    background: i === page ? "#0F172A" : "#ccc",
                     display: "inline-block",
                     transition: "background 0.3s ease",
                   }}
@@ -987,7 +988,7 @@ function Home() {
           <div className="text-center mb-5">
             <span
               style={{
-                color: "#16a34a",
+                color: "#0D9488",
                 fontWeight: 700,
                 fontSize: "0.8rem",
                 letterSpacing: "0.14em",

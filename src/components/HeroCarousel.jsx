@@ -144,7 +144,7 @@ function HeroCarousel() {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.55);
+            background: linear-gradient(135deg, rgba(15,23,42,0.72) 0%, rgba(15,23,42,0.55) 100%);
           }
 
           .hero-content { position: relative; z-index: 2; }
@@ -154,7 +154,7 @@ function HeroCarousel() {
           .fade-in { animation: fadeIn 2s ease; }
 
           .highlight-text {
-            color: #28a745;
+            color: #D4A853;
             position: relative;
           }
 
@@ -163,17 +163,33 @@ function HeroCarousel() {
             position: absolute;
             left: 0; bottom: -5px;
             width: 100%; height: 4px;
-            background: #28a745;
+            background: linear-gradient(90deg, #B8862D, #D4A853);
+            border-radius: 2px;
             animation: pulseLine 2s infinite;
           }
 
-          .hero-btn { transition: all 0.3s ease; }
-          .hero-btn:hover { transform: translateY(-3px) scale(1.05); }
+          .hero-btn {
+            background: linear-gradient(135deg, #0D9488, #14B8A6) !important;
+            border: none !important;
+            color: #fff !important;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(13, 148, 136, 0.35);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          }
+          .hero-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 24px rgba(13, 148, 136, 0.5);
+          }
 
-          .hero-btn-outline { transition: all 0.3s ease; }
+          .hero-btn-outline {
+            border: 2px solid rgba(255,255,255,0.5) !important;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          }
           .hero-btn-outline:hover {
-            background-color: #fff;
-            color: #000;
+            background: rgba(255,255,255,0.1) !important;
+            border-color: #D4A853 !important;
+            color: #D4A853 !important;
             transform: translateY(-3px) scale(1.05);
           }
 

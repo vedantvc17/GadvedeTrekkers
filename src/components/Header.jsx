@@ -56,7 +56,7 @@ function Header() {
       {/* ── Top contact bar – desktop only ── */}
       <div
         className="d-none d-lg-block"
-        style={{ backgroundColor: "#146c43", borderBottom: "1px solid rgba(255,255,255,0.15)" }}
+        style={{ backgroundColor: "#0F172A", borderBottom: "1px solid rgba(212,168,83,0.12)" }}
       >
         <div className="container d-flex justify-content-end align-items-center py-1 gap-3">
           <span className="text-white" style={{ fontSize: "0.8rem" }}>
@@ -74,7 +74,7 @@ function Header() {
 
     <nav
          className="navbar navbar-expand-lg navbar-dark shadow-sm py-3"
-         style={{ backgroundColor: "#198754" }}>
+         style={{ backgroundColor: "transparent" }}>
       <div className="container">
 
         {/* LOGO + NAME */}

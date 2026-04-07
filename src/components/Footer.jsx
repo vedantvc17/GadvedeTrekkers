@@ -6,7 +6,7 @@ function Footer() {
   return (
     <footer
       className="py-5 mt-5 text-white"
-      style={{ backgroundColor: "#198754" }}
+      style={{ backgroundColor: "transparent" }}
     >
       <div className="container">
         <div className="row text-start g-4">
