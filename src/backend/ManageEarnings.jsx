@@ -429,6 +429,25 @@ function TrekPaymentsTab({ tick, onRefresh }) {
       module: "Payments",
       severity: "warning",
     });
+    // Notify leader via backend (email + Supabase sync)
+    if (selectedLeader?.email && config.trekLeaderName) {
+      const token = sessionStorage.getItem("gt_admin_token");
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notify/trek-assigned`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({
+          leaderEmail: selectedLeader.email,
+          leaderName: config.trekLeaderName,
+          leaderId: selectedLeader.employeeId,
+          trekName: selectedTrek?.name || selectedTrekId,
+          eventDate,
+          participants: Number(participants),
+          leaderFee: config.leaderFee,
+          whatsappGroupLink: config.whatsappGroupLink,
+          config,
+        }),
+      }).catch(err => console.warn("Leader notification failed:", err));
+    }
     resetForm();
     setFormMsg("Payment initiated successfully!");
     setTimeout(() => setFormMsg(""), 3000);

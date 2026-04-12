@@ -192,6 +192,7 @@ export default function EmployeePortal() {
   const [showPastTreks, setShowPastTreks] = useState(false);
   const [tick, setTick] = useState(0);
   const [trainingModules, setTrainingModules] = useState(() => getTrainingModules());
+  const [backendTrekEvents, setBackendTrekEvents] = useState([]);
 
   useEffect(() => {
     const name = getTrainingUpdateEventName();
@@ -200,6 +201,15 @@ export default function EmployeePortal() {
     return () => window.removeEventListener(name, handler);
   }, []);
 
+  useEffect(() => {
+    if (!session?.fullName) return;
+    const API = import.meta.env.VITE_API_BASE_URL || "";
+    fetch(`${API}/api/notify/leader-treks/${encodeURIComponent(session.fullName)}`)
+      .then(r => r.json())
+      .then(json => { if (json.success) setBackendTrekEvents(json.data || []); })
+      .catch(() => {});
+  }, [session?.fullName]);
+
   const emp = useMemo(() => getAllEmployees().find(e => e.employeeId === session.employeeId), [tick]);
   const cred = useMemo(() => getCredentialsByEmployeeId(session.employeeId), []);
   const incentives = useMemo(() => getIncentivesByEmployee(session.employeeId), [tick]);
@@ -207,6 +217,28 @@ export default function EmployeePortal() {
   const ratings = useMemo(() => getEmployeeRatings(session.fullName), [tick]);
   const treks = useMemo(() => getUpcomingTreks(), [tick]);
   const myTrekEvents = useMemo(() => getLeaderTrekEvents(session.fullName), [tick]);
+  const allTrekEvents = useMemo(() => {
+    // Merge localStorage events and backend (Supabase) events, deduplicating by trekName+eventDate
+    const seen = new Set();
+    const merged = [...myTrekEvents];
+    myTrekEvents.forEach(e => { if (e.trekName && e.eventDate) seen.add(`${e.trekName}|${e.eventDate}`); });
+    backendTrekEvents.forEach(e => {
+      const key = `${e.trek_name}|${e.event_date}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        // Normalize backend row to match localStorage shape
+        merged.push({
+          paymentId: e.id,
+          trekName: e.trek_name,
+          eventDate: e.event_date,
+          participants: e.seats_total,
+          config: e.config || {},
+          status: e.status,
+        });
+      }
+    });
+    return merged;
+  }, [myTrekEvents, backendTrekEvents]);
   const canViewEnquiries = useMemo(() => canAccessAssignedEnquiries(session, emp), [session, emp]);
   // emp is a dep: management status is derived from session.username (stable),
   // but emp must be included so the list re-evaluates if the employee record changes.
@@ -256,7 +288,7 @@ export default function EmployeePortal() {
   const TABS = [
     { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
     ...(canViewEnquiries ? [{ id: "enquiries", icon: Inbox, label: "Enquiries", badge: assignedEnquiries.length || null }] : []),
-    { id: "mytreks", icon: Mountain, label: "My Treks", badge: myTrekEvents.length || null },
+    { id: "mytreks", icon: Mountain, label: "My Treks", badge: allTrekEvents.length || null },
     { id: "treks", icon: CalendarDays, label: "Trek Events" },
     { id: "share", icon: Share2, label: "Share & Earn" },
     { id: "earnings", icon: IndianRupee, label: "My Earnings" },
@@ -462,17 +494,17 @@ export default function EmployeePortal() {
                     </div>
                     <div style={{ display: "flex", gap: 0, border: "1px solid rgba(255,255,255,0.08)", borderRadius: 9, overflow: "hidden" }}>
                       <button onClick={() => setShowPastTreks(false)} style={{ border: "none", padding: "6px 14px", fontSize: 12, fontWeight: !showPastTreks ? 700 : 500, background: !showPastTreks ? "#22c55e" : "transparent", color: !showPastTreks ? "#fff" : S.muted, cursor: "pointer" }}>
-                        🚀 Upcoming ({myTrekEvents.filter(e => !e.eventDate || new Date(e.eventDate) >= new Date()).length})
+                        🚀 Upcoming ({allTrekEvents.filter(e => !e.eventDate || new Date(e.eventDate) >= new Date()).length})
                       </button>
                       <button onClick={() => setShowPastTreks(true)} style={{ border: "none", padding: "6px 14px", fontSize: 12, fontWeight: showPastTreks ? 700 : 500, background: showPastTreks ? "#22c55e" : "transparent", color: showPastTreks ? "#fff" : S.muted, cursor: "pointer" }}>
-                        🕒 Past ({myTrekEvents.filter(e => e.eventDate && new Date(e.eventDate) < new Date()).length})
+                        🕒 Past ({allTrekEvents.filter(e => e.eventDate && new Date(e.eventDate) < new Date()).length})
                       </button>
                     </div>
                   </div>
 
                   {(() => {
                     const today = new Date(); today.setHours(0, 0, 0, 0);
-                    const filtered = myTrekEvents.filter(e => {
+                    const filtered = allTrekEvents.filter(e => {
                       const d = e.eventDate ? new Date(e.eventDate) : null;
                       return showPastTreks ? (d && d < today) : (!d || d >= today);
                     });
