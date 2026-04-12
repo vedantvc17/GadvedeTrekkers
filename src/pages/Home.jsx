@@ -622,7 +622,7 @@ function Home() {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#198754",
+    color: "#0F172A",
     transition: "box-shadow 0.2s ease",
   });
 
@@ -751,7 +751,7 @@ function Home() {
           margin-bottom: 18px;
         }
         .ht-hero-headline .ht-accent {
-          color: #4ade80;
+          color: #D4A853;
           position: relative;
         }
         .ht-hero-sub {
@@ -763,19 +763,19 @@ function Home() {
         }
         .ht-hero-cta {
           display: inline-flex; align-items: center; gap: 8px;
-          background: #16a34a;
+          background: linear-gradient(135deg, #0D9488, #14B8A6);
           color: #fff;
           font-weight: 700;
           font-size: 1rem;
           padding: 14px 32px;
           border-radius: 999px;
           text-decoration: none;
-          box-shadow: 0 8px 28px rgba(22,163,74,0.4);
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          box-shadow: 0 8px 28px rgba(13,148,136,0.4);
+          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
         }
         .ht-hero-cta:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 14px 36px rgba(22,163,74,0.5);
+          transform: translateY(-4px) scale(1.03);
+          box-shadow: 0 14px 36px rgba(13,148,136,0.55);
           color: #fff;
         }
         .ht-hero-cta-outline {
@@ -789,38 +789,39 @@ function Home() {
           text-decoration: none;
           transition: background 0.2s ease, color 0.2s ease;
         }
-        .ht-hero-cta-outline:hover { background: #fff; color: #16a34a; }
+        .ht-hero-cta-outline:hover { background: rgba(255,255,255,0.1); border-color: #D4A853; color: #D4A853; }
 
         /* Service cards */
         .ht-svc-card {
           border-radius: 18px;
           padding: 28px 24px;
           background: #fff;
-          border: 1px solid #e8f5e9;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-          transition: transform 0.22s ease, box-shadow 0.22s ease;
+          border: 1px solid #E8E5DF;
+          box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
           height: 100%;
           display: flex; flex-direction: column;
         }
         .ht-svc-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 14px 36px rgba(0,0,0,0.1);
+          transform: translateY(-8px);
+          box-shadow: 0 12px 36px rgba(15,23,42,0.12), 0 0 20px rgba(212,168,83,0.15);
         }
         .ht-svc-icon {
           font-size: 2.2rem;
           margin-bottom: 14px;
           width: 52px; height: 52px;
           display: flex; align-items: center; justify-content: center;
-          background: #f0fdf4;
+          background: linear-gradient(135deg, #0F172A, #1E293B);
           border-radius: 14px;
+          box-shadow: 0 6px 16px rgba(15,23,42,0.2);
         }
 
         /* SEO chips */
         .ht-seo-chip {
           display: inline-block;
-          background: #f0fdf4;
-          color: #16a34a;
-          border: 1px solid #bbf7d0;
+          background: rgba(13,148,136,0.08);
+          color: #0D9488;
+          border: 1px solid rgba(13,148,136,0.2);
           font-size: 0.78rem;
           font-weight: 600;
           padding: 5px 14px;
@@ -1002,7 +1003,7 @@ function Home() {
           <div className="text-center mb-4">
             <span
               style={{
-                color: "#16a34a",
+                color: "#0D9488",
                 fontWeight: 700,
                 fontSize: "0.8rem",
                 letterSpacing: "0.14em",
@@ -1052,7 +1053,7 @@ function Home() {
                   key={i}
                   style={{
                     width: "8px", height: "8px", borderRadius: "50%",
-                    background: i === page ? "#198754" : "#ccc",
+                    background: i === page ? "#0F172A" : "#ccc",
                     display: "inline-block",
                     transition: "background 0.3s ease",
                   }}
@@ -1079,7 +1080,100 @@ function Home() {
         </div>
       </section>
 
-      {/* ================= TOUR CATEGORIES ================= */}
+      {/* ================= SERVICES ================= */}
+      <section className="py-5" style={{ background: "#f8fffe" }}>
+        <div className="container">
+          <div className="text-center mb-5">
+            <span
+              style={{
+                color: "#0D9488",
+                fontWeight: 700,
+                fontSize: "0.8rem",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+              }}
+            >
+              What We Offer
+            </span>
+            <h2 className="fw-bold mt-1 mb-2">Our Adventure Services</h2>
+            <p className="text-muted">
+              Everything you need — from weekend treks to corporate outings and villa stays.
+            </p>
+          </div>
+
+          <div className="row g-4">
+            {services.map((svc, i) => (
+              <div className="col-12 col-sm-6 col-md-4 col-lg-3" key={i}>
+                <div className="ht-svc-card">
+                  <div className="ht-svc-icon">{svc.icon}</div>
+                  <h5 className="fw-bold mb-2" style={{ fontSize: "1rem" }}>{svc.title}</h5>
+                  <p className="text-muted mb-3" style={{ fontSize: "0.875rem", lineHeight: 1.65, flex: 1 }}>
+                    {svc.desc}
+                  </p>
+                  <Link
+                    to={svc.link}
+                    className="btn btn-outline-success btn-sm"
+                    style={{ borderRadius: "999px", alignSelf: "flex-start" }}
+                  >
+                    Learn More →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= HOW IT WORKS ================= */}
+      <section className="ht-how-section py-5">
+        <div className="container">
+          <div className="text-center mb-5">
+            <span className="ht-section-eyebrow">Simple Process</span>
+            <h2 className="ht-section-title">How It Works</h2>
+            <p className="ht-section-sub">Book your next adventure in 3 simple steps</p>
+          </div>
+          <div className="row g-4 align-items-stretch justify-content-center">
+            <div className="col-12 col-md-4">
+              <div className="ht-step-card">
+                <div className="ht-step-number">01</div>
+                <div className="ht-step-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                </div>
+                <h4 className="ht-step-title">Pick Your Trek</h4>
+                <p className="ht-step-desc">Browse 50+ trek destinations across Maharashtra. Filter by difficulty, duration, and your departure city.</p>
+              </div>
+            </div>
+            <div className="col-12 col-md-4">
+              <div className="ht-step-card">
+                <div className="ht-step-number">02</div>
+                <div className="ht-step-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <h4 className="ht-step-title">Book Your Slot</h4>
+                <p className="ht-step-desc">Select your preferred date, fill in the details, and pay securely online. Confirmation arrives in minutes.</p>
+              </div>
+            </div>
+            <div className="col-12 col-md-4">
+              <div className="ht-step-card">
+                <div className="ht-step-number">03</div>
+                <div className="ht-step-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                </div>
+                <h4 className="ht-step-title">Trek with Us</h4>
+                <p className="ht-step-desc">Show up at the meetup point, meet your group and expert guides, and set off on an unforgettable adventure.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= POPULAR TOURS ================= */}
       <section className="py-5 bg-light">
         <div className="container">
           <div className="text-center mb-5">

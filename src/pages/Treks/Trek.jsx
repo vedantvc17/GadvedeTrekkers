@@ -300,7 +300,7 @@ function Trek() {
                 width: "100%",
                 padding: "10px 14px 10px 42px",
                 border: "1.5px solid",
-                borderColor: isSearchActive ? "#16a34a" : "#e2e8f0",
+                borderColor: isSearchActive ? "#0D9488" : "#e2e8f0",
                 borderRadius: 10,
                 fontSize: 14,
                 outline: "none",
@@ -373,6 +373,20 @@ function Trek() {
               {activeFilter !== "All" ? `${activeFilter} ` : ""}treks</>
           }
         </p>
+
+
+        {/* ── NO RESULTS ───────────────────────────── */}
+        {filteredTreks.length === 0 && (
+          <div style={{ textAlign: "center", padding: "48px 24px", background: "#fff", borderRadius: 14, border: "1px solid #e2e8f0", margin: "16px 0" }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: "#0f172a", marginBottom: 6 }}>No treks found for "{searchQuery}"</div>
+            <div style={{ color: "#64748b", fontSize: 14, marginBottom: 16 }}>Try a different name, location, or difficulty</div>
+            <button onClick={() => { setSearchQuery(""); setActiveFilter("All"); }} style={{ background: "#0D9488", color: "#fff", border: "none", borderRadius: 8, padding: "8px 22px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+              Clear Search
+            </button>
+          </div>
+        )}
+
 
         {/* ── TREK GRID ────────────────────────────── */}
         <div className="trek-grid" role="list" aria-label="Available treks">
