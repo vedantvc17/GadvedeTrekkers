@@ -3,6 +3,8 @@
    Handles: Employees · Assignments · Expenses · Availability
 ══════════════════════════════════════════════════ */
 
+import { backendPost, backendDelete, backendGet } from "../api/syncService.js";
+
 const EMPLOYEES_KEY   = "gt_employees";
 const ASSIGNMENTS_KEY = "gt_assignments";
 const EXPENSES_KEY    = "gt_expenses";
@@ -24,8 +26,10 @@ function _saveEmployees(arr) { localStorage.setItem(EMPLOYEES_KEY, JSON.stringif
 export function saveEmployee(emp) {
   const all = getAllEmployees();
   if (emp.employeeId) {
-    _saveEmployees(all.map(e => e.employeeId === emp.employeeId
-      ? { ...e, ...emp, updatedAt: new Date().toISOString() } : e));
+    const updated = { ...all.find(e => e.employeeId === emp.employeeId), ...emp, updatedAt: new Date().toISOString() };
+    _saveEmployees(all.map(e => e.employeeId === emp.employeeId ? updated : e));
+    // Sync to backend (fire-and-forget)
+    backendPost("/api/employees/upsert", updated).catch(err => console.warn("Employee backend sync failed:", err.message));
     return emp;
   }
   const n = {
@@ -37,11 +41,15 @@ export function saveEmployee(emp) {
     createdAt: new Date().toISOString(),
   };
   _saveEmployees([n, ...all]);
+  // Sync to backend (fire-and-forget)
+  backendPost("/api/employees/upsert", n).catch(err => console.warn("Employee backend sync failed:", err.message));
   return n;
 }
 
 export function deleteEmployee(id) {
   _saveEmployees(getAllEmployees().filter(e => e.employeeId !== id));
+  // Sync delete to backend (fire-and-forget)
+  backendDelete(`/api/employees/${id}`).catch(err => console.warn("Employee delete sync failed:", err.message));
 }
 
 export function queryEmployees({ search, role, status, expertise } = {}) {
@@ -170,6 +178,30 @@ export function setEmployeeAvailability(employeeId, blockedDates, notes) {
 }
 export function getEmployeeAvailability(employeeId) {
   return getAvailabilityMap()[employeeId] || { blockedDates: [], notes: "" };
+}
+
+/* ─────────────────────────────────────────────────
+   BACKEND SYNC
+───────────────────────────────────────────────── */
+export async function syncEmployeesFromBackend() {
+  try {
+    const employees = await backendGet("/api/employees");
+    if (Array.isArray(employees) && employees.length > 0) {
+      // Merge: backend is source of truth, preserve any local-only fields
+      const existing = getAllEmployees();
+      const merged = employees.map(emp => {
+        const local = existing.find(e => e.employeeId === emp.employeeId);
+        return { ...local, ...emp }; // backend fields override local
+      });
+      // Add any local-only employees not in backend
+      existing.forEach(e => {
+        if (!merged.find(m => m.employeeId === e.employeeId)) merged.push(e);
+      });
+      localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(merged));
+    }
+  } catch (err) {
+    console.warn("Employee sync from backend failed, using localStorage:", err.message);
+  }
 }
 
 /* ─────────────────────────────────────────────────

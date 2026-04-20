@@ -1,4 +1,6 @@
 /* ── Vendor Storage ── */
+import { backendPost, backendDelete, backendGet } from "../api/syncService.js";
+
 const KEY = "gt_vendors";
 
 const SEED_VENDORS = [
@@ -22,14 +24,22 @@ function _save(list) { localStorage.setItem(KEY, JSON.stringify(list)); }
 export function saveVendor(vendor) {
   const all = getAllVendors();
   if (vendor.id && all.some((v) => v.id === vendor.id)) {
-    _save(all.map((v) => v.id === vendor.id ? { ...v, ...vendor } : v));
+    const updated = { ...all.find(v => v.id === vendor.id), ...vendor };
+    _save(all.map((v) => v.id === vendor.id ? updated : v));
+    // Sync to backend (fire-and-forget)
+    backendPost("/api/vendors/upsert", updated).catch(err => console.warn("Vendor backend sync failed:", err.message));
   } else {
-    _save([{ ...vendor, id: `v-${Date.now()}`, createdAt: new Date().toISOString() }, ...all]);
+    const newVendor = { ...vendor, id: `v-${Date.now()}`, createdAt: new Date().toISOString() };
+    _save([newVendor, ...all]);
+    // Sync to backend (fire-and-forget)
+    backendPost("/api/vendors/upsert", newVendor).catch(err => console.warn("Vendor backend sync failed:", err.message));
   }
 }
 
 export function deleteVendor(id) {
   _save(getAllVendors().filter((v) => v.id !== id));
+  // Sync delete to backend (fire-and-forget)
+  backendDelete(`/api/vendors/${id}`).catch(err => console.warn("Vendor delete sync failed:", err.message));
 }
 
 export function searchVendors(query) {
@@ -38,4 +48,21 @@ export function searchVendors(query) {
   return getAllVendors().filter(
     (v) => v.name?.toLowerCase().includes(q) || v.serviceType?.toLowerCase().includes(q) || v.location?.toLowerCase().includes(q)
   );
+}
+
+export async function syncVendorsFromBackend() {
+  try {
+    const vendors = await backendGet("/api/vendors");
+    if (Array.isArray(vendors) && vendors.length > 0) {
+      const existing = getAllVendors();
+      const merged = vendors.map(v => {
+        const local = existing.find(e => e.id === v.id);
+        return { ...local, ...v };
+      });
+      existing.forEach(v => { if (!merged.find(m => m.id === v.id)) merged.push(v); });
+      localStorage.setItem(KEY, JSON.stringify(merged));
+    }
+  } catch (err) {
+    console.warn("Vendor sync from backend failed:", err.message);
+  }
 }

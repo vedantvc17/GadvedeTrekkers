@@ -2,6 +2,8 @@
    trekPaymentStorage.js — Gadvede Trekkers
    Tracks outgoing payments to vendors/leaders per trek event
 ══════════════════════════════════════════════ */
+import { backendPost, backendPatch, backendDelete, backendGet } from "../api/syncService.js";
+
 const KEY = "gt_trek_payments";
 
 function _uid() {
@@ -56,6 +58,8 @@ export function createTrekPayment({ trekName, trekId, eventDate, participants, c
     createdAt: new Date().toISOString(),
   };
   _save([record, ...getAllTrekPayments()]);
+  // Sync to backend (fire-and-forget)
+  backendPost("/api/trek-payments", record).catch(err => console.warn("Trek payment backend sync failed:", err.message));
   return record;
 }
 
@@ -78,10 +82,18 @@ export function markSubPaymentDone({ paymentId, recipientType, method, reference
     return { ...rec, payments, status: allDone ? "COMPLETED" : anyDone ? "IN_PROGRESS" : "PENDING" };
   });
   _save(updated);
+  // Sync updated payments array to backend (fire-and-forget)
+  const syncRecord = getAllTrekPayments().find(p => p.paymentId === paymentId);
+  if (syncRecord) {
+    backendPatch(`/api/trek-payments/${paymentId}`, { payments: syncRecord.payments, status: syncRecord.status })
+      .catch(err => console.warn("Trek payment update sync failed:", err.message));
+  }
 }
 
 export function deleteTrekPayment(paymentId) {
   _save(getAllTrekPayments().filter((r) => r.paymentId !== paymentId));
+  // Sync delete to backend (fire-and-forget)
+  backendDelete(`/api/trek-payments/${paymentId}`).catch(err => console.warn("Trek payment delete sync failed:", err.message));
 }
 
 /* Update arbitrary config fields (e.g. whatsappGroupLink) on an existing record */
@@ -100,4 +112,21 @@ export function getTrekPaymentStats() {
   const pending   = all.filter(r => r.status !== "COMPLETED").reduce((s, r) => s + (r.calculations?.totalCost || 0), 0);
   const completed = all.filter(r => r.status === "COMPLETED").reduce((s, r) => s + (r.calculations?.totalCost || 0), 0);
   return { count: all.length, totalOutgoing, pending, completed };
+}
+
+export async function syncTrekPaymentsFromBackend() {
+  try {
+    const payments = await backendGet("/api/trek-payments");
+    if (Array.isArray(payments) && payments.length > 0) {
+      const existing = getAllTrekPayments();
+      const merged = payments.map(p => {
+        const local = existing.find(e => e.paymentId === p.paymentId);
+        return { ...local, ...p };
+      });
+      existing.forEach(p => { if (!merged.find(m => m.paymentId === p.paymentId)) merged.push(p); });
+      localStorage.setItem(KEY, JSON.stringify(merged));
+    }
+  } catch (err) {
+    console.warn("Trek payment sync from backend failed:", err.message);
+  }
 }

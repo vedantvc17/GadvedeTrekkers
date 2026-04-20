@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getCurrentAdminUser } from "../data/permissionStorage";
 import { getAlerts } from "../data/notificationStorage";
+import { useBackendSync } from "../hooks/useBackendSync";
 
 const NAV = [
   { path: "/admin/dashboard",    icon: "📊", label: "Dashboard" },
@@ -40,6 +41,8 @@ function AdminLayout() {
   const user = getCurrentAdminUser();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const unreadAlerts = getAlerts().slice(0, 20).length;
+
+  useBackendSync();
 
   useEffect(() => {
     if (!sessionStorage.getItem("gt_admin")) navigate("/admin");
